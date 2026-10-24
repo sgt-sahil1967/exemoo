@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cricket — Exemoo</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1b3a;--red:#ff3b30;--red-d:#b3160f;--yellow:#ffd21f;--yellow-d:#c79a00;--green:#2fc65a;--green-d:#16883a;--blue:#2f7cff;--blue-d:#1747b5}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;background:#7fd0ff;font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink)}
+canvas#scene{position:fixed;inset:0;display:block;width:100%;height:100%}
+.display{font-family:'Lilita One',sans-serif;letter-spacing:.02em}
+.btn{--c:var(--red);--d:var(--red-d);font-family:'Lilita One';font-size:24px;color:#fff;cursor:pointer;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 70%,#fff) 0%,var(--c) 45%);border:4px solid var(--ink);border-radius:18px;padding:10px 26px;
+  box-shadow:0 7px 0 var(--d),0 7px 0 4px var(--ink);text-shadow:0 2px 0 var(--d);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translateY(-3px);box-shadow:0 10px 0 var(--d),0 10px 0 4px var(--ink)}
+.btn:active{transform:translateY(6px);box-shadow:0 1px 0 var(--d),0 1px 0 4px var(--ink)}
+.btn:focus-visible{outline:5px solid var(--yellow);outline-offset:4px}
+.btn.green{--c:var(--green);--d:var(--green-d)}
+.hud{position:fixed;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:none;z-index:2}
+.pill{background:#fff;border:4px solid var(--ink);border-radius:16px;padding:3px 16px;box-shadow:0 5px 0 var(--ink);font-family:'Lilita One';font-size:26px;white-space:nowrap}
+.pill small{font-family:'Baloo 2';font-weight:800;font-size:13px;opacity:.65;margin-right:6px}
+.last{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:none;z-index:2}
+.last i{min-width:34px;height:34px;border-radius:12px;border:3px solid var(--ink);background:#fff;font:800 16px 'Baloo 2';display:grid;place-items:center;font-style:normal;box-shadow:0 3px 0 var(--ink);padding:0 6px}
+.last i.r4{background:var(--blue);color:#fff}.last i.r6{background:var(--green);color:#fff}.last i.w{background:var(--red);color:#fff}
+.call{position:fixed;top:34%;left:50%;transform:translate(-50%,-50%) scale(0);font-family:'Lilita One';font-size:clamp(60px,11vw,124px);color:var(--yellow);
+  -webkit-text-stroke:7px var(--ink);paint-order:stroke fill;text-shadow:0 8px 0 var(--ink);pointer-events:none;transition:transform .25s cubic-bezier(.5,1.8,.5,1);z-index:3;white-space:nowrap}
+.call.show{transform:translate(-50%,-50%) scale(1)}
+.shot{position:fixed;top:47%;left:50%;transform:translateX(-50%);background:#fff;border:4px solid var(--ink);border-radius:14px;box-shadow:0 5px 0 var(--ink);
+  padding:4px 16px;font-weight:800;font-size:18px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:3;text-align:center}
+.shot.show{opacity:1}
+.shot b{font-family:'Lilita One';font-size:22px;display:block;font-weight:400}
+.map{position:fixed;left:16px;bottom:16px;width:190px;height:190px;border-radius:50%;border:5px solid var(--ink);box-shadow:0 6px 0 var(--ink);z-index:2;
+  background:repeating-conic-gradient(#5fd03a 0 10deg,#55c232 0 20deg);overflow:hidden}
+.map svg{width:100%;height:100%;display:block}
+.inputs{position:fixed;right:16px;bottom:16px;z-index:2;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.chip{display:flex;align-items:center;gap:7px;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:2px 12px;font-weight:800;font-size:14px;box-shadow:0 3px 0 var(--ink)}
+.chip i{width:11px;height:11px;border-radius:50%;background:#c9c9d6;border:2px solid var(--ink)}
+.chip.ok i{background:var(--green)}
+.cambtn{font-size:16px;padding:5px 14px;border-radius:14px}
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:#1b1b3a55;padding:20px;z-index:5}
+.overlay.hidden{display:none}
+.card{background:#fff;border:5px solid var(--ink);border-radius:28px;box-shadow:0 10px 0 var(--ink),0 22px 30px #0004;padding:24px 28px;text-align:center;max-width:620px;width:100%}
+.card h1{font-size:clamp(46px,8vw,76px);color:var(--yellow);-webkit-text-stroke:6px var(--ink);paint-order:stroke fill;text-shadow:0 6px 0 var(--ink);line-height:1;margin-bottom:8px}
+.card h2{font-family:'Lilita One';font-size:40px;margin-bottom:4px;font-weight:400}
+.card p{font-weight:700;margin-bottom:12px}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:left;font-weight:800;font-size:14px;margin:12px 0 18px}
+.how div{background:#eaffd9;border:3px solid var(--ink);border-radius:14px;padding:8px 10px;box-shadow:0 4px 0 var(--ink)}
+.how b{font-family:'Lilita One';font-size:17px;display:block;font-weight:400}
+.best{font-family:'Lilita One';font-size:22px;margin-bottom:12px}
+.big{font-family:'Lilita One';font-size:64px;line-height:1;margin:6px 0}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.stance{position:fixed;top:56%;left:50%;transform:translateX(-50%);z-index:4;background:#fff;border:4px solid var(--ink);border-radius:18px;box-shadow:0 6px 0 var(--ink);padding:10px 20px;text-align:center;font-weight:800}
+.stance.hidden{display:none}
+.stance .bar{width:240px;height:16px;border:3px solid var(--ink);border-radius:10px;overflow:hidden;margin-top:8px;background:#eee}
+.stance .bar i{display:block;height:100%;width:0;background:var(--green)}
+.stance .dots{display:flex;gap:10px;justify-content:center;margin-top:8px}
+.stance .dots i{width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);background:#eee}
+.stance .dots i.on{background:var(--green)}
+.stance .skip{font-size:15px;padding:3px 14px;border-radius:12px;margin-top:10px;box-shadow:0 4px 0 var(--d),0 4px 0 3px var(--ink)}
+.pill.target{background:var(--blue);color:#fff}
+.pill[hidden]{display:none}
+.btn.small{font-size:17px;padding:5px 16px;border-radius:14px}
+@media (max-width:700px){.how{grid-template-columns:1fr}.map{width:130px;height:130px}}
+/* Right edge: timing bar (timingbar.js) up top under the HUD, camera panel (handcam.js) below it above the chips. */
+body .tb-root{top:86px;transform:none;height:clamp(150px,calc(100vh - 440px),420px)}
+@media (max-width:700px){body .tb-root{top:76px;height:clamp(110px,calc(100vh - 330px),300px)}}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="hud">
+  <div class="pill"><small>RUNS</small><span id="runs">0</span></div>
+  <div class="pill"><small>BALLS</small><span id="balls">0</span></div>
+  <div class="pill"><small>BEST</small><span id="bestHud">0</span></div>
+  <div class="pill target" id="targetPill" hidden><small style="color:#fff" id="targetLabel">HIT TO</small><span id="target"></span></div>
+</div>
+<div class="last" id="last"></div>
+<div class="call" id="call"></div>
+<div class="shot" id="shot"></div>
+<div class="map" aria-label="Field map"><svg viewBox="-100 -100 200 200" id="map"></svg></div>
+<div class="inputs">
+  <div class="chip" id="chipPhone"><i></i><span>Phone: menus + feedback</span></div>
+  <div class="chip" id="chipCam"><i></i><span>Camera: your bat</span></div>
+  <button class="btn green cambtn" id="camBtn" hidden>Turn on camera</button>
+</div>
+<div class="stance hidden" id="stance">Take your stance and hold still<div class="bar"><i id="stanceBar"></i></div></div>
+
+<div class="overlay" id="menu"><div class="card">
+  <h1 class="display">CRICKET</h1>
+  <p>Endless innings: bat until you're out. Hit into the gaps between the fielders.</p>
+  <div class="how">
+    <div><b>Timing</b>Swing as the ball reaches you. Only perfect timing sends it far; early or late loses power.</div>
+    <div><b>Direction + power</b>Bat in front of the camera: where your hands go is where the ball goes, a bigger, faster swing hits harder, swinging up lofts it.</div>
+    <div><b>Gaps</b>Fielders stop or catch anything hit at them. The map shows the gaps.</div>
+  </div>
+  <div class="best" id="bestMenu"></div>
+  <div class="row"><button class="btn" id="play">PLAY</button><button class="btn small" id="howtoBtn" style="--c:var(--yellow);--d:var(--yellow-d);color:var(--ink);text-shadow:none">How to bat</button><button class="btn green small" id="practiceBtn">Practice: OFF</button></div>
+  <div class="row" style="margin-top:10px"><button class="btn small" id="playersBtn" style="--c:var(--blue);--d:var(--blue-d)">Players: Men</button><button class="btn small" id="timeBtn" style="--c:var(--blue);--d:var(--blue-d)">Time: Day</button></div>
+  <p style="margin:14px 0 0;font-size:13px;opacity:.7">No phone or camera? Click or press Space to swing; the mouse picks the direction.</p>
+</div></div>
+
+<div class="overlay hidden" id="paused"><div class="card">
+  <h2>PAUSED</h2>
+  <p>Press Pause or GO on your phone (or P) to carry on.</p>
+</div></div>
+
+<div class="overlay hidden" id="result"><div class="card">
+  <h2 id="outHow">BOWLED!</h2>
+  <div class="big" id="final">0</div>
+  <p id="finalSub"></p>
+  <div class="row"><button class="btn" id="again">BAT AGAIN</button><button class="btn green" id="toMenu">EXEMOO MENU</button></div>
+</div></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

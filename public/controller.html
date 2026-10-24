@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5ec2ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>EXEMOO Controller</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1b3a;--red:#ff3b30;--red-d:#b3160f;--yellow:#ffd21f;--yellow-d:#c79a00;--blue:#2f7cff;--blue-d:#1747b5;--green:#2fc65a;--green-d:#16883a}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:none}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink);display:flex;flex-direction:column;gap:14px;
+  padding:max(14px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));
+  background:linear-gradient(#5ec2ff,#bfe8ff 55%,#62d23c 55%);
+  background-image:linear-gradient(#5ec2ff,#bfe8ff 55%,transparent 55%),repeating-conic-gradient(#62d23c 0 25%,#55c232 0 50%);background-size:100% 100%,40px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-family:'Lilita One';font-size:30px;color:var(--yellow);-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;text-shadow:0 4px 0 var(--ink)}
+.state{display:flex;align-items:center;gap:7px;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:3px 12px;font-weight:800;font-size:14px;box-shadow:0 4px 0 var(--ink)}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--yellow);border:2px solid var(--ink)}
+.state.ok .dot{background:var(--green)} .state.bad .dot{background:var(--red)}
+.b{font-family:'Lilita One';color:#fff;border:4px solid var(--ink);cursor:pointer;
+  --c:var(--blue);--d:var(--blue-d);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 70%,#fff),var(--c) 50%);
+  box-shadow:0 6px 0 var(--d),0 6px 0 4px var(--ink);transition:transform .05s,box-shadow .05s;text-shadow:0 2px 0 var(--d)}
+.b.down{transform:translateY(5px);box-shadow:0 1px 0 var(--d),0 1px 0 4px var(--ink)}
+.b.red{--c:var(--red);--d:var(--red-d)} .b.yellow{--c:var(--yellow);--d:var(--yellow-d);color:var(--ink);text-shadow:none} .b.green{--c:var(--green);--d:var(--green-d)}
+
+/* motion pad */
+.pad{position:relative;flex:1;min-height:180px;border:5px solid var(--ink);border-radius:28px;background:#fff;box-shadow:0 8px 0 var(--ink);overflow:hidden;display:grid;place-items:center;text-align:center}
+.pad .ring{position:absolute;width:64px;height:64px;border-radius:50%;border:5px solid var(--ink);background:var(--yellow);left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 5px 0 var(--yellow-d)}
+.pad .label{position:absolute;bottom:12px;left:0;right:0;font-weight:800;font-size:14px;opacity:.7}
+.pad .mode{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between}
+.pill{font-family:'Lilita One';font-size:15px;border-radius:12px;padding:4px 12px}
+.pad.motion{background:radial-gradient(circle at 50% 50%,#eaffd9,#fff 70%)}
+.pad.flash{animation:flash .25s}
+@keyframes flash{from{background:#ffd21f}}
+
+.row{display:flex;gap:14px;align-items:center;justify-content:space-between}
+.dpad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:6px}
+.dpad .b{border-radius:16px;font-size:24px;padding:0}
+.u{grid-area:1/2}.l{grid-area:2/1}.r{grid-area:2/3}.d{grid-area:3/2}
+.ab{display:grid;grid-template-columns:auto auto;gap:10px;align-items:end}
+.ab .b{border-radius:50%;padding:0}
+.ba{width:96px;height:96px;font-size:40px}
+.bb{width:62px;height:62px;font-size:26px;margin-bottom:6px}
+
+/* gate overlays */
+.gate{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:24px;background:#1b1b3acc}
+.gate .card{background:#fff;border:5px solid var(--ink);border-radius:26px;box-shadow:0 8px 0 var(--ink);padding:24px;text-align:center;max-width:360px;width:100%}
+.gate h2{font-family:'Lilita One';font-size:30px;margin-bottom:6px}
+.gate p{font-weight:700;margin-bottom:16px}
+.gate .b{font-size:24px;padding:12px 26px;border-radius:18px;width:100%}
+.gate input{width:100%;font-family:'Lilita One';font-size:32px;letter-spacing:.25em;text-align:center;border:4px solid var(--ink);border-radius:16px;padding:8px;margin-bottom:14px;touch-action:manipulation;user-select:text;-webkit-user-select:text}
+.bar{height:22px;border:4px solid var(--ink);border-radius:12px;overflow:hidden;background:#eee;margin-bottom:16px}
+.bar i{display:block;height:100%;width:0;background:var(--green);transition:width .1s linear}
+.sl{display:block;text-align:left;font-weight:800;margin-bottom:10px}.sl b{float:right}
+.sl input{width:100%;accent-color:#2f7cff;touch-action:pan-x}
+.chk{display:flex;gap:8px;align-items:center;font-weight:800;margin-bottom:6px}.chk input{width:22px;height:22px;accent-color:#2f7cff}
+#calBtn{--c:#9b4dff;--d:#6a24c7}
+.top .title{flex:1;min-width:0;font-family:'Lilita One';font-size:20px;background:#fff;border:3px solid var(--ink);border-radius:12px;padding:2px 10px;box-shadow:0 3px 0 var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body:not(.layout-menu) .top h1{display:none}
+.state{white-space:nowrap;flex:none}
+.top .home{flex:none}
+.top .home{position:relative;overflow:hidden;width:46px;height:42px;border-radius:12px;padding:0;display:grid;place-items:center}
+.top .home .fill{position:absolute;left:0;bottom:0;height:0;width:100%;background:#ff3b3088;transition:height .6s linear}
+.top .home.holding .fill{height:100%}
+.state small{font-weight:700;opacity:.6}
+.view{display:none}
+body.layout-menu [data-view=menu], body.layout-swing [data-view=swing], body.layout-slice [data-view=slice], body.layout-remote [data-view=remote]{display:grid}
+.big-wrap{flex:1;place-items:center;align-content:center;gap:14px;text-align:center}
+.bigbtn{width:min(62vw,250px);height:min(62vw,250px);border-radius:50%;font-size:44px;display:grid;place-content:center;line-height:1}
+.bigbtn small{font-family:'Baloo 2';font-size:18px;font-weight:800}
+.bigbtn.down{transform:translateY(6px)}
+.hint{font-weight:800;background:#fffc;border:3px solid var(--ink);border-radius:14px;padding:6px 12px;max-width:320px}
+.blade{flex:1;place-items:center;align-content:center;gap:14px;text-align:center;border:5px solid var(--ink);border-radius:28px;background:radial-gradient(circle,#fff6d0,#fff 70%);box-shadow:0 8px 0 var(--ink)}
+.blade.down{background:radial-gradient(circle,#ffd21f,#fff 75%)}
+.blade-mark{width:110px;height:110px;border-radius:50%;background:#ff3b30;border:5px solid var(--ink);display:grid;place-items:center;box-shadow:0 6px 0 #b3160f}
+.side{display:flex;flex-direction:column;gap:12px}
+.extras{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.xb{font-size:20px;border-radius:14px;padding:6px 16px;min-width:64px}
+.sb{font-size:18px;border-radius:16px;padding:10px 16px;min-width:120px}
+body.flash{animation:hap .15s}
+@keyframes hap{from{box-shadow:inset 0 0 0 10px #ffd21f}}
+.err{color:#b3160f;font-weight:800}
+.err:empty{display:none}
+.hidden{display:none!important}
+</style>
+</head>
+<body class="layout-menu">
+<div class="top">
+  <h1>EXEMOO</h1>
+  <span class="title hidden" id="title"></span>
+  <div class="state" id="state"><i class="dot"></i><span id="stxt">Connecting</span></div>
+  <button class="b yellow home hidden" id="homeBtn" aria-label="Back to Exemoo menu (hold)"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z" fill="currentColor"/></svg><i class="fill"></i></button>
+</div>
+
+<!-- menu: air pointer pad -->
+<div class="pad view" id="pad" data-view="menu">
+  <div class="mode">
+    <button class="b green pill" id="motionBtn">Motion: ON</button>
+    <span style="display:flex;gap:8px"><button class="b pill" id="calBtn">Calibrate</button><button class="b yellow pill" id="centerBtn">Recenter</button></span>
+  </div>
+  <div class="ring" id="ring"></div>
+  <div class="label" id="padLabel">Point and tilt your phone to move. Flick or tap A to pick.</div>
+</div>
+
+<!-- swing: hold the big button and swing the phone -->
+<div class="view big-wrap" data-view="swing">
+  <button class="b red bigbtn" data-b="action" data-hold aria-label="Hold to swing">HOLD<small>then swing</small></button>
+  <p class="hint">Hold the button and swing your phone like a club, bat or paddle.</p>
+</div>
+
+<!-- slice: the whole screen is the blade -->
+<div class="view blade" data-view="slice" data-b="action" data-hold>
+  <div class="blade-mark"><svg viewBox="0 0 64 64" width="64" height="64"><path d="M10 54 46 18l8-8-2 10-36 36z" fill="#fff" stroke="#1b1b3a" stroke-width="4" stroke-linejoin="round"/><path d="M8 56l6-6" stroke="#1b1b3a" stroke-width="7" stroke-linecap="round"/></svg></div>
+  <p class="hint">Hold your phone like a sword. Touch and hold here to draw the blade, then swing to slice. Tap to select.</p>
+</div>
+
+<!-- remote: simple buttons for camera games -->
+<div class="view big-wrap" data-view="remote">
+  <button class="b green bigbtn" data-b="action" aria-label="Action">GO</button>
+  <p class="hint">The screen's camera tracks your body. Use the phone to pick and pause.</p>
+</div>
+
+<div class="extras hidden" id="extras"></div>
+<div class="row">
+  <div class="dpad">
+    <button class="b u" data-b="up" aria-label="Up">&#9650;</button><button class="b l" data-b="left" aria-label="Left">&#9664;</button>
+    <button class="b r" data-b="right" aria-label="Right">&#9654;</button><button class="b d" data-b="down" aria-label="Down">&#9660;</button>
+  </div>
+  <div class="ab" data-only="menu">
+    <button class="b yellow bb" data-b="back" aria-label="Back">B</button>
+    <button class="b red ba" data-b="action" aria-label="Select">A</button>
+  </div>
+  <div class="side" data-only="swing slice remote">
+    <button class="b yellow sb" data-b="pause">Pause</button>
+    <button class="b sb" data-b="recenter" data-only="swing slice">Recenter</button>
+    <button class="b sb" data-b="back" data-only="remote">Back</button>
+  </div>
+</div>
+
+<!-- start gate: one tap unlocks motion sensors (required on iOS) -->
+<div class="gate" id="startGate"><div class="card">
+  <h2>Ready to play?</h2>
+  <p>Your phone becomes a motion controller. Hold it like a TV remote, pointing at the screen.</p>
+  <p class="err" id="startErr"></p>
+  <button class="b red" id="startBtn">TAP TO START</button>
+</div></div>
+<div class="gate hidden" id="calGate"><div class="card">
+  <h2 id="calTitle">Calibrate</h2>
+  <div id="calStill">
+    <p id="calMsg">Rest your phone on a table, or hold it very still.</p>
+    <div class="bar"><i id="calBar"></i></div>
+    <button class="b red" id="calGo">START</button>
+  </div>
+  <div id="calTune" class="hidden">
+    <p>Point at the screen and move around to test.</p>
+    <label class="sl">Pointer speed <b id="sensV"></b><input type="range" id="sens" min="0.3" max="2.5" step="0.1"></label>
+    <label class="sl">Flick to select <b id="flickV"></b><input type="range" id="flick" min="12" max="40" step="1"></label>
+    <label class="chk"><input type="checkbox" id="invX"> Flip left / right</label>
+    <label class="chk"><input type="checkbox" id="invY"> Flip up / down</label>
+    <div style="display:flex;gap:10px;margin-top:12px"><button class="b yellow" id="calRedo" style="font-size:18px">Redo</button><button class="b green" id="calDone">DONE</button></div>
+  </div>
+</div></div>
+<div class="gate hidden" id="pinGate"><div class="card">
+  <h2>Enter PIN</h2>
+  <p>Type the 6-digit code shown on your screen.</p>
+  <form id="pinForm"><input id="pinIn" inputmode="numeric" maxlength="6" autocomplete="off"><button class="b red">CONNECT</button></form>
+</div></div>
+
+<script type="module" src="/js/pad.js"></script>
+</body>
+</html>

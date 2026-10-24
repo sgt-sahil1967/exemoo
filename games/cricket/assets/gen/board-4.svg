@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="1024" height="128">
+  <defs>
+    <clipPath id="boardClip">
+      <rect x="0" y="0" width="1024" height="128" rx="0" />
+    </clipPath>
+  </defs>
+
+  <!-- Board Base & Background Graphics -->
+  <g clip-path="url(#boardClip)">
+    <!-- Base Turf Green -->
+    <rect x="0" y="0" width="1024" height="128" fill="#063821" />
+
+    <!-- Broadcast Chevron & Speed Band Accents -->
+    <polygon points="-20,0 120,0 50,128 -20,128" fill="#042717" />
+    <polygon points="120,0 135,0 65,128 50,128" fill="#D4FC00" />
+
+    <!-- Midground Angled Sport Slices -->
+    <polygon points="690,0 760,0 670,128 600,128" fill="#0B4D2E" opacity="0.6" />
+    <polygon points="745,0 760,0 685,128 670,128" fill="#00D084" />
+    <polygon points="980,0 1040,0 1040,128 895,128" fill="#042717" />
+    <polygon points="960,0 978,0 893,128 875,128" fill="#00D2FF" />
+    <polygon points="995,0 1010,0 925,128 910,128" fill="#D4FC00" />
+
+    <!-- Left Logo Mark (Emblem: Pasture Leaf & Jet Wings) -->
+    <g transform="translate(18, 14)">
+      <!-- Outer Hex/Pill Ring -->
+      <polygon points="45,0 80,18 80,82 45,100 10,82 10,18" fill="#082E1C" stroke="#D4FC00" stroke-width="3" stroke-linejoin="round" />
+      <!-- Inner Dynamic Blade/Leaf Shapes forming Aero Tail & Jet Wing -->
+      <path d="M 45,14 C 45,14 52,38 72,46 C 56,48 48,56 46,76 C 44,56 36,48 20,46 C 40,38 45,14 45,14 Z" fill="#00D084" />
+      <!-- Ascending Jet Silo -->
+      <path d="M 32,74 L 45,28 L 58,74 L 45,63 Z" fill="#FFFFFF" />
+      <!-- Speed Dash Under Wing -->
+      <polygon points="41,68 45,38 49,68 45,78" fill="#D4FC00" />
+      <circle cx="45" cy="24" r="3" fill="#D4FC00" />
+    </g>
+
+    <!-- Main Typography Section -->
+    <!-- Brand Name: PASTURE AIRWAYS -->
+    <g font-family="Arial Black, Arial, sans-serif" font-weight="900">
+      <!-- Word 1: PASTURE -->
+      <text x="135" y="68" font-size="44" fill="#FFFFFF" letter-spacing="1">PASTURE</text>
+      <!-- Word 2: AIRWAYS with vibrant sports cyan/lime styling -->
+      <text x="390" y="68" font-size="44" fill="#D4FC00" letter-spacing="1">AIRWAYS</text>
+    </g>
+
+    <!-- Modern Sport Tagline & Dot Dividers -->
+    <g font-family="Arial Black, Arial, sans-serif">
+      <text x="138" y="98" font-size="12" font-weight="900" fill="#00E575" letter-spacing="3.5">FLY NATURAL</text>
+      <circle cx="270" cy="94" r="3" fill="#D4FC00" />
+      <text x="284" y="98" font-size="12" font-weight="900" fill="#FFFFFF" letter-spacing="3.5">ZERO COMPROMISE</text>
+      <circle cx="488" cy="94" r="3" fill="#00E575" />
+      <text x="502" y="98" font-size="12" font-weight="900" fill="#38BDF8" letter-spacing="3.5">GLOBAL CRICKET TOURS</text>
+    </g>
+
+    <!-- Right Side CTA / Partner Badge -->
+    <g transform="translate(738, 22)">
+      <!-- Angled CTA Pill -->
+      <polygon points="18,0 215,0 197,84 0,84" fill="#D4FC00" />
+      <!-- Secondary Inner Border -->
+      <polygon points="26,6 207,6 191,78 10,78" fill="#042717" />
+      
+      <!-- Text Inside CTA -->
+      <text x="108" y="32" font-family="Arial Black, Arial, sans-serif" font-size="10" font-weight="900" fill="#00D2FF" letter-spacing="2" text-anchor="middle">OFFICIAL AIRLINE</text>
+      <text x="108" y="55" font-family="Arial Black, Arial, sans-serif" font-size="16" font-weight="900" fill="#FFFFFF" letter-spacing="1" text-anchor="middle">PASTUREAIR.COM</text>
+      <polygon points="98,64 118,64 108,72" fill="#D4FC00" />
+    </g>
+  </g>
+
+  <!-- Broadcast Perimeter 6px Dark Board Outline -->
+  <rect x="3" y="3" width="1018" height="122" fill="none" stroke="#0A140F" stroke-width="6" />
+</svg>

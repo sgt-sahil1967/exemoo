@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512" width="1024" height="512">
+  <defs>
+    <!-- Leather Base Gradients -->
+    <linearGradient id="leatherGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#55030A" />
+      <stop offset="18%" stop-color="#7B0714" />
+      <stop offset="38%" stop-color="#9E0F21" />
+      <stop offset="48%" stop-color="#B11427" />
+      <stop offset="50%" stop-color="#66050F" />
+      <stop offset="52%" stop-color="#B11427" />
+      <stop offset="62%" stop-color="#9E0F21" />
+      <stop offset="82%" stop-color="#7B0714" />
+      <stop offset="100%" stop-color="#55030A" />
+    </linearGradient>
+
+    <linearGradient id="seamBed" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#400207" stop-opacity="0.8" />
+      <stop offset="18%" stop-color="#7B0815" />
+      <stop offset="35%" stop-color="#B81D31" />
+      <stop offset="48%" stop-color="#C9293F" />
+      <stop offset="50%" stop-color="#3D0106" />
+      <stop offset="52%" stop-color="#C9293F" />
+      <stop offset="65%" stop-color="#B81D31" />
+      <stop offset="82%" stop-color="#7B0815" />
+      <stop offset="100%" stop-color="#400207" stop-opacity="0.8" />
+    </linearGradient>
+
+    <linearGradient id="quarterSeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4A0208" stop-opacity="0" />
+      <stop offset="30%" stop-color="#380005" stop-opacity="0.7" />
+      <stop offset="50%" stop-color="#220003" stop-opacity="0.9" />
+      <stop offset="70%" stop-color="#A81B2D" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#4A0208" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Thread Gradient -->
+    <linearGradient id="stitchGradTop" x1="0%" y1="100%" x2="40%" y2="0%">
+      <stop offset="0%" stop-color="#CFBE9B" />
+      <stop offset="30%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#FFF8E7" />
+      <stop offset="100%" stop-color="#D9C9A7" />
+    </linearGradient>
+
+    <linearGradient id="stitchGradBtm" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#CFBE9B" />
+      <stop offset="30%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#FFF8E7" />
+      <stop offset="100%" stop-color="#D9C9A7" />
+    </linearGradient>
+
+    <!-- Gold Foil Stamp Gradient -->
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ECC667" />
+      <stop offset="25%" stop-color="#FFF2AE" />
+      <stop offset="50%" stop-color="#D4A034" />
+      <stop offset="75%" stop-color="#FCE58D" />
+      <stop offset="100%" stop-color="#AA7516" />
+    </linearGradient>
+
+    <!-- Fine Leather Texture Pattern -->
+    <pattern id="leatherGrain" width="32" height="32" patternUnits="userSpaceOnUse">
+      <!-- Pores and micro-texture -->
+      <circle cx="8" cy="8" r="0.9" fill="#380106" opacity="0.35" />
+      <circle cx="24" cy="8" r="0.7" fill="#FF5266" opacity="0.15" />
+      <circle cx="16" cy="16" r="1.1" fill="#2E0105" opacity="0.4" />
+      <circle cx="4" cy="24" r="0.8" fill="#FF475B" opacity="0.12" />
+      <circle cx="20" cy="26" r="1.0" fill="#3D0106" opacity="0.35" />
+      <path d="M 0,16 Q 8,14 16,16 T 32,16" stroke="#250003" stroke-width="0.5" fill="none" opacity="0.12" />
+      <path d="M 16,0 Q 14,8 16,16 T 16,32" stroke="#FF475B" stroke-width="0.5" fill="none" opacity="0.08" />
+      <circle cx="28" cy="18" r="0.7" fill="#1F0003" opacity="0.4" />
+      <circle cx="10" cy="2" r="0.8" fill="#FF5266" opacity="0.12" />
+    </pattern>
+
+    <!-- Repeating Equatorial Stitches Unit (Width 16, Height 36, centered at y=18) -->
+    <pattern id="equatorStitches" width="16" height="36" patternUnits="userSpaceOnUse" y="238">
+      <!-- Puncture shadow holes (Top row) -->
+      <ellipse cx="4" cy="7" rx="1.8" ry="1.2" fill="#240003" />
+      <ellipse cx="12" cy="13" rx="1.6" ry="1.2" fill="#240003" />
+      <!-- Puncture shadow holes (Bottom row) -->
+      <ellipse cx="4" cy="29" rx="1.8" ry="1.2" fill="#240003" />
+      <ellipse cx="12" cy="23" rx="1.6" ry="1.2" fill="#240003" />
+
+      <!-- Top Row Slanted Primary Stitch -->
+      <!-- Shadow -->
+      <path d="M 2.5,7.8 L 10.8,14.6 L 12.8,13.2 L 4.5,6.4 Z" fill="#260004" opacity="0.7" />
+      <!-- Cream Thread -->
+      <path d="M 3.2,7.0 L 11.2,13.6 C 12.2,14.4 13.0,13.8 12.4,12.8 L 4.8,6.0 C 4.0,5.2 2.6,6.2 3.2,7.0 Z" fill="url(#stitchGradTop)" />
+      <!-- Thread Highlight Rib -->
+      <line x1="4.2" y1="6.8" x2="11.8" y2="13.2" stroke="#FFFFFF" stroke-width="0.7" stroke-linecap="round" opacity="0.8" />
+
+      <!-- Bottom Row Slanted Primary Stitch (Mirrored chevron feel) -->
+      <!-- Shadow -->
+      <path d="M 2.5,28.2 L 10.8,21.4 L 12.8,22.8 L 4.5,29.6 Z" fill="#260004" opacity="0.7" />
+      <!-- Cream Thread -->
+      <path d="M 3.2,29.0 L 11.2,22.4 C 12.2,21.6 13.0,22.2 12.4,23.2 L 4.8,30.0 C 4.0,30.8 2.6,29.8 3.2,29.0 Z" fill="url(#stitchGradBtm)" />
+      <!-- Thread Highlight Rib -->
+      <line x1="4.2" y1="29.2" x2="11.8" y2="22.8" stroke="#FFFFFF" stroke-width="0.7" stroke-linecap="round" opacity="0.8" />
+
+      <!-- Faint Inner Center Ridge Lock-stitches -->
+      <circle cx="8" cy="17" r="0.9" fill="#FAF1D8" opacity="0.9" />
+      <circle cx="8" cy="19" r="0.9" fill="#FAF1D8" opacity="0.9" />
+      <circle cx="8" cy="18" r="1.3" fill="#350005" opacity="0.6" />
+    </pattern>
+  </defs>
+
+  <!-- 1. BASE RED LEATHER BACKGROUND -->
+  <rect x="0" y="0" width="1024" height="512" fill="#880A18" />
+  <rect x="0" y="0" width="1024" height="512" fill="url(#leatherGlow)" />
+
+  <!-- 2. BROAD POLISHED SPECULAR SHEEN (Sports broadcast gloss finish) -->
+  <path d="M 0,90 Q 256,60 512,85 T 1024,90 L 1024,195 Q 768,170 512,190 T 0,195 Z" fill="#FF2A42" opacity="0.14" />
+  <path d="M 0,320 Q 256,315 512,335 T 1024,320 L 1024,410 Q 768,435 512,415 T 0,410 Z" fill="#FF2A42" opacity="0.12" />
+  <ellipse cx="280" cy="130" rx="240" ry="50" fill="#FFFFFF" opacity="0.06" />
+  <ellipse cx="800" cy="380" rx="220" ry="45" fill="#FFFFFF" opacity="0.05" />
+
+  <!-- 3. FAINT QUARTER SEAMS (Perpendicular meridians at X=256 and X=768) -->
+  <!-- Quarter Seam 1 (Left Hemisphere, x=256) -->
+  <g id="quarterSeam1">
+    <!-- North section -->
+    <rect x="251" y="0" width="10" height="238" fill="url(#quarterSeamGrad)" />
+    <line x1="256" y1="0" x2="256" y2="238" stroke="#1E0003" stroke-width="1.2" stroke-dasharray="1.5,4.5" />
+    <line x1="257.2" y1="0" x2="257.2" y2="238" stroke="#E63946" stroke-width="0.6" stroke-dasharray="1.5,4.5" opacity="0.4" />
+    <!-- South section -->
+    <rect x="251" y="274" width="10" height="238" fill="url(#quarterSeamGrad)" />
+    <line x1="256" y1="274" x2="256" y2="512" stroke="#1E0003" stroke-width="1.2" stroke-dasharray="1.5,4.5" />
+    <line x1="257.2" y1="274" x2="257.2" y2="512" stroke="#E63946" stroke-width="0.6" stroke-dasharray="1.5,4.5" opacity="0.4" />
+  </g>
+
+  <!-- Quarter Seam 2 (Right Hemisphere, x=768) -->
+  <g id="quarterSeam2">
+    <!-- North section -->
+    <rect x="763" y="0" width="10" height="238" fill="url(#quarterSeamGrad)" />
+    <line x1="768" y1="0" x2="768" y2="238" stroke="#1E0003" stroke-width="1.2" stroke-dasharray="1.5,4.5" />
+    <line x1="769.2" y1="0" x2="769.2" y2="238" stroke="#E63946" stroke-width="0.6" stroke-dasharray="1.5,4.5" opacity="0.4" />
+    <!-- South section -->
+    <rect x="763" y="274" width="10" height="238" fill="url(#quarterSeamGrad)" />
+    <line x1="768" y1="274" x2="768" y2="512" stroke="#1E0003" stroke-width="1.2" stroke-dasharray="1.5,4.5" />
+    <line x1="769.2" y1="274" x2="769.2" y2="512" stroke="#E63946" stroke-width="0.6" stroke-dasharray="1.5,4.5" opacity="0.4" />
+  </g>
+
+  <!-- 4. LEATHER GRAIN TEXTURE OVERLAY -->
+  <rect x="0" y="0" width="1024" height="512" fill="url(#leatherGrain)" />
+
+  <!-- 5. CRISP MODERN SCUFFS & LEATHER PLAY-MARKS -->
+  <g opacity="0.65">
+    <!-- Fine surface scratches -->
+    <path d="M 120,80 L 145,72 M 126,73 L 138,85" stroke="#FFFFFF" stroke-width="0.6" stroke-linecap="round" opacity="0.25" />
+    <path d="M 680,110 L 715,102 M 695,98 L 710,114" stroke="#FFFFFF" stroke-width="0.6" stroke-linecap="round" opacity="0.2" />
+    <path d="M 380,410 L 415,395 M 390,396 L 402,416" stroke="#FFFFFF" stroke-width="0.6" stroke-linecap="round" opacity="0.25" />
+    <path d="M 890,350 L 920,338" stroke="#FFFFFF" stroke-width="0.7" stroke-linecap="round" opacity="0.3" />
+    <path d="M 60,340 L 95,332" stroke="#260003" stroke-width="0.8" stroke-linecap="round" opacity="0.4" />
+    <!-- Subtle impact abrasions -->
+    <polygon points="460,78 466,74 472,77 470,83 463,82" fill="#FFFFFF" opacity="0.08" />
+    <polygon points="610,430 618,424 625,428 622,436 614,435" fill="#FFFFFF" opacity="0.08" />
+    <polygon points="180,390 188,386 193,392 186,396" fill="#1C0003" opacity="0.25" />
+    <polygon points="840,160 847,155 853,159 848,165" fill="#1C0003" opacity="0.25" />
+  </g>
+
+  <!-- 6. GOLD FOIL MAKER'S CREST (Clean sports-broadcast graphic emblem on upper panel) -->
+  <g transform="translate(512, 128)" text-anchor="middle">
+    <!-- Laurel Wreath Leaves (Left) -->
+    <path d="M -52,-2 C -65,-18 -55,-40 -38,-50 C -42,-35 -48,-18 -38,-8 Z" fill="url(#gold)" />
+    <path d="M -58,15 C -75,2 -72,-18 -56,-28 C -58,-12 -60,4 -46,12 Z" fill="url(#gold)" />
+    <path d="M -48,34 C -64,28 -68,8 -54,-2 C -53,12 -50,26 -36,28 Z" fill="url(#gold)" />
+    <!-- Laurel Wreath Leaves (Right) -->
+    <path d="M 52,-2 C 65,-18 55,-40 38,-50 C 42,-35 48,-18 38,-8 Z" fill="url(#gold)" />
+    <path d="M 58,15 C 75,2 72,-18 56,-28 C 58,-12 60,4 46,12 Z" fill="url(#gold)" />
+    <path d="M 48,34 C 64,28 68,8 54,-2 C 53,12 50,26 36,28 Z" fill="url(#gold)" />
+    <!-- Crown / Stars -->
+    <polygon points="0,-48 -7,-35 -20,-38 -12,-26 -16,-13 0,-20 16,-13 12,-26 20,-38 7,-35" fill="url(#gold)" />
+    <circle cx="-28" cy="-38" r="2.2" fill="url(#gold)" />
+    <circle cx="28" cy="-38" r="2.2" fill="url(#gold)" />
+    <!-- Concentric Rings -->
+    <circle cx="0" cy="0" r="42" fill="none" stroke="url(#gold)" stroke-width="1.8" />
+    <circle cx="0" cy="0" r="38" fill="none" stroke="url(#gold)" stroke-width="0.6" stroke-dasharray="2,2" />
+    <!-- Typography -->
+    <text x="0" y="-3" font-family="Arial Black, Arial, sans-serif" font-size="11" font-weight="900" fill="url(#gold)" letter-spacing="3">SPECIAL</text>
+    <text x="0" y="11" font-family="Arial Black, Arial, sans-serif" font-size="13" font-weight="900" fill="url(#gold)" letter-spacing="4">COUNTY</text>
+    <text x="0" y="24" font-family="Arial Black, Arial, sans-serif" font-size="7.5" font-weight="bold" fill="url(#gold)" letter-spacing="2">MATCH</text>
+    <text x="0" y="33" font-family="Arial Black, Arial, sans-serif" font-size="5.5" font-weight="bold" fill="url(#gold)" letter-spacing="1.5">5 1/2 OZ</text>
+  </g>
+
+  <!-- 7. RAISED EQUATORIAL SEAM BED (The structural leather ridge) -->
+  <!-- Outer depression shadow (groove where leather is pulled together) -->
+  <rect x="0" y="235" width="1024" height="42" fill="#290104" opacity="0.6" />
+  <!-- Main raised welt -->
+  <rect x="0" y="238" width="1024" height="36" fill="url(#seamBed)" />
+
+  <!-- Upper and lower seam edge highlights (lip of the raised welt) -->
+  <line x1="0" y1="237.5" x2="1024" y2="237.5" stroke="#FFA4B0" stroke-width="0.8" opacity="0.4" />
+  <line x1="0" y1="239" x2="1024" y2="239" stroke="#380106" stroke-width="1.2" opacity="0.9" />
+  <line x1="0" y1="273" x2="1024" y2="273" stroke="#380106" stroke-width="1.2" opacity="0.9" />
+  <line x1="0" y1="274.5" x2="1024" y2="274.5" stroke="#FFA4B0" stroke-width="0.8" opacity="0.4" />
+
+  <!-- Center Split Line (Where two hemispheres meet tightly) -->
+  <line x1="0" y1="256" x2="1024" y2="256" stroke="#140002" stroke-width="2.2" />
+  <line x1="0" y1="255.1" x2="1024" y2="255.1" stroke="#FFA6B2" stroke-width="0.5" opacity="0.5" />
+  <line x1="0" y1="256.9" x2="1024" y2="256.9" stroke="#4A0208" stroke-width="0.5" opacity="0.8" />
+
+  <!-- 8. THE EQUATORIAL STITCHES (Crisp white/cream two-row slanted stitching) -->
+  <rect x="0" y="238" width="1024" height="36" fill="url(#equatorStitches)" />
+
+  <!-- 9. BROAD SEAM SPECULAR RUNNER (Broadcast glossy highlight skimming the thread apex) -->
+  <rect x="0" y="248" width="1024" height="3" fill="#FFFFFF" opacity="0.1" />
+  <rect x="0" y="261" width="1024" height="3" fill="#FFFFFF" opacity="0.08" />
+</svg>

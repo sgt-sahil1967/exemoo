@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="1024" height="128">
+  <!-- Base Background -->
+  <rect x="0" y="0" width="1024" height="128" fill="#091420"/>
+
+  <!-- Dynamic Geometric Panels (Sports Broadcast Styling) -->
+  <polygon points="0,0 200,0 160,128 0,128" fill="#0E1E2E"/>
+  <polygon points="152,0 166,0 134,128 120,128" fill="#00F0FF" opacity="0.6"/>
+  <polygon points="172,0 188,0 154,128 138,128" fill="#E2FF00"/>
+  
+  <polygon points="765,0 781,0 751,128 735,128" fill="#15283C"/>
+  <polygon points="786,0 798,0 768,128 756,128" fill="#00F0FF" opacity="0.8"/>
+  <polygon points="803,0 817,0 785,128 771,128" fill="#E2FF00"/>
+  
+  <!-- Right Quality Badge Background -->
+  <polygon points="825,14 998,14 976,114 803,114" fill="#E2FF00"/>
+  <polygon points="839,20 843,20 813,108 809,108" fill="#091420" opacity="0.15"/>
+
+  <!-- LOGO MARK: Aggressive Cow + Cricket Bat Fusion -->
+  <g id="logo-mark">
+    <!-- Shield Container -->
+    <polygon points="86,13 135,33 135,95 86,115 37,95 37,33" fill="#060E17" stroke="#00F0FF" stroke-width="2.5"/>
+    
+    <!-- Sweeping Bull Horns -->
+    <path d="M 74 50 C 56 49 43 38 44 23 C 50 35 65 43 76 44 Z" fill="#E2FF00"/>
+    <path d="M 98 50 C 116 49 129 38 128 23 C 122 35 107 43 96 44 Z" fill="#E2FF00"/>
+    
+    <!-- Ears -->
+    <path d="M 72 56 C 53 58 48 68 50 75 C 58 75 66 69 73 63 Z" fill="#00F0FF"/>
+    <path d="M 100 56 C 119 58 124 68 122 75 C 114 75 106 69 99 63 Z" fill="#00F0FF"/>
+    
+    <!-- Cricket Bat Handle (Crown of Head) -->
+    <rect x="82.5" y="24" width="7" height="20" rx="1.5" fill="#E2FF00"/>
+    <line x1="82.5" y1="29" x2="89.5" y2="29" stroke="#060E17" stroke-width="1.5"/>
+    <line x1="82.5" y1="34" x2="89.5" y2="34" stroke="#060E17" stroke-width="1.5"/>
+    <line x1="82.5" y1="39" x2="89.5" y2="39" stroke="#060E17" stroke-width="1.5"/>
+    
+    <!-- Bat Blade / Face Bridge -->
+    <path d="M 82 44 L 74 52 L 74 93 Q 86 99 98 93 L 98 52 L 90 44 Z" fill="#FFFFFF"/>
+    <line x1="86" y1="46" x2="86" y2="94" stroke="#CBDCE8" stroke-width="2"/>
+    
+    <!-- Angry Bull Eyes -->
+    <polygon points="76,64 66,69 77,71" fill="#E2FF00"/>
+    <polygon points="96,64 106,69 95,71" fill="#E2FF00"/>
+    
+    <!-- Nostrils / Toe Detail -->
+    <circle cx="81.5" cy="85.5" r="2.5" fill="#060E17"/>
+    <circle cx="90.5" cy="85.5" r="2.5" fill="#060E17"/>
+  </g>
+
+  <!-- CENTER TYPOGRAPHY -->
+  <!-- Top Category Kicker -->
+  <text x="200" y="27" font-family="'Arial Black', Arial, sans-serif" font-size="11" font-weight="900" fill="#00F0FF" letter-spacing="4">ELITE CRICKET WILLOW</text>
+  
+  <!-- Main Brand Name -->
+  <text x="197" y="73" font-family="'Arial Black', Arial, sans-serif" font-size="50" font-weight="900" font-style="italic" fill="#FFFFFF" letter-spacing="0.5">MOO WILLOW <tspan fill="#E2FF00">BATS</tspan></text>
+  
+  <!-- Bottom Feature Tagline -->
+  <text x="200" y="101" font-family="'Arial Black', Arial, sans-serif" font-size="11.5" font-weight="900" fill="#8FAEC5" letter-spacing="2.5">MASSIVE SWEET SPOT <tspan fill="#E2FF00" font-size="10">■</tspan> EXPLOSIVE PING <tspan fill="#E2FF00" font-size="10">■</tspan> HANDCRAFTED IN ENGLAND</text>
+
+  <!-- RIGHT BADGE: Quality & Power Spec -->
+  <text x="902" y="38" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="11" font-weight="900" fill="#091420" letter-spacing="2">PRO SERIES</text>
+  <text x="900" y="74" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="34" font-weight="900" font-style="italic" fill="#091420" letter-spacing="-1">GRADE 1+</text>
+  <text x="895" y="99" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="9.5" font-weight="900" fill="#091420" letter-spacing="2">ENGLISH WILLOW</text>
+  
+  <circle cx="837" cy="35" r="2.5" fill="#091420"/>
+  <circle cx="963" cy="35" r="2.5" fill="#091420"/>
+
+  <!-- Mandatory 6px Dark Board Outline -->
+  <rect x="3" y="3" width="1018" height="122" fill="none" stroke="#04090F" stroke-width="6"/>
+</svg>

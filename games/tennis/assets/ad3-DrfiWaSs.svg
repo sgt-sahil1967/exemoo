@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="1024" height="128">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-base" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4a000e"/>
+      <stop offset="20%" stop-color="#800018"/>
+      <stop offset="50%" stop-color="#b30024"/>
+      <stop offset="80%" stop-color="#800018"/>
+      <stop offset="100%" stop-color="#3b000a"/>
+    </linearGradient>
+
+    <!-- Overlay Dynamic Strata Shards -->
+    <linearGradient id="shard-bright" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff1744" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#800018" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <linearGradient id="shard-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2b0007" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#600012" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Metallic White/Silver Text Gradient -->
+    <linearGradient id="white-silver" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d1d5db"/>
+    </linearGradient>
+
+    <!-- Glowing Accent Red -->
+    <linearGradient id="red-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff4d6d"/>
+      <stop offset="50%" stop-color="#ff0033"/>
+      <stop offset="100%" stop-color="#ff4d6d"/>
+    </linearGradient>
+
+    <!-- Stadium LED Grid Texture -->
+    <pattern id="led-matrix" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="none"/>
+      <circle cx="2" cy="2" r="0.8" fill="#000000" opacity="0.25"/>
+    </pattern>
+
+    <!-- Speed Lines Pattern -->
+    <pattern id="speed-stripes" width="20" height="20" patternTransform="rotate(-25 0 0)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="#ffffff" stroke-width="1" opacity="0.04"/>
+    </pattern>
+  </defs>
+
+  <!-- Full-Bleed Background Layer -->
+  <rect width="1024" height="128" fill="url(#bg-base)"/>
+  
+  <!-- Geometric Strata Background Layers (Dynamic Angular Shards) -->
+  <polygon points="-20,0 160,0 60,128 -20,128" fill="url(#shard-dark)"/>
+  <polygon points="120,0 280,0 150,128 0,128" fill="url(#shard-bright)" opacity="0.4"/>
+  
+  <polygon points="340,0 580,0 420,128 180,128" fill="url(#shard-dark)" opacity="0.5"/>
+  <polygon points="490,0 710,0 550,128 330,128" fill="url(#shard-bright)" opacity="0.3"/>
+  
+  <polygon points="750,0 920,0 790,128 620,128" fill="url(#shard-dark)"/>
+  <polygon points="860,0 1040,0 910,128 730,128" fill="url(#shard-bright)" opacity="0.5"/>
+
+  <!-- Speed Lines and LED Matrix Texture Overlays -->
+  <rect width="1024" height="128" fill="url(#speed-stripes)"/>
+  <rect width="1024" height="128" fill="url(#led-matrix)"/>
+
+  <!-- High-Energy Razor Slashes (Background Motion) -->
+  <polygon points="280,0 295,0 175,128 160,128" fill="#ff4d6d" opacity="0.4"/>
+  <polygon points="300,0 306,0 186,128 180,128" fill="#ffffff" opacity="0.2"/>
+  
+  <polygon points="710,0 725,0 605,128 590,128" fill="#ff4d6d" opacity="0.3"/>
+  <polygon points="730,0 736,0 616,128 610,128" fill="#ffffff" opacity="0.5"/>
+
+  <!-- ==================== LEFT BRAND LOCKUP (LOGO + WORDMARK) ==================== -->
+
+  <!-- STRATA Dynamic Layered Logo Mark -->
+  <g transform="translate(42, 18)">
+    <!-- Shadow/Glow under logo -->
+    <g opacity="0.3" transform="translate(2, 3)">
+      <path d="M 35,0 L 115,0 L 95,26 L 15,26 Z" fill="#000"/>
+      <path d="M 25,32 L 105,32 L 85,58 L 5,58 Z" fill="#000"/>
+      <path d="M 15,64 L 95,64 L 75,90 L -5,90 Z" fill="#000"/>
+    </g>
+
+    <!-- Top Strata Blade -->
+    <path d="M 35,0 L 115,0 L 95,26 L 15,26 Z" fill="url(#white-silver)"/>
+    <!-- Middle Strata Blade (Accent Red Cut) -->
+    <path d="M 25,32 L 105,32 L 85,58 L 5,58 Z" fill="url(#white-silver)"/>
+    <!-- Bottom Strata Blade -->
+    <path d="M 15,64 L 95,64 L 75,90 L -5,90 Z" fill="url(#white-silver)"/>
+
+    <!-- Negative Space Angular Cuts for Tech Look -->
+    <polygon points="50,-5 62,-5 32,95 20,95" fill="#800018"/>
+    <polygon points="80,-5 88,-5 62,95 54,95" fill="#b30024"/>
+
+    <!-- Bright Red Highlight Edge -->
+    <polygon points="115,0 119,0 100,26 95,26" fill="#ff4d6d"/>
+    <polygon points="105,32 109,32 90,58 85,58" fill="#ff4d6d"/>
+    <polygon points="95,64 99,64 80,90 75,90" fill="#ff4d6d"/>
+  </g>
+
+  <!-- Main Wordmark: STRATA -->
+  <!-- Drop Shadow -->
+  <text x="178" y="93" font-family="Arial Black, Impact, sans-serif" font-size="78" font-weight="900" font-style="italic" fill="#2b0007" letter-spacing="5" opacity="0.7">STRATA</text>
+  <!-- Primary White Text -->
+  <text x="174" y="90" font-family="Arial Black, Impact, sans-serif" font-size="78" font-weight="900" font-style="italic" fill="url(#white-silver)" letter-spacing="5">STRATA</text>
+
+  <!-- Modern Sharp Inline Cut (Overlay Line through Text) -->
+  <polygon points="160,56 500,56 496,60 160,60" fill="#800018" opacity="0.4"/>
+
+
+  <!-- ==================== CENTER DIVIDER SECTION ==================== -->
+  <g transform="translate(535, 16)">
+    <polygon points="20,0 32,0 2,96 -10,96" fill="url(#red-glow)"/>
+    <polygon points="34,0 38,0 10,96 6,96" fill="#ffffff" opacity="0.8"/>
+  </g>
+
+
+  <!-- ==================== RIGHT BRANDING & TAGLINE ==================== -->
+  <!-- Top Line: APPAREL CATEGORY -->
+  <text x="590" y="50" font-family="Arial Black, Impact, sans-serif" font-size="24" font-weight="900" font-style="italic" fill="#ffffff" letter-spacing="3">PERFORMANCE APPAREL</text>
+  
+  <!-- Bottom Line: BRAND SLOGAN -->
+  <text x="592" y="74" font-family="Arial Black, Impact, sans-serif" font-size="13" font-weight="900" font-style="italic" fill="#ff8095" letter-spacing="4.5">ENGINEERED FOR EXTREMES</text>
+
+  <!-- Technical Spec / Web Ribbon -->
+  <rect x="592" y="84" width="270" height="2" fill="url(#red-glow)"/>
+  <text x="592" y="98" font-family="Arial Black, sans-serif" font-size="9" font-weight="700" fill="#ffffff" opacity="0.6" letter-spacing="2">PRO SYSTEM // HIGH-VELOCITY FABRIC // STRATA.COM</text>
+
+
+  <!-- ==================== FAR RIGHT MOTION CHEVRONS ==================== -->
+  <g transform="translate(905, 34)">
+    <!-- Chevron 1 -->
+    <path d="M 0,0 L 22,30 L 0,60 L 12,60 L 34,30 L 12,0 Z" fill="url(#red-glow)"/>
+    <!-- Chevron 2 -->
+    <path d="M 22,0 L 44,30 L 22,60 L 34,60 L 56,30 L 34,0 Z" fill="#ffffff"/>
+    <!-- Chevron 3 -->
+    <path d="M 44,0 L 66,30 L 44,60 L 56,60 L 78,30 L 56,0 Z" fill="url(#red-glow)" opacity="0.5"/>
+  </g>
+
+
+  <!-- ==================== STADIUM LED BOARD BORDERS ==================== -->
+  <!-- Top Highlight Rail -->
+  <rect x="0" y="0" width="1024" height="3" fill="#ffffff" opacity="0.4"/>
+  <rect x="200" y="0" width="150" height="3" fill="#ffffff" opacity="0.9"/>
+  <rect x="650" y="0" width="200" height="3" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Bottom Accent Rail -->
+  <rect x="0" y="125" width="1024" height="3" fill="url(#red-glow)"/>
+  <rect x="150" y="125" width="350" height="3" fill="#ffffff" opacity="0.8"/>
+</svg>

@@ -1,0 +1,4 @@
+node_modules
+games-src
+server/.cert
+**/.DS_Store

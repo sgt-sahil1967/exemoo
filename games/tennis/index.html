@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Court Ace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/play/tennis/assets/index-DOHF_LWQ.js"></script>
+    <link rel="stylesheet" crossorigin href="/play/tennis/assets/index-mLFROelI.css">
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <section id="menu">
+      <header class="topbar">
+        <div id="brand"><span class="word">COURT<em>ACE</em></span></div>
+      </header>
+      <div class="menu-body">
+        <h1>CHOOSE <em>YOUR MATCH</em></h1>
+        <p class="lede">Warm up with 3 practice balls, chase today's goal, or take on Rookie Ray in a full set.</p>
+
+        <div class="label">CHOOSE YOUR STADIUM</div>
+        <div class="stadiums">
+          <button class="stadium" data-theme="midnight"><div class="thumb"></div><div><b>MIDNIGHT</b><small>Night arena, lights</small></div></button>
+          <button class="stadium" data-theme="riviera"><div class="thumb"></div><div><b>RIVIERA</b><small>Island court, daylight</small></div></button>
+        </div>
+
+        <div id="goal-card" class="goal">
+          <div>
+            <div class="eyebrow">TODAY'S COURT GOAL · Push them back</div>
+            <div class="goal-title">Land 3 returns deep in the far court <em id="goal-count">0/3</em></div>
+            <div id="goal-bars" class="bars"></div>
+            <small>Aim past the service line. The glowing far-court band marks the target. Saved on this device.</small>
+          </div>
+          <button class="ghost" data-mode="goal">Play today's goal</button>
+        </div>
+
+        <div class="modes">
+          <div class="mode hero" data-mode="match">
+            <div class="mode-art match-art"></div>
+            <span class="tag">START HERE</span>
+            <div class="mode-body">
+              <h2>PLAY VS AI</h2>
+              <p>Face Rookie Ray. One set: first to 6 games, tiebreak at 6–6.</p>
+              <div class="chips"><span>1 PLAYER</span><span>BEGINNER AI</span></div>
+              <button class="cta">PLAY NOW</button>
+            </div>
+          </div>
+          <div class="mode" data-mode="practice">
+            <div class="mode-art practice-art"></div>
+            <div class="mode-body">
+              <h2>PRACTICE</h2>
+              <p>Three friendly feeds. Find your timing before the match.</p>
+              <div class="chips"><span>3 BALLS</span><span>NO PRESSURE</span></div>
+              <button class="cta alt">WARM UP</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div><kbd>Click</kbd> / <kbd>Space</kbd> swing — time it as the ball arrives</div>
+          <div><kbd>Mouse</kbd> aim: left/right, up = deeper</div>
+          <div><kbd>Shift</kbd> slice · <kbd>A</kbd><kbd>D</kbd> nudge · <kbd>Esc</kbd> pause</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="hud" class="hidden">
+      <div id="scorebug">
+        <div class="sb-row" id="sb-0"><i></i><span class="name">YOU</span><span class="games">0</span><span class="pts">0</span></div>
+        <div class="sb-row" id="sb-1"><i></i><span class="name">RAY</span><span class="games">0</span><span class="pts">0</span></div>
+      </div>
+      <div class="hud-buttons">
+        <button id="btn-mute" title="Sound"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+        <button id="btn-pause" title="Pause (Esc)"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+      </div>
+      <div id="rally" class="hidden">Rally <b>0</b></div>
+      <div id="progress" class="hidden"></div>
+      <div id="grade" class="grade"></div>
+      <div id="callout" class="callout"></div>
+      <div id="hint" class="hidden"></div>
+    </section>
+
+    <section id="pause" class="overlay hidden">
+      <div class="card">
+        <h2>PAUSED</h2>
+        <button id="btn-resume" class="cta">RESUME</button>
+        <button id="btn-quit" class="ghost">QUIT TO MENU</button>
+      </div>
+    </section>
+
+    <section id="result" class="overlay hidden">
+      <div class="card">
+        <h2 id="result-title">YOU WIN</h2>
+        <p id="result-sub"></p>
+        <div id="result-stats"></div>
+        <button id="btn-again" class="cta">PLAY AGAIN</button>
+        <button id="btn-menu" class="ghost">MENU</button>
+      </div>
+    </section>
+
+  </body>
+</html>

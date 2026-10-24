@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controller Test — Exemoo</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1b3a;--red:#ff3b30;--yellow:#ffd21f;--blue:#2f7cff;--green:#2fc65a}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink);min-height:100vh;padding:70px 24px 24px;
+  background:linear-gradient(#5ec2ff,#bfe8ff 45%,transparent 45%),repeating-conic-gradient(#62d23c 0 25%,#55c232 0 50%) 0 0/60px 60px}
+h1{font-family:'Lilita One';font-size:44px;color:#fff;-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;text-shadow:0 6px 0 var(--ink);text-align:center;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;max-width:1000px;margin:0 auto}
+.card{background:#fff;border:5px solid var(--ink);border-radius:24px;box-shadow:0 8px 0 var(--ink);padding:18px 20px}
+.card h2{font-family:'Lilita One';font-size:22px;margin-bottom:10px}
+.view{height:300px;display:grid;place-items:center;perspective:700px}
+.phone{width:110px;height:210px;border-radius:22px;background:#ffd21f;border:6px solid var(--ink);transform-style:preserve-3d;box-shadow:0 0 0 2px #fff inset;position:relative}
+.phone::before{content:"";position:absolute;inset:12px 10px 30px;border-radius:10px;background:#bfe8ff;border:3px solid var(--ink)}
+.phone::after{content:"TOP";position:absolute;top:-30px;left:0;right:0;text-align:center;font-family:'Lilita One'}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-weight:800}
+dt{opacity:.6}
+dd{font-family:ui-monospace,monospace;font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:3px solid var(--ink);border-radius:10px;padding:2px 10px;font-weight:800;background:#eee}
+.chip.on{background:var(--yellow)}
+.chip.flash{background:var(--green);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+button{font-family:'Lilita One';font-size:17px;border:4px solid var(--ink);border-radius:14px;padding:6px 14px;background:var(--blue);color:#fff;box-shadow:0 5px 0 var(--ink);cursor:pointer}
+button:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+button.sel{background:var(--red)}
+.status{display:inline-flex;align-items:center;gap:8px;font-weight:800}
+.dot{width:14px;height:14px;border-radius:50%;border:3px solid var(--ink);background:var(--yellow)}
+.ok .dot{background:var(--green)}
+.warn{background:#fff3c4;border:3px dashed var(--ink);border-radius:14px;padding:8px 12px;font-weight:800;margin-bottom:16px;text-align:center;max-width:1000px;margin-inline:auto}
+#log{font-family:ui-monospace,monospace;font-size:13px;height:120px;overflow:auto;background:#f4f4f8;border-radius:10px;padding:8px}
+@media (max-width:800px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Controller Test</h1>
+<p class="warn" id="standalone" hidden>Open this from the Exemoo menu (footer → Test controller) so it can use your paired phone.</p>
+<div class="grid">
+  <section class="card">
+    <h2>Phone orientation</h2>
+    <div class="view"><div class="phone" id="phone"></div></div>
+    <div class="row"><button id="zero">Zero here</button></div>
+  </section>
+  <section class="card">
+    <h2>Live data</h2>
+    <dl>
+      <dt>Link</dt><dd><span class="status" id="status"><i class="dot"></i><span id="stxt">Waiting for phone</span></span></dd>
+      <dt>Packets</dt><dd id="rate">0 / s</dd>
+      <dt>Accel</dt><dd id="acc">-</dd>
+      <dt>Gyro</dt><dd id="gyro">-</dd>
+      <dt>Quat</dt><dd id="quat">-</dd>
+    </dl>
+    <div class="btns" id="held"></div>
+    <h2 style="margin-top:14px">Phone layout</h2>
+    <div class="row" id="layouts">
+      <button data-l="swing" class="sel">Swing</button><button data-l="slice">Slice</button><button data-l="remote">Remote</button>
+    </div>
+    <div class="row"><button id="buzz">Buzz phone</button><button id="exit" class="sel">Exit to menu</button></div>
+    <h2 style="margin-top:14px">Events</h2>
+    <div id="log"></div>
+  </section>
+</div>
+
+<script type="module">
+import { connectExemoo } from '/sdk/exemoo.js';
+
+const $ = (id) => document.getElementById(id);
+const exemoo = connectExemoo({ layout: 'swing', title: 'Controller Test' });
+$('standalone').hidden = exemoo.inShell;
+
+const NAMES = ['action', 'pause', 'recenter', 'up', 'down', 'left', 'right', 'back', 'power'];
+$('held').innerHTML = NAMES.map((n) => `<span class="chip" data-n="${n}">${n}</span>`).join('');
+const chip = (n) => $('held').querySelector(`[data-n="${n}"]`);
+
+function log(text) {
+  const line = document.createElement('div');
+  line.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+  $('log').prepend(line);
+  while ($('log').childElementCount > 40) $('log').lastChild.remove();
+}
+
+exemoo.on('status', (s) => {
+  $('stxt').textContent = s.connected ? `Connected (${s.transport}, ${s.latency} ms)` : 'Waiting for phone';
+  $('status').classList.toggle('ok', s.connected);
+});
+
+// Quaternion → CSS matrix. W3C device frame is y-up; CSS is y-down, so mirror y on both sides.
+let zero = { x: 0, y: 0, z: 0, w: 1 };
+const conj = (q) => ({ x: -q.x, y: -q.y, z: -q.z, w: q.w });
+const mul = (a, b) => ({
+  w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+  x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+  y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+  z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+});
+function cssMatrix({ x, y, z, w }) {
+  const m = [
+    1 - 2 * (y * y + z * z), 2 * (x * y + z * w), 2 * (x * z - y * w), 0,
+    2 * (x * y - z * w), 1 - 2 * (x * x + z * z), 2 * (y * z + x * w), 0,
+    2 * (x * z + y * w), 2 * (y * z - x * w), 1 - 2 * (x * x + y * y), 0,
+    0, 0, 0, 1,
+  ];
+  // S·M·S with S = diag(1,-1,1)
+  for (const i of [1, 4, 6, 9]) m[i] = -m[i];
+  return `matrix3d(${m.map((v) => v.toFixed(5)).join(',')})`;
+}
+
+let last = null, count = 0;
+exemoo.on('packet', (p) => {
+  last = p;
+  count++;
+  $('phone').style.transform = cssMatrix(mul(conj(zero), p.q));
+  for (const n of NAMES) chip(n).classList.toggle('on', exemoo.held(p, n));
+});
+setInterval(() => {
+  $('rate').textContent = `${count} / s`;
+  count = 0;
+  if (!last) return;
+  const f = (v) => v.toFixed(2).padStart(7);
+  $('acc').textContent = `${f(last.acc.x)} ${f(last.acc.y)} ${f(last.acc.z)}`;
+  $('gyro').textContent = `${f(last.gyro.alpha)} ${f(last.gyro.beta)} ${f(last.gyro.gamma)}`;
+  $('quat').textContent = `${f(last.q.x)} ${f(last.q.y)} ${f(last.q.z)} ${f(last.q.w)}`;
+}, 1000);
+
+exemoo.on('button', (b) => {
+  log(`button ${b}`);
+  const c = chip(b);
+  if (!c) return;
+  c.classList.add('flash');
+  setTimeout(() => c.classList.remove('flash'), 200);
+  if (b === 'recenter' && last) zero = last.q;
+});
+exemoo.on('message', (m) => log(`message ${JSON.stringify(m)}`));
+
+$('zero').onclick = () => last && (zero = last.q);
+$('buzz').onclick = () => exemoo.haptic([40, 60, 40]);
+$('exit').onclick = () => exemoo.exit();
+for (const b of document.querySelectorAll('[data-l]')) {
+  b.onclick = () => {
+    exemoo.setLayout(b.dataset.l, 'Controller Test');
+    document.querySelectorAll('[data-l]').forEach((x) => x.classList.toggle('sel', x === b));
+    log(`layout ${b.dataset.l}`);
+  };
+}
+addEventListener('keydown', (e) => log(`key ${e.key} (keyboard works inside games too)`));
+</script>
+</body>
+</html>

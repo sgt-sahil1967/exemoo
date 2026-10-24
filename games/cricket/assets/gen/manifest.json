@@ -1,0 +1,76 @@
+{
+  "model": "gemini-3.8-flash",
+  "generatedAt": "2026-10-24T05:23:36.597Z",
+  "files": {
+    "ball": {
+      "file": "ball.svg",
+      "w": 1024,
+      "h": 512
+    },
+    "bat-sticker": {
+      "file": "bat-sticker.svg",
+      "w": 256,
+      "h": 512
+    },
+    "crest-blue": {
+      "file": "crest-blue.svg",
+      "w": 256,
+      "h": 256
+    },
+    "crest-yellow": {
+      "file": "crest-yellow.svg",
+      "w": 256,
+      "h": 256
+    },
+    "board-1": {
+      "file": "board-1.svg",
+      "w": 1024,
+      "h": 128
+    },
+    "board-2": {
+      "file": "board-2.svg",
+      "w": 1024,
+      "h": 128
+    },
+    "board-3": {
+      "file": "board-3.svg",
+      "w": 1024,
+      "h": 128
+    },
+    "board-4": {
+      "file": "board-4.svg",
+      "w": 1024,
+      "h": 128
+    },
+    "board-5": {
+      "file": "board-5.svg",
+      "w": 1024,
+      "h": 128
+    },
+    "board-6": {
+      "file": "board-6.svg",
+      "w": 1024,
+      "h": 128
+    },
+    "fascia-1": {
+      "file": "fascia-1.svg",
+      "w": 2048,
+      "h": 128
+    },
+    "fascia-2": {
+      "file": "fascia-2.svg",
+      "w": 2048,
+      "h": 128
+    },
+    "fascia-3": {
+      "file": "fascia-3.svg",
+      "w": 2048,
+      "h": 128
+    },
+    "fascia-4": {
+      "file": "fascia-4.svg",
+      "w": 2048,
+      "h": 128
+    }
+  }
+}

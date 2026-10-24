@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="100%" height="100%">
+  <defs>
+    <!-- Color Gradients -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#020302"/>
+      <stop offset="35%" stop-color="#0b0f0a"/>
+      <stop offset="70%" stop-color="#050705"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+
+    <linearGradient id="lime-bright" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EEFF00"/>
+      <stop offset="50%" stop-color="#CCFF00"/>
+      <stop offset="100%" stop-color="#77FF00"/>
+    </linearGradient>
+
+    <linearGradient id="lime-glow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#CCFF00" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#CCFF00" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="text-metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#E2E8E0"/>
+      <stop offset="100%" stop-color="#9AA098"/>
+    </linearGradient>
+
+    <linearGradient id="dark-slash" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141C12"/>
+      <stop offset="100%" stop-color="#060906"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur1"/>
+      <feGaussianBlur stdDeviation="2" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="subtle-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Background Pattern -->
+    <pattern id="tech-grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="16" x2="16" y2="0" stroke="#CCFF00" stroke-width="0.75" opacity="0.07"/>
+    </pattern>
+  </defs>
+
+  <!-- Base Dark Background -->
+  <rect width="1024" height="128" fill="url(#bg-grad)"/>
+
+  <!-- Tech Grid Texture Overlay -->
+  <rect width="1024" height="128" fill="url(#tech-grid)"/>
+
+  <!-- Dynamic Energy Rays / Slanted Background Geometry -->
+  <g id="bg-graphics">
+    <!-- Left Accent Light Beam -->
+    <polygon points="0,0 160,0 80,128 0,128" fill="url(#lime-glow-grad)"/>
+    
+    <!-- Speed Slashes - Far Left -->
+    <polygon points="190,0 230,0 150,128 110,128" fill="url(#dark-slash)"/>
+    <polygon points="225,0 235,0 155,128 145,128" fill="#CCFF00" opacity="0.3"/>
+    
+    <!-- Central Energetic Backdrop Shapes -->
+    <polygon points="510,0 670,0 550,128 390,128" fill="#0d140b" opacity="0.6"/>
+    <polygon points="660,0 672,0 552,128 540,128" fill="#CCFF00" filter="url(#subtle-glow)"/>
+    <polygon points="680,0 684,0 564,128 560,128" fill="#CCFF00" opacity="0.4"/>
+
+    <!-- Right Energy Sector Background -->
+    <polygon points="760,0 1024,0 1024,128 660,128" fill="#080d07"/>
+    <polygon points="780,0 1024,0 1024,128 680,128" fill="url(#dark-slash)"/>
+    <polygon points="775,0 790,0 670,128 655,128" fill="#CCFF00" filter="url(#neon-glow)"/>
+    <polygon points="800,0 805,0 685,128 680,128" fill="#EEFF00" opacity="0.5"/>
+  </g>
+
+  <!-- Left Side: Brand Logo Icon (Stylized Hex Shield + Lightning 'V') -->
+  <g id="logo-mark" transform="translate(24, 0)">
+    <!-- Outer Hexagon Border -->
+    <polygon points="65,12 120,12 142,64 120,116 65,116 43,64" fill="#040604" stroke="#CCFF00" stroke-width="3.5" filter="url(#neon-glow)"/>
+    
+    <!-- Inner Geometric Lightning V -->
+    <!-- Left Wing -->
+    <path d="M 58,28 L 78,28 L 66,74 L 80,74 L 62,100 L 50,100 Z" fill="url(#lime-bright)"/>
+    <!-- Right Wing / Main Bolt -->
+    <path d="M 84,28 L 126,28 L 102,62 L 120,62 L 76,102 L 88,68 L 72,68 Z" fill="url(#lime-bright)" filter="url(#subtle-glow)"/>
+    <!-- Core Dark Cut -->
+    <path d="M 88,34 L 110,34 L 94,56 L 108,56 L 80,90 L 88,62 L 74,62 Z" fill="#040604"/>
+  </g>
+
+  <!-- Center-Left: Main "VOLTA" Wordmark -->
+  <g id="wordmark" transform="translate(180, 0)">
+    <!-- Background Glow for Text Wordmark -->
+    <text x="5" y="98" font-family="Arial Black, Impact, sans-serif" font-size="106" font-weight="900" font-style="italic" fill="none" stroke="#CCFF00" stroke-width="12" stroke-linejoin="miter" filter="url(#neon-glow)" opacity="0.9" letter-spacing="2">VOLTA</text>
+
+    <!-- Outer Dark Shadow/Stroke for Depth -->
+    <text x="5" y="98" font-family="Arial Black, Impact, sans-serif" font-size="106" font-weight="900" font-style="italic" fill="#000000" stroke="#000000" stroke-width="8" stroke-linejoin="miter" letter-spacing="2">VOLTA</text>
+
+    <!-- Main Crisp Metal/White Text -->
+    <text x="5" y="98" font-family="Arial Black, Impact, sans-serif" font-size="106" font-weight="900" font-style="italic" fill="url(#text-metal)" letter-spacing="2">VOLTA</text>
+
+    <!-- Foreground Electric Inline Cut Effect -->
+    <text x="5" y="98" font-family="Arial Black, Impact, sans-serif" font-size="106" font-weight="900" font-style="italic" fill="none" stroke="#CCFF00" stroke-width="2" stroke-dasharray="40 10 15 5 90" letter-spacing="2" filter="url(#subtle-glow)">VOLTA</text>
+  </g>
+
+  <!-- Right Side: Product Callouts & Sports Slogan -->
+  <g id="right-branding">
+    <!-- Slanted Tagline Container Box -->
+    <polygon points="635,22 865,22 845,62 615,62" fill="#CCFF00" filter="url(#neon-glow)"/>
+    <text x="640" y="51" font-family="Arial Black, Impact, sans-serif" font-size="28" font-weight="900" font-style="italic" fill="#000000" letter-spacing="1.5">ELECTRIC ENERGY</text>
+
+    <!-- Secondary Callout Badges -->
+    <!-- Sub-text 1 -->
+    <g transform="translate(620, 78)">
+      <!-- Angled Pill -->
+      <polygon points="0,0 135,0 127,28 0,28" fill="#121a11" stroke="#CCFF00" stroke-width="1.5"/>
+      <text x="12" y="19" font-family="Arial Black, Impact, sans-serif" font-size="14" font-weight="900" font-style="italic" fill="#FFFFFF" letter-spacing="1">MAX VOLTAGE</text>
+    </g>
+
+    <!-- Sub-text 2 -->
+    <g transform="translate(763, 78)">
+      <!-- Angled Pill -->
+      <polygon points="0,0 140,0 132,28 0,28" fill="#CCFF00"/>
+      <text x="12" y="19" font-family="Arial Black, Impact, sans-serif" font-size="14" font-weight="900" font-style="italic" fill="#000000" letter-spacing="1">ZERO SUGAR</text>
+    </g>
+
+    <!-- Dynamic Motion Arrows / Chevrons on Far Right -->
+    <g id="motion-chevrons" transform="translate(918, 26)" filter="url(#subtle-glow)">
+      <polygon points="0,0 18,0 36,36 18,72 0,72 18,36" fill="#CCFF00" opacity="0.4"/>
+      <polygon points="22,0 40,0 58,36 40,72 22,72 40,36" fill="#CCFF00" opacity="0.7"/>
+      <polygon points="44,0 62,0 80,36 62,72 44,72 62,36" fill="#CCFF00"/>
+    </g>
+  </g>
+
+  <!-- Top and Bottom Edge Frame Lighting (Stadium LED Board Trim) -->
+  <line x1="0" y1="1" x2="1024" y2="1" stroke="#CCFF00" stroke-width="2" opacity="0.8" filter="url(#subtle-glow)"/>
+  <line x1="0" y1="127" x2="1024" y2="127" stroke="#CCFF00" stroke-width="2" opacity="0.5"/>
+</svg>

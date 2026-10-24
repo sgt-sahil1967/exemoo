@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="1024" height="128">
+  <defs>
+    <!-- Sharp, high-contrast linear gradient for dynamic speed background -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#040915" />
+      <stop offset="65%" stop-color="#0A1428" />
+      <stop offset="100%" stop-color="#050D1A" />
+    </linearGradient>
+
+    <!-- Clover neon green fill -->
+    <linearGradient id="cloverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00FF88" />
+      <stop offset="100%" stop-color="#00C853" />
+    </linearGradient>
+
+    <!-- 5G Badge gradient -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00FF88" />
+      <stop offset="100%" stop-color="#00E5FF" />
+    </linearGradient>
+
+    <!-- Clip path to keep interior strictly inside rounded board corners -->
+    <clipPath id="boardClip">
+      <rect x="3" y="3" width="1018" height="122" rx="4" />
+    </clipPath>
+  </defs>
+
+  <!-- Base Board Background -->
+  <g clip-path="url(#boardClip)">
+    <rect x="0" y="0" width="1024" height="128" fill="url(#bgGrad)" />
+
+    <!-- Broadcast Geometric Accent Patterns -->
+    <polygon points="0,0 260,0 180,128 0,128" fill="#0E1E38" opacity="0.6" />
+    <polygon points="210,0 230,0 150,128 130,128" fill="#00FF88" opacity="0.15" />
+    
+    <!-- Angled Energy Slashes (Mid-Right) -->
+    <polygon points="705,0 735,0 675,128 645,128" fill="#0E223D" opacity="0.9" />
+    <polygon points="730,0 742,0 682,128 670,128" fill="#00E5FF" opacity="0.4" />
+    <polygon points="747,0 777,0 717,128 687,128" fill="#00C853" opacity="0.3" />
+
+    <!-- LEFT ZONE: Bold Clover Logo Mark -->
+    <g transform="translate(18, 0)">
+      <!-- Outer glow disc / backing ring -->
+      <circle cx="80" cy="64" r="46" fill="#061826" stroke="#00FF88" stroke-width="2" stroke-opacity="0.3" />
+      
+      <!-- Clover Leaf 1: Top -->
+      <circle cx="80" cy="46" r="17" fill="url(#cloverGrad)" />
+      <!-- Clover Leaf 2: Right -->
+      <circle cx="98" cy="64" r="17" fill="url(#cloverGrad)" />
+      <!-- Clover Leaf 3: Bottom -->
+      <circle cx="80" cy="82" r="17" fill="url(#cloverGrad)" />
+      <!-- Clover Leaf 4: Left -->
+      <circle cx="62" cy="64" r="17" fill="url(#cloverGrad)" />
+
+      <!-- Center Mobile Data Hub & Cutout -->
+      <circle cx="80" cy="64" r="12" fill="#040915" />
+      <circle cx="80" cy="64" r="6" fill="#FFFFFF" />
+
+      <!-- High-tech signal dots on leaves -->
+      <circle cx="80" cy="44" r="3.5" fill="#040915" />
+      <circle cx="100" cy="64" r="3.5" fill="#040915" />
+      <circle cx="80" cy="84" r="3.5" fill="#040915" />
+      <circle cx="60" cy="64" r="3.5" fill="#040915" />
+
+      <!-- Dynamic stem swoosh -->
+      <path d="M80,80 Q76,112 50,115 Q68,111 84,85 Z" fill="#00FF88" />
+    </g>
+
+    <!-- CENTER ZONE: Brand Name and Tagline -->
+    <!-- "CLOVER" -->
+    <text x="188" y="70" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="55" 
+          font-weight="900" 
+          letter-spacing="0.5" 
+          fill="#FFFFFF">CLOVER</text>
+
+    <!-- "MOBILE" -->
+    <text x="462" y="70" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="55" 
+          font-weight="900" 
+          letter-spacing="0.5" 
+          fill="#00FF88">MOBILE</text>
+
+    <!-- Sub-bar divider line -->
+    <rect x="190" y="80" width="460" height="3" fill="#00E5FF" rx="1.5" />
+
+    <!-- Tagline: Clean, sporty, high-legibility -->
+    <text x="190" y="103" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="14" 
+          font-weight="900" 
+          letter-spacing="3.5" 
+          fill="#E0F2FE">LIGHTNING-FAST 5G NETWORK</text>
+
+    <text x="525" y="103" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="13" 
+          font-weight="900" 
+          letter-spacing="2" 
+          fill="#00FF88">• EVERYWHERE</text>
+
+    <!-- RIGHT ZONE: Dynamic Action / 5G Speed Badge -->
+    <g transform="translate(745, 18)">
+      <!-- Badge container (angled polygon plate) -->
+      <polygon points="35,0 255,0 225,92 5,92" fill="#0F2442" stroke="#00E5FF" stroke-width="2" />
+      <polygon points="41,6 247,6 221,86 15,86" fill="#081426" />
+
+      <!-- Ultra-bold "5G" Graphic -->
+      <text x="28" y="65" 
+            font-family="Arial Black, Arial, sans-serif" 
+            font-size="56" 
+            font-weight="900" 
+            font-style="italic" 
+            letter-spacing="-1" 
+            fill="url(#badgeGrad)">5G</text>
+
+      <!-- Badge Text Details -->
+      <text x="112" y="38" 
+            font-family="Arial Black, Arial, sans-serif" 
+            font-size="16" 
+            font-weight="900" 
+            letter-spacing="1" 
+            fill="#FFFFFF">ULTRA</text>
+
+      <text x="112" y="56" 
+            font-family="Arial Black, Arial, sans-serif" 
+            font-size="14" 
+            font-weight="900" 
+            letter-spacing="2.5" 
+            fill="#00FF88">SPEED</text>
+
+      <!-- Network Signal Chevrons -->
+      <path d="M194,32 L206,46 L194,60" fill="none" stroke="#00E5FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M206,32 L218,46 L206,60" fill="none" stroke="#00FF88" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M218,32 L230,46 L218,60" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+
+      <!-- Small secondary footer in badge -->
+      <text x="75" y="77" 
+            font-family="Arial Black, Arial, sans-serif" 
+            font-size="8.5" 
+            font-weight="900" 
+            letter-spacing="1.5" 
+            fill="#7DD3FC">OFFICIAL PARTNER</text>
+    </g>
+
+    <!-- Top & Bottom Edge Broadcast Accent Lines -->
+    <rect x="0" y="0" width="1024" height="4" fill="#00FF88" />
+    <rect x="0" y="124" width="1024" height="4" fill="#00E5FF" />
+  </g>
+
+  <!-- 6px Solid Dark Outer Outline Around Entire Board -->
+  <rect x="3" y="3" width="1018" height="122" rx="4" fill="none" stroke="#02050A" stroke-width="6" />
+</svg>

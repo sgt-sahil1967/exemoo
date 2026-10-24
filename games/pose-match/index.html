@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pose Portal</title>
+    <script type="module" crossorigin src="/play/pose-match/assets/index-DfsWCj6k.js"></script>
+    <link rel="stylesheet" crossorigin href="/play/pose-match/assets/index-B9hQy-ic.css">
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div id="vignette"></div>
+    <div id="hud" class="hidden">
+      <div id="phuds"></div>
+      <div id="keys-help"></div>
+    </div>
+
+    <template id="phud-tpl">
+      <div class="phud">
+        <div class="flash"></div>
+        <div class="score-box"><div class="ptag"></div><div class="label">SCORE</div><div class="score">0</div><div class="streak"></div></div>
+        <div class="level">SPEED 1</div>
+        <div class="next"><canvas class="next-icon" width="96" height="96"></canvas><div><div class="label">INCOMING</div><div class="next-label"></div><div class="eta"><i></i></div></div></div>
+        <div class="lives"></div>
+        <div class="fit"><div class="label">FIT</div><div class="fit-bar"><i></i></div><span class="fit-pct"></span></div>
+        <div class="banner"></div>
+        <div class="out">OUT!<small>waiting for the other player…</small></div>
+      </div>
+    </template>
+
+    <div id="cam" class="hidden"><canvas id="cam-overlay"></canvas></div>
+
+    <section id="title" class="screen">
+      <h1 class="logo"><span>POSE</span><span>PORTAL</span></h1>
+      <p class="tag">Copy the hole. Fit the wall. Don't get splatted.</p>
+      <div class="buttons">
+        <button id="btn-camera" class="big">Play with camera</button>
+        <button id="btn-keys">Play with keyboard</button>
+      </div>
+      <div class="buttons" style="margin-top:12px">
+        <button id="btn-camera2">2 players · camera</button>
+        <button id="btn-cpu">vs CPU · keyboard</button>
+      </div>
+      <p id="cam-status" class="status"></p>
+      <ul class="rules">
+        <li><b>Match the silhouette</b> cut into each wall as it reaches you.</li>
+        <li><b>Duck</b> under high barriers, <b>jump</b> over low ones.</li>
+        <li>+100 per wall · 3 lives · walls speed up as your score climbs.</li>
+        <li>2 players: stand side by side ~3 m from the camera, whole bodies in view.</li>
+      </ul>
+    </section>
+
+    <section id="calib" class="screen hidden">
+      <h2>Calibrating</h2>
+      <p id="calib-msg">Step into view of the camera</p>
+      <div id="calib-bar"><i></i></div>
+      <button id="btn-upper" class="hidden">My feet won't fit — upper body only</button>
+    </section>
+
+    <section id="over" class="screen hidden">
+      <h2 class="splat-title">GAME OVER</h2>
+      <div class="final" id="final-solo"><div class="label">FINAL SCORE</div><div id="final-score">0</div></div>
+      <div id="final-versus" class="hidden"></div>
+      <p id="final-detail"></p>
+      <p id="final-best"></p>
+      <div class="buttons">
+        <button id="btn-retry" class="big">Retry</button>
+        <button id="btn-menu">Menu</button>
+      </div>
+      <p id="retry-hint" class="status"></p>
+    </section>
+
+    <button id="mute" title="Mute (M)">Sound</button>
+  </body>
+</html>

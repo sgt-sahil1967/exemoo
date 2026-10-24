@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="1024" height="128">
+  <defs>
+    <clipPath id="board-clip">
+      <rect x="0" y="0" width="1024" height="128"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#board-clip)">
+    <!-- Base Turf Green Background -->
+    <rect x="0" y="0" width="1024" height="128" fill="#042211"/>
+
+    <!-- High-energy Stadium LED Angled Panels -->
+    <polygon points="0,0 210,0 160,128 0,128" fill="#02180B"/>
+    <polygon points="195,0 230,0 180,128 145,128" fill="#00E676" opacity="0.15"/>
+    <polygon points="230,0 245,0 195,128 180,128" fill="#CCFF00" opacity="0.12"/>
+
+    <!-- Midground Angled Speed Accents -->
+    <polygon points="760,0 795,0 745,128 710,128" fill="#00E676" opacity="0.1"/>
+    <polygon points="805,0 840,0 790,128 755,128" fill="#CCFF00" opacity="0.1"/>
+
+    <!-- Right Side Dynamic Broadcast Chevrons -->
+    <polygon points="850,0 910,0 845,128 785,128" fill="#07331A"/>
+    <polygon points="900,10 920,10 865,118 845,118" fill="#00E676"/>
+    <polygon points="924,10 944,10 889,118 869,118" fill="#CCFF00"/>
+    <polygon points="948,10 964,10 909,118 893,118" fill="#FFFFFF"/>
+    <polygon points="975,0 1024,0 1024,128 925,128" fill="#021409"/>
+
+    <!-- LEFT: BOLD BRAND LOGO MARK -->
+    <g transform="translate(10, 0)">
+      <!-- Outer Geometric Shield -->
+      <polygon points="56,22 124,22 144,64 124,106 56,106 36,64" fill="#02190C" stroke="#CCFF00" stroke-width="3"/>
+      <polygon points="61,28 119,28 136,64 119,100 61,100 44,64" fill="none" stroke="#00E676" stroke-width="1" opacity="0.6"/>
+
+      <!-- Iconic Triple Grass Blades (Cricket Pitch Energy motif) -->
+      <!-- Left Blade -->
+      <path d="M 68,78 C 66,58 74,46 84,40 C 80,52 80,66 80,78 Z" fill="#00E676"/>
+      <!-- Right Blade -->
+      <path d="M 112,78 C 114,58 106,46 96,40 C 100,52 100,66 100,78 Z" fill="#00E676"/>
+      <!-- Tall Center Energy Blade (Lightning / Grass fusion) -->
+      <path d="M 90,28 L 96,52 L 93,88 L 87,88 L 84,52 Z" fill="#FFFFFF"/>
+
+      <!-- Lightning Energy Slash Crossing Grass Motif -->
+      <polygon points="85,58 98,40 94,56 104,56 86,84 90,64" fill="#CCFF00" stroke="#02190C" stroke-width="1.2"/>
+    </g>
+
+    <!-- CENTER: BRAND NAME & TAGLINE -->
+    <!-- Framing Horizontal Accent Ribbons -->
+    <rect x="230" y="80" width="110" height="3" rx="1.5" fill="#CCFF00"/>
+    <polygon points="345,78 351,81.5 345,85" fill="#CCFF00"/>
+
+    <rect x="674" y="80" width="110" height="3" rx="1.5" fill="#CCFF00"/>
+    <polygon points="669,78 663,81.5 669,85" fill="#CCFF00"/>
+
+    <!-- Main Wordmark: GRASSFED -->
+    <text x="507" y="58" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-style="italic" font-size="52" fill="#FFFFFF" letter-spacing="4">GRASSFED</text>
+
+    <!-- Sub-Wordmark: SPORTS DRINK -->
+    <text x="507" y="88" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-style="italic" font-size="24" fill="#CCFF00" letter-spacing="7">SPORTS DRINK</text>
+
+    <!-- Tagline: Smaller & Clean -->
+    <text x="507" y="110" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="11" fill="#8AECA8" letter-spacing="4">100% RAW PERFORMANCE • CRICKET GRADE HYDRATION</text>
+
+    <!-- RIGHT: FAST ELECTROLYTE ENERGY EMBLEM -->
+    <g transform="translate(4, 0)">
+      <circle cx="955" cy="64" r="32" fill="#031E0E" stroke="#CCFF00" stroke-width="2.5"/>
+      <!-- Droplet Silhouette -->
+      <path d="M 955,42 C 955,42 940,61 940,72 A 15,15 0 0 0 970,72 C 970,61 955,42 955,42 Z" fill="#00E676"/>
+      <!-- Inner Lightning Spark -->
+      <polygon points="955,48 948,63 954,63 950,76 962,59 956,59" fill="#CCFF00"/>
+      <!-- Mini Organic Stamina Label -->
+      <text x="955" y="90" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="7.5" fill="#FFFFFF" letter-spacing="1.5">IONIC</text>
+    </g>
+
+    <!-- High-Tech Inner LED Keyline -->
+    <rect x="7" y="7" width="1010" height="114" fill="none" stroke="#105C2B" stroke-width="1" opacity="0.6"/>
+
+    <!-- MANDATORY 6px DARK PERIMETER OUTLINE (Centered at (3,3) with w=1018, h=122) -->
+    <rect x="3" y="3" width="1018" height="122" fill="none" stroke="#040D07" stroke-width="6"/>
+  </g>
+</svg>

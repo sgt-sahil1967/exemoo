@@ -1,0 +1,5 @@
+node_modules/
+server/.cert/
+games-src/*/node_modules
+swing_logs/
+.DS_Store

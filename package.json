@@ -1,0 +1,20 @@
+{
+  "name": "exemoo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js --lan",
+    "test": "node --test --test-concurrency=1 'server/test/*.test.js'",
+    "build": "node scripts/build-games.mjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "selfsigned": "^5.5.0",
+    "ws": "^8.22.0"
+  }
+}

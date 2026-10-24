@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 128" width="1024" height="128">
+  <defs>
+    <!-- Red gradient for cricket ball -->
+    <linearGradient id="ballGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF3B30" />
+      <stop offset="40%" stop-color="#D6001C" />
+      <stop offset="100%" stop-color="#8E0010" />
+    </linearGradient>
+
+    <!-- Gold gradient for accents & typography -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF066" />
+      <stop offset="50%" stop-color="#FFD000" />
+      <stop offset="100%" stop-color="#E69900" />
+    </linearGradient>
+
+    <!-- Metallic border gradient for right badge -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D6001C" />
+      <stop offset="100%" stop-color="#9E0012" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base Stadium Board Background -->
+  <rect x="0" y="0" width="1024" height="128" fill="#080F24" />
+
+  <!-- Dynamic Geometric Angles (Broadcast Energy) -->
+  <polygon points="0,0 280,0 210,128 0,128" fill="#0E1B3D" />
+  <polygon points="265,0 295,0 230,128 200,128" fill="#FF2A2A" />
+  <polygon points="302,0 314,0 250,128 238,128" fill="#FFD000" />
+
+  <polygon points="710,0 722,0 658,128 646,128" fill="#FFD000" />
+  <polygon points="727,0 757,0 692,128 662,128" fill="#FF2A2A" />
+  <polygon points="745,0 1024,0 1024,128 680,128" fill="#0E1B3D" />
+
+  <!-- Speed streaks (Bottom accent line) -->
+  <rect x="256" y="118" width="460" height="4" fill="#FFD000" />
+  <rect x="230" y="118" width="18" height="4" fill="#FF2A2A" />
+  <rect x="724" y="118" width="18" height="4" fill="#FF2A2A" />
+
+  <!-- ==================== LEFT: LOGO MARK ==================== -->
+  <g id="logo-mark">
+    <!-- Motion trails -->
+    <polygon points="25,44 65,44 55,50 15,50" fill="#FFD000" />
+    <polygon points="12,58 72,58 62,64 2,64" fill="#FFFFFF" opacity="0.9" />
+    <polygon points="22,72 68,72 58,78 12,78" fill="#FF2A2A" />
+
+    <!-- Ball shadow -->
+    <ellipse cx="106" cy="68" rx="34" ry="34" fill="#000000" opacity="0.4" />
+
+    <!-- Cricket Ball -->
+    <circle cx="104" cy="64" r="34" fill="url(#ballGrad)" stroke="#FFFFFF" stroke-width="1.5" />
+
+    <!-- Ball Seam -->
+    <path d="M 83,40 C 95,49 113,77 125,88" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" />
+    <!-- Ball Stitches -->
+    <path d="M 83,46 L 89,40 M 89,52 L 95,46 M 95,58 L 101,52 M 101,65 L 107,59 M 107,72 L 113,66 M 113,79 L 119,73 M 119,86 L 125,80" 
+          fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.85" />
+
+    <!-- Crunch Energy Shards (Snack element) -->
+    <polygon points="135,42 152,36 142,50" fill="#FFD000" />
+    <polygon points="144,58 162,63 146,71" fill="#FFFFFF" />
+    <polygon points="137,78 153,90 139,83" fill="#FF2A2A" />
+
+    <!-- Big Athletic '6' Emblem cut into the ball -->
+    <text x="102" y="80" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="44" 
+          font-weight="900" 
+          font-style="italic" 
+          text-anchor="middle" 
+          fill="url(#goldGrad)" 
+          stroke="#080F24" 
+          stroke-width="5" 
+          paint-order="stroke fill">6</text>
+  </g>
+
+  <!-- ==================== CENTER: BRAND NAME & TAGLINE ==================== -->
+  <g id="brand-text">
+    <!-- Drop shadows for maximum stadium visibility -->
+    <text x="488" y="73" 
+          text-anchor="middle" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="52" 
+          font-weight="900" 
+          font-style="italic" 
+          letter-spacing="0.5" 
+          fill="#000000" 
+          opacity="0.6">SIXER SNACKS</text>
+
+    <!-- Main Title -->
+    <text x="486" y="70" 
+          text-anchor="middle" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="52" 
+          font-weight="900" 
+          font-style="italic" 
+          letter-spacing="0.5">
+      <tspan fill="url(#goldGrad)">SIXER</tspan>
+      <tspan fill="#FFFFFF"> SNACKS</tspan>
+    </text>
+
+    <!-- Tagline Banner Background Pill -->
+    <rect x="312" y="86" width="348" height="20" rx="4" fill="#050A17" opacity="0.75" />
+
+    <!-- Tagline Text -->
+    <text x="486" y="100" 
+          text-anchor="middle" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="12" 
+          font-weight="900" 
+          letter-spacing="3.5" 
+          fill="#FFFFFF">
+      <tspan fill="#FF2A2A">★</tspan> HIT IT FOR SIX! <tspan fill="#FFD000">•</tspan> MAXIMUM CRUNCH <tspan fill="#FF2A2A">★</tspan>
+    </text>
+  </g>
+
+  <!-- ==================== RIGHT: OFFICIAL BADGE ==================== -->
+  <g id="right-badge">
+    <!-- Slanted sports badge container -->
+    <polygon points="782,20 985,20 955,108 752,108" fill="url(#badgeGrad)" stroke="#FFD000" stroke-width="2" />
+    <polygon points="791,26 978,26 951,102 764,102" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.4" />
+
+    <!-- Corner yellow design accent -->
+    <polygon points="782,20 806,20 779,56 770,56" fill="#FFD000" />
+
+    <!-- Badge typography -->
+    <text x="866" y="44" 
+          text-anchor="middle" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="11" 
+          font-weight="900" 
+          letter-spacing="2" 
+          fill="#FFFFFF">OFFICIAL MATCH</text>
+
+    <text x="862" y="74" 
+          text-anchor="middle" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="28" 
+          font-weight="900" 
+          font-style="italic" 
+          letter-spacing="1" 
+          fill="url(#goldGrad)" 
+          stroke="#520008" 
+          stroke-width="1.5" 
+          paint-order="stroke fill">CRUNCH</text>
+
+    <text x="856" y="94" 
+          text-anchor="middle" 
+          font-family="Arial Black, Arial, sans-serif" 
+          font-size="10" 
+          font-weight="900" 
+          letter-spacing="4" 
+          fill="#FFFFFF">PARTNER</text>
+  </g>
+
+  <!-- ==================== PERIMETER BORDER (6px Dark Outline) ==================== -->
+  <rect x="3" y="3" width="1018" height="122" rx="2" fill="none" stroke="#050811" stroke-width="6" />
+</svg>

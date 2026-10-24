@@ -1,0 +1,18 @@
+# Render blueprint: one web service runs the landing page, phone pad, games and pairing.
+# Render terminates TLS, so phones reach https://<service>.onrender.com/pad with motion sensors enabled.
+services:
+  - type: web
+    name: exemoo
+    runtime: node
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: TRUST_PROXY
+        value: "1"
+      # Optional: set once you have a custom domain, e.g. https://play.exemoo.app
+      # - key: PUBLIC_URL
+      #   value: https://play.exemoo.app

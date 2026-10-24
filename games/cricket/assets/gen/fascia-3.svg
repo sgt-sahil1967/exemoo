@@ -1,0 +1,276 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 128" width="2048" height="128">
+  <defs>
+    <!-- Background diagonal sports texture (64px wide: exactly 32 repeats across 2048px for seamless tiling) -->
+    <pattern id="stripe-pattern" width="64" height="128" patternUnits="userSpaceOnUse">
+      <path d="M-16,144 L16,-16 L32,-16 L0,144 Z M48,144 L80,-16 L96,-16 L64,144 Z" fill="#29b752" opacity="0.35"/>
+      <path d="M16,144 L48,-16 L56,-16 L24,144 Z M80,144 L112,-16 L120,-16 L88,144 Z" fill="#44d66e" opacity="0.18"/>
+    </pattern>
+
+    <!-- Star definition -->
+    <g id="gold-star">
+      <polygon points="0,-13 3.8,-4.2 13,-3.3 6.2,2.8 8.1,12 0,7.2 -8.1,12 -6.2,2.8 -13,-3.3 -3.8,-4.2" fill="#ffd000" stroke="#a36d00" stroke-width="1.2" stroke-linejoin="round"/>
+      <polygon points="0,-11 2.8,-3.5 10.5,-2.8 5,2.2 6.5,9.6 0,5.8" fill="#ffe666"/>
+    </g>
+
+    <g id="mini-star">
+      <polygon points="0,-7 2.1,-2.2 7.2,-1.7 3.4,1.6 4.4,6.7 0,4 -4.4,6.7 -3.4,1.6 -7.2,-1.7 -2.1,-2.2" fill="#ffd000"/>
+    </g>
+
+    <!-- Cricket Ball definition -->
+    <g id="cricket-ball">
+      <circle cx="0" cy="0" r="19" fill="#990b14"/>
+      <circle cx="0" cy="0" r="19" fill="url(#ball-gloss)"/>
+      <circle cx="0" cy="0" r="19" fill="none" stroke="#500307" stroke-width="1.5"/>
+      <!-- Seam -->
+      <path d="M-13,-13 C-4,-4 4,4 13,13" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M-14,-12 C-5,-3 3,5 12,14" fill="none" stroke="#ffffff" stroke-dasharray="1.5,2.5" stroke-width="1.5"/>
+      <path d="M-12,-14 C-3,-5 5,3 14,12" fill="none" stroke="#ffffff" stroke-dasharray="1.5,2.5" stroke-width="1.5"/>
+    </g>
+
+    <radialGradient id="ball-gloss" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#ff5252" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#d61320" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3d0105" stop-opacity="0.75"/>
+    </radialGradient>
+
+    <!-- Cricket Bat definition -->
+    <g id="cricket-bat">
+      <!-- Handle -->
+      <path d="M-3.5,-52 L3.5,-52 L2.8,-18 L-2.8,-18 Z" fill="#ffffff" stroke="#0e3a1a" stroke-width="1.5"/>
+      <line x1="-3.2" y1="-44" x2="3.2" y2="-44" stroke="#d61320" stroke-width="2.5"/>
+      <line x1="-3" y1="-36" x2="3" y2="-36" stroke="#0e3a1a" stroke-width="2.5"/>
+      <line x1="-2.9" y1="-28" x2="2.9" y2="-28" stroke="#d61320" stroke-width="2.5"/>
+      <!-- Rubber Grip Top Knob -->
+      <ellipse cx="0" cy="-52" rx="4.2" ry="2" fill="#d61320"/>
+      <!-- Shoulder & Blade -->
+      <path d="M-2.8,-18 C-6,-14 -7.5,-7 -7.5,2 L-7,38 C-7,45 -2,47 0,47 C2,47 7,45 7,38 L7.5,2 C7.5,-7 6,-14 2.8,-18 Z" fill="#ecd099" stroke="#5c3811" stroke-width="1.8" stroke-linejoin="round"/>
+      <!-- Blade Spine / Wood Grain Accent -->
+      <path d="M0,-16 L0,45" stroke="#ce9e58" stroke-width="2"/>
+      <path d="M3.5,-6 L3.5,36" stroke="#f6e4bf" stroke-width="1.2" opacity="0.7"/>
+      <!-- Colored Handle Wrap Base -->
+      <polygon points="-4,-18 4,-18 4.8,-11 -4.8,-11" fill="#0e3a1a"/>
+    </g>
+
+    <!-- Crossed Bats + Ball Motif -->
+    <g id="crossed-bats-motif">
+      <ellipse cx="0" cy="40" rx="46" ry="7" fill="#092813" opacity="0.35"/>
+      <!-- Left bat tilted 36 deg -->
+      <g transform="rotate(-36)">
+        <use href="#cricket-bat"/>
+      </g>
+      <!-- Right bat tilted -36 deg -->
+      <g transform="rotate(36) scale(-1, 1)">
+        <use href="#cricket-bat"/>
+      </g>
+      <!-- Center Ball -->
+      <use href="#cricket-ball" x="0" y="4"/>
+    </g>
+
+    <!-- Stumps Motif -->
+    <g id="stumps-motif">
+      <ellipse cx="0" cy="42" rx="36" ry="6" fill="#092813" opacity="0.35"/>
+      <!-- Ground Bar/Base Plate -->
+      <rect x="-24" y="38" width="48" height="4" rx="2" fill="#523214" stroke="#0e3a1a" stroke-width="1"/>
+      <!-- Stumps -->
+      <!-- Left -->
+      <rect x="-20" y="-28" width="6.5" height="66" rx="2" fill="#ffcd66" stroke="#683d0f" stroke-width="1.5"/>
+      <line x1="-16.8" y1="-26" x2="-16.8" y2="36" stroke="#ffe699" stroke-width="1.2"/>
+      <!-- Center -->
+      <rect x="-3.25" y="-28" width="6.5" height="66" rx="2" fill="#ffcd66" stroke="#683d0f" stroke-width="1.5"/>
+      <line x1="0" y1="-26" x2="0" y2="36" stroke="#ffe699" stroke-width="1.2"/>
+      <!-- Right -->
+      <rect x="13.5" y="-28" width="6.5" height="66" rx="2" fill="#ffcd66" stroke="#683d0f" stroke-width="1.5"/>
+      <line x1="16.8" y1="-26" x2="16.8" y2="36" stroke="#ffe699" stroke-width="1.2"/>
+      <!-- Bails -->
+      <rect x="-22" y="-33" width="20" height="4.5" rx="1.5" fill="#e8982a" stroke="#502a06" stroke-width="1.2"/>
+      <rect x="2" y="-33" width="20" height="4.5" rx="1.5" fill="#e8982a" stroke="#502a06" stroke-width="1.2"/>
+      <!-- Small Red Ball resting by stumps -->
+      <circle cx="-16" cy="30" r="10" fill="#a50e18" stroke="#500307" stroke-width="1.2"/>
+      <path d="M-22,26 C-17,29 -14,33 -10,36" fill="none" stroke="#ffffff" stroke-width="1.2"/>
+    </g>
+
+    <!-- Flanking Star Triad -->
+    <g id="star-cluster">
+      <use href="#gold-star" x="0" y="0" transform="scale(1.3)"/>
+      <use href="#mini-star" x="-26" y="8" transform="scale(1.1)"/>
+      <use href="#mini-star" x="26" y="8" transform="scale(1.1)"/>
+      <use href="#mini-star" x="-42" y="16" transform="scale(0.85)"/>
+      <use href="#mini-star" x="42" y="16" transform="scale(0.85)"/>
+    </g>
+
+    <!-- Seam Element (Centered precisely at x=0 and x=2048 for seamless left-right tiling) -->
+    <g id="seam-joint">
+      <!-- Outer badge/shield backing -->
+      <polygon points="0,10 28,24 28,104 0,118 -28,104 -28,24" fill="#0c3517" stroke="#ffd000" stroke-width="2"/>
+      <polygon points="0,15 22,26 22,100 0,111 -22,100 -22,26" fill="#144d23"/>
+      <!-- Small star top & bottom -->
+      <use href="#mini-star" x="0" y="32"/>
+      <use href="#mini-star" x="0" y="96"/>
+      <!-- Ball at center -->
+      <use href="#cricket-ball" x="0" y="64"/>
+      <!-- Outward gold arrow accents -->
+      <polygon points="34,64 42,56 42,72" fill="#ffd000"/>
+      <polygon points="-34,64 -42,56 -42,72" fill="#ffd000"/>
+    </g>
+  </defs>
+
+  <!-- ================= BASE BACKGROUND ================= -->
+  <!-- Main turf green -->
+  <rect x="0" y="0" width="2048" height="128" fill="#2fc65a"/>
+
+  <!-- Repeating sports angle stripes (tiles seamlessly across 2048) -->
+  <rect x="0" y="0" width="2048" height="128" fill="url(#stripe-pattern)"/>
+
+  <!-- Top horizontal stripes (continuous, seamless) -->
+  <rect x="0" y="0" width="2048" height="8" fill="#69f08f"/>
+  <rect x="0" y="8" width="2048" height="3" fill="#ffffff" opacity="0.8"/>
+  <rect x="0" y="11" width="2048" height="3" fill="#0c3517"/>
+
+  <!-- Bottom horizontal stripes (continuous, seamless) -->
+  <rect x="0" y="114" width="2048" height="3" fill="#0c3517"/>
+  <rect x="0" y="117" width="2048" height="3" fill="#ffffff" opacity="0.8"/>
+  <rect x="0" y="120" width="2048" height="8" fill="#69f08f"/>
+
+  <!-- Athletic chevron accents along outer edge runners -->
+  <g fill="#249945" opacity="0.5">
+    <polygon points="120,18 126,18 136,64 126,110 120,110 130,64"/>
+    <polygon points="134,18 140,18 150,64 140,110 134,110 144,64"/>
+    <polygon points="1914,18 1920,18 1930,64 1920,110 1914,110 1924,64"/>
+    <polygon points="1928,18 1934,18 1944,64 1934,110 1928,110 1938,64"/>
+  </g>
+
+  <!-- ================= MOTIFS - LEFT SIDE ================= -->
+  <!-- Stumps motif at x=280 -->
+  <g transform="translate(280, 64)">
+    <circle cx="0" cy="0" r="48" fill="#0e3a1a" opacity="0.3"/>
+    <circle cx="0" cy="0" r="44" fill="none" stroke="#69f08f" stroke-width="2" stroke-dasharray="8,4"/>
+    <use href="#stumps-motif"/>
+  </g>
+
+  <!-- Golden Stars Accent at x=416 -->
+  <g transform="translate(416, 64)">
+    <use href="#star-cluster"/>
+  </g>
+
+  <!-- Crossed Bats Motif at x=556 -->
+  <g transform="translate(556, 60)">
+    <circle cx="0" cy="4" r="50" fill="#0e3a1a" opacity="0.35"/>
+    <circle cx="0" cy="4" r="46" fill="#144d23" stroke="#ffd000" stroke-width="2"/>
+    <use href="#crossed-bats-motif"/>
+  </g>
+
+  <!-- Chevron/Arrow divider pointing inward at x=668 -->
+  <g fill="#ffd000">
+    <polygon points="660,40 674,64 660,88 667,88 681,64 667,40"/>
+    <polygon points="674,40 688,64 674,88 681,88 695,64 681,40"/>
+  </g>
+
+  <!-- ================= MOTIFS - RIGHT SIDE ================= -->
+  <!-- Chevron/Arrow divider pointing inward at x=1380 -->
+  <g fill="#ffd000">
+    <polygon points="1388,40 1374,64 1388,88 1381,88 1367,64 1381,40"/>
+    <polygon points="1374,40 1360,64 1374,88 1367,88 1353,64 1367,40"/>
+  </g>
+
+  <!-- Crossed Bats Motif at x=1492 -->
+  <g transform="translate(1492, 60)">
+    <circle cx="0" cy="4" r="50" fill="#0e3a1a" opacity="0.35"/>
+    <circle cx="0" cy="4" r="46" fill="#144d23" stroke="#ffd000" stroke-width="2"/>
+    <use href="#crossed-bats-motif"/>
+  </g>
+
+  <!-- Golden Stars Accent at x=1632 -->
+  <g transform="translate(1632, 64)">
+    <use href="#star-cluster"/>
+  </g>
+
+  <!-- Stumps motif at x=1768 -->
+  <g transform="translate(1768, 64)">
+    <circle cx="0" cy="0" r="48" fill="#0e3a1a" opacity="0.3"/>
+    <circle cx="0" cy="0" r="44" fill="none" stroke="#69f08f" stroke-width="2" stroke-dasharray="8,4"/>
+    <use href="#stumps-motif"/>
+  </g>
+
+  <!-- ================= CENTER BROADCAST BANNER PLATE ================= -->
+  <!-- Center drop shadow -->
+  <polygon points="706,20 1342,20 1368,66 1342,112 706,112 680,66" fill="#08210f" opacity="0.6"/>
+
+  <!-- Outer frame with stadium chamfer cuts -->
+  <polygon points="704,17 1344,17 1368,64 1344,111 704,111 680,64" fill="#0e3a1a" stroke="#ffd000" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- Inner dark plate -->
+  <polygon points="710,23 1338,23 1358,64 1338,105 710,105 690,64" fill="#092813"/>
+
+  <!-- Modern broadcast corner highlight notches -->
+  <line x1="712" y1="27" x2="1336" y2="27" stroke="#ffffff" stroke-width="1.2" opacity="0.3"/>
+  <line x1="714" y1="101" x2="1334" y2="101" stroke="#000000" stroke-width="2" opacity="0.4"/>
+  <polygon points="692,64 700,48 700,80" fill="#ffd000"/>
+  <polygon points="1356,64 1348,48 1348,80" fill="#ffd000"/>
+
+  <!-- ================= CENTER STAND NAME TYPOGRAPHY ================= -->
+  <!-- 3D sports drop shadow extrusion -->
+  <text x="1024" y="87"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="64"
+        letter-spacing="5"
+        fill="#041208">
+    FARMYARD END
+  </text>
+  <text x="1024" y="85"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="64"
+        letter-spacing="5"
+        fill="#08210f">
+    FARMYARD END
+  </text>
+
+  <!-- Bold Dark Stroke Base -->
+  <text x="1024" y="83"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="64"
+        letter-spacing="5"
+        fill="#ffffff"
+        stroke="#061e0c"
+        stroke-width="12"
+        stroke-linejoin="round"
+        paint-order="stroke fill">
+    FARMYARD END
+  </text>
+
+  <!-- Secondary Gold Stroke Accent -->
+  <text x="1024" y="83"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="64"
+        letter-spacing="5"
+        fill="#ffffff"
+        stroke="#ffd000"
+        stroke-width="3"
+        stroke-linejoin="round"
+        paint-order="stroke fill">
+    FARMYARD END
+  </text>
+
+  <!-- Main Crisp White Letters -->
+  <text x="1024" y="83"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="64"
+        letter-spacing="5"
+        fill="#ffffff">
+    FARMYARD END
+  </text>
+
+  <!-- ================= PERFECT SEAM CLOSURES (LEFT & RIGHT) ================= -->
+  <!-- Identical joint elements at x=0 and x=2048 to guarantee flawless horizontal loop -->
+  <use href="#seam-joint" x="0" y="0"/>
+  <use href="#seam-joint" x="2048" y="0"/>
+</svg>

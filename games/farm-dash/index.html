@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Farm Dash</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="powers"></div>
+    <div class="hud-right">
+      <div class="pill score-pill"><span id="mult">×1</span><b id="score">0</b></div>
+      <div class="pill coin-pill"><span class="coin-icon"></span><b id="coins">0</b></div>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <button id="mute" class="icon-btn" title="Mute">🔊</button>
+
+  <!-- Title / camera gate -->
+  <div id="menu" class="overlay">
+    <div class="panel">
+      <h1><span>FARM</span><span>DASH</span></h1>
+      <p class="tag">Dodge trains. Grab coins. Move your body to play.</p>
+      <div class="moves">
+        <div><b>⇆</b><span>Step left / right<br>to change lanes</span></div>
+        <div><b>⤒</b><span>Jump up<br>to hop barriers</span></div>
+        <div><b>⤓</b><span>Squat down<br>to roll under</span></div>
+        <div><b>🙌</b><span>Raise both hands<br>to start</span></div>
+      </div>
+      <div class="buttons">
+        <button id="enable-camera" class="btn primary">📷 Enable Motion Controls</button>
+        <button id="play-keyboard" class="btn">⌨️ Play with Keyboard</button>
+      </div>
+      <p id="start-hint" class="hint">Keyboard: ← → lanes · ↑ / Space jump · ↓ roll · P pause</p>
+      <p id="menu-status" class="status"></p>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <div class="panel small">
+      <h2>Paused</h2>
+      <button id="resume" class="btn primary">Resume</button>
+      <p class="hint">Raise both hands or press P to resume</p>
+    </div>
+  </div>
+
+  <div id="gameover" class="overlay hidden">
+    <div class="panel small">
+      <h2>Busted!</h2>
+      <div id="new-best" class="new-best hidden">★ New best! ★</div>
+      <div class="results">
+        <div><span>Score</span><b id="final-score">0</b></div>
+        <div><span>Coins</span><b id="final-coins">0</b></div>
+        <div><span>Best</span><b id="best">0</b></div>
+      </div>
+      <button id="restart" class="btn primary">Run again</button>
+      <p class="hint">Raise both hands or press Space to run again</p>
+    </div>
+  </div>
+
+  <!-- Camera preview -->
+  <div id="cam-wrap" class="hidden">
+    <div class="cam-box">
+      <video id="camera-preview" playsinline muted></video>
+      <canvas id="camera-overlay"></canvas>
+    </div>
+    <div class="cam-bar">
+      <span id="camera-status">Starting camera…</span>
+      <button id="recalibrate" class="mini">Recalibrate</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/game.js"></script>
+  <script type="module" src="js/exemoo-remote.js"></script>
+</body>
+</html>

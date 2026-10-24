@@ -1,0 +1,223 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 128" width="2048" height="128">
+  <defs>
+    <!-- Background diagonal pattern (width 64 divides 2048 exactly 32 times for seamless tiling) -->
+    <pattern id="bg-stripes" width="64" height="128" patternUnits="userSpaceOnUse">
+      <polygon points="0,128 24,0 42,0 18,128" fill="#256fe6" opacity="0.32"/>
+      <polygon points="32,128 56,0 64,0 40,128" fill="#256fe6" opacity="0.18"/>
+    </pattern>
+
+    <!-- Gold 5-point star -->
+    <g id="star-gold">
+      <polygon points="0,-11 3.2,-3.4 11,-3.4 4.8,1.2 7.1,8.8 0,4.2 -7.1,8.8 -4.8,1.2 -11,-3.4 -3.2,-3.4" fill="#fbbf24" stroke="#07152e" stroke-width="1.5" stroke-linejoin="round"/>
+    </g>
+
+    <!-- White 5-point star -->
+    <g id="star-white">
+      <polygon points="0,-8 2.3,-2.5 7.8,-2.5 3.4,0.8 5.1,6.4 0,3 -5.1,6.4 -3.4,0.8 -7.8,-2.5 -2.3,-2.5" fill="#ffffff" stroke="#07152e" stroke-width="1.2" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Small accent star -->
+    <g id="star-mini">
+      <polygon points="0,-5 1.5,-1.5 5,-1.5 2.2,0.5 3.2,4 0,2 -3.2,4 -2.2,0.5 -5,-1.5 -1.5,-1.5" fill="#fde047"/>
+    </g>
+
+    <!-- Large 4-point sports diamond star -->
+    <g id="star-burst">
+      <polygon points="0,-18 4,-4 18,0 4,4 0,18 -4,4 -18,0 -4,-4" fill="#fbbf24" stroke="#07152e" stroke-width="1.5"/>
+      <polygon points="0,-10 2.5,-2.5 10,0 2.5,2.5 0,10 -2.5,2.5 -10,0 -2.5,-2.5" fill="#ffffff"/>
+      <use href="#star-mini" x="-26" y="0"/>
+      <use href="#star-mini" x="26" y="0"/>
+    </g>
+
+    <!-- Crossed Cricket Bats with central ball and stars -->
+    <g id="crossed-bats">
+      <!-- Shadow behind bats -->
+      <g opacity="0.35" transform="translate(0, 3)">
+        <rect x="-3" y="-45" width="6" height="24" rx="2" transform="rotate(-33)" fill="#07152e"/>
+        <rect x="-3" y="-45" width="6" height="24" rx="2" transform="rotate(33)" fill="#07152e"/>
+      </g>
+      <!-- Bat 1 (angled -33deg) -->
+      <g transform="rotate(-33)">
+        <rect x="-3.5" y="-46" width="7" height="24" rx="2" fill="#ffffff" stroke="#07152e" stroke-width="2.5"/>
+        <line x1="-3.5" y1="-38" x2="3.5" y2="-38" stroke="#dc2626" stroke-width="2.5"/>
+        <line x1="-3.5" y1="-30" x2="3.5" y2="-30" stroke="#07152e" stroke-width="2"/>
+        <path d="M -3.5 -22 C -6 -18 -7 -10 -7 -2 L -7 38 C -7 42 -4 44 0 44 C 4 44 7 42 7 38 L 7 -2 C 7 -10 6 -18 3.5 -22 Z" fill="#fef08a" stroke="#07152e" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M 0 -21 L -7 -2 L -7 38 C -7 42 -4 44 0 44 Z" fill="#facc15" opacity="0.7"/>
+      </g>
+      <!-- Bat 2 (angled +33deg) -->
+      <g transform="rotate(33)">
+        <rect x="-3.5" y="-46" width="7" height="24" rx="2" fill="#ffffff" stroke="#07152e" stroke-width="2.5"/>
+        <line x1="-3.5" y1="-38" x2="3.5" y2="-38" stroke="#dc2626" stroke-width="2.5"/>
+        <line x1="-3.5" y1="-30" x2="3.5" y2="-30" stroke="#07152e" stroke-width="2"/>
+        <path d="M -3.5 -22 C -6 -18 -7 -10 -7 -2 L -7 38 C -7 42 -4 44 0 44 C 4 44 7 42 7 38 L 7 -2 C 7 -10 6 -18 3.5 -22 Z" fill="#fef08a" stroke="#07152e" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M 0 -21 L -7 -2 L -7 38 C -7 42 -4 44 0 44 Z" fill="#facc15" opacity="0.7"/>
+      </g>
+      <!-- Central Cricket Ball -->
+      <circle cx="0" cy="5" r="14" fill="#dc2626" stroke="#07152e" stroke-width="2.5"/>
+      <path d="M -9 -2 C -2 1, 2 8, 8 13" stroke="#ffffff" stroke-width="2.2" fill="none"/>
+      <!-- Ball seam stitches -->
+      <line x1="-8" y1="1" x2="-5" y2="-2" stroke="#ffffff" stroke-width="1.5"/>
+      <line x1="-4" y1="5" x2="-1" y2="2" stroke="#ffffff" stroke-width="1.5"/>
+      <line x1="0" y1="9" x2="3" y2="6" stroke="#ffffff" stroke-width="1.5"/>
+      <line x1="4" y1="13" x2="7" y2="10" stroke="#ffffff" stroke-width="1.5"/>
+      <path d="M -7 -4 A 10 10 0 0 1 4 -7" stroke="#fca5a5" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <!-- Flanking stars -->
+      <use href="#star-gold" x="0" y="-45"/>
+      <use href="#star-white" x="-36" y="16"/>
+      <use href="#star-white" x="36" y="16"/>
+    </g>
+
+    <!-- Cricket Wickets Motif (3 Stumps, 2 Bails, Turf base, Ball) -->
+    <g id="cricket-wickets">
+      <!-- Ground plate -->
+      <polygon points="-25,38 25,38 20,45 -20,45" fill="#0c234b" stroke="#07152e" stroke-width="2"/>
+      <line x1="-18" y1="41" x2="18" y2="41" stroke="#38bdf8" stroke-width="1.5"/>
+      <!-- 3 Stumps -->
+      <!-- Left stump -->
+      <rect x="-16" y="-26" width="6" height="64" rx="2" fill="#fde047" stroke="#07152e" stroke-width="2"/>
+      <rect x="-16" y="-26" width="2.5" height="64" fill="#ca8a04" opacity="0.5"/>
+      <!-- Middle stump -->
+      <rect x="-3" y="-28" width="6" height="66" rx="2" fill="#fde047" stroke="#07152e" stroke-width="2"/>
+      <rect x="-3" y="-28" width="2.5" height="66" fill="#ca8a04" opacity="0.5"/>
+      <!-- Right stump -->
+      <rect x="10" y="-26" width="6" height="64" rx="2" fill="#fde047" stroke="#07152e" stroke-width="2"/>
+      <rect x="10" y="-26" width="2.5" height="64" fill="#ca8a04" opacity="0.5"/>
+      <!-- 2 Bails across stumps -->
+      <rect x="-18" y="-32" width="16" height="4.5" rx="1.5" fill="#f59e0b" stroke="#07152e" stroke-width="1.8"/>
+      <rect x="2" y="-32" width="16" height="4.5" rx="1.5" fill="#f59e0b" stroke="#07152e" stroke-width="1.8"/>
+      <!-- Cricket Ball at base -->
+      <g transform="translate(22, 22)">
+        <circle cx="0" cy="0" r="10" fill="#dc2626" stroke="#07152e" stroke-width="2"/>
+        <path d="M -6 -5 C -1 -2, 2 3, 6 6" stroke="#ffffff" stroke-width="1.8" fill="none"/>
+        <path d="M -5 -6 A 7 7 0 0 1 2 -8" stroke="#fca5a5" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- Stars over wickets -->
+      <use href="#star-gold" x="0" y="-45"/>
+      <use href="#star-white" x="-26" y="-38"/>
+      <use href="#star-white" x="26" y="-38"/>
+    </g>
+
+    <!-- Mirrored Cricket Wickets for right side -->
+    <g id="cricket-wickets-mirror">
+      <use href="#cricket-wickets" transform="scale(-1, 1)"/>
+    </g>
+
+    <!-- Chevron sports speed indicators pointing right (toward center text) -->
+    <g id="chevrons-group-left">
+      <path d="M -16 -22 L -2 0 L -16 22" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M -2 -22 L 12 0 L -2 22" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 12 -22 L 26 0 L 12 22" fill="none" stroke="#fbbf24" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <use href="#star-mini" x="5" y="-32"/>
+      <use href="#star-mini" x="5" y="32"/>
+    </g>
+
+    <!-- Chevron sports speed indicators pointing left (toward center text) -->
+    <g id="chevrons-group-right">
+      <use href="#chevrons-group-left" transform="scale(-1, 1)"/>
+    </g>
+
+    <!-- Stand edge divider bracket (left of text) -->
+    <g id="divider-bracket-left">
+      <polygon points="-8,-40 -2,-40 8,40 2,40" fill="#fbbf24" stroke="#07152e" stroke-width="1.5"/>
+      <polygon points="4,-40 10,-40 20,40 14,40" fill="#ffffff" stroke="#07152e" stroke-width="1.5"/>
+      <use href="#star-gold" x="-8" y="0"/>
+    </g>
+
+    <!-- Stand edge divider bracket (right of text) -->
+    <g id="divider-bracket-right">
+      <use href="#divider-bracket-left" transform="scale(-1, 1)"/>
+    </g>
+
+    <!-- SEAM BOUNDARY CREST (Placed at x=0 and x=2048 for 100% seamless left-to-right tiling) -->
+    <g id="boundary-crest">
+      <!-- Outer wings / chevron arrows -->
+      <path d="M -70 -16 L -82 0 L -70 16" fill="none" stroke="#93c5fd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 70 -16 L 82 0 L 70 16" fill="none" stroke="#93c5fd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Flanking stars -->
+      <use href="#star-gold" x="-56" y="0"/>
+      <use href="#star-gold" x="56" y="0"/>
+      <!-- Central medallion -->
+      <circle cx="0" cy="0" r="44" fill="#091b3a" stroke="#07152e" stroke-width="3"/>
+      <circle cx="0" cy="0" r="39" fill="#1e4da8" stroke="#fbbf24" stroke-width="2.5"/>
+      <circle cx="0" cy="0" r="33" fill="#0f2f6d"/>
+      <!-- Cricket ball in medallion -->
+      <circle cx="0" cy="0" r="23" fill="#dc2626" stroke="#07152e" stroke-width="2.5"/>
+      <!-- Ball seam -->
+      <path d="M 0 -23 C 10 -12, 10 12, 0 23" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+      <!-- Stitches -->
+      <line x1="1" y1="-17" x2="6" y2="-15" stroke="#ffffff" stroke-width="1.8"/>
+      <line x1="4" y1="-10" x2="9" y2="-8" stroke="#ffffff" stroke-width="1.8"/>
+      <line x1="5" y1="-3" x2="10" y2="-1" stroke="#ffffff" stroke-width="1.8"/>
+      <line x1="5" y1="4" x2="10" y2="6" stroke="#ffffff" stroke-width="1.8"/>
+      <line x1="4" y1="11" x2="9" y2="13" stroke="#ffffff" stroke-width="1.8"/>
+      <line x1="1" y1="18" x2="6" y2="20" stroke="#ffffff" stroke-width="1.8"/>
+      <!-- Ball highlight -->
+      <path d="M -12 -15 A 18 18 0 0 1 5 -19" stroke="#fca5a5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Mini accent stars -->
+      <use href="#star-white" x="0" y="-31"/>
+      <use href="#star-white" x="0" y="31"/>
+    </g>
+  </defs>
+
+  <!-- ================= BACKGROUND ================= -->
+  <!-- Base background (#2f7cff) -->
+  <rect x="0" y="0" width="2048" height="128" fill="#2f7cff"/>
+
+  <!-- Tiling sports stripes texture -->
+  <rect x="0" y="0" width="2048" height="128" fill="url(#bg-stripes)"/>
+
+  <!-- Top thin lighter stripe (tiles perfectly left-to-right) -->
+  <rect x="0" y="0" width="2048" height="5" fill="#8ec5fc"/>
+  <rect x="0" y="5" width="2048" height="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="0" y="7" width="2048" height="1.5" fill="#1347a8" opacity="0.5"/>
+
+  <!-- Bottom thin lighter stripe (tiles perfectly left-to-right) -->
+  <rect x="0" y="119.5" width="2048" height="1.5" fill="#1347a8" opacity="0.5"/>
+  <rect x="0" y="121" width="2048" height="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="0" y="123" width="2048" height="5" fill="#8ec5fc"/>
+
+  <!-- ================= TILE SEAM MOTIFS ================= -->
+  <!-- Seamless boundary crest rendered exactly at x=0 and x=2048 -->
+  <use href="#boundary-crest" x="0" y="64"/>
+  <use href="#boundary-crest" x="2048" y="64"/>
+
+  <!-- ================= LEFT FLANK MOTIFS ================= -->
+  <use href="#chevrons-group-left" x="160" y="64"/>
+  <use href="#cricket-wickets" x="320" y="64"/>
+  <use href="#star-burst" x="475" y="64"/>
+  <use href="#crossed-bats" x="600" y="64"/>
+  <use href="#divider-bracket-left" x="705" y="64"/>
+
+  <!-- ================= RIGHT FLANK MOTIFS ================= -->
+  <use href="#divider-bracket-right" x="1343" y="64"/>
+  <use href="#crossed-bats" x="1448" y="64"/>
+  <use href="#star-burst" x="1573" y="64"/>
+  <use href="#cricket-wickets-mirror" x="1728" y="64"/>
+  <use href="#chevrons-group-right" x="1888" y="64"/>
+
+  <!-- ================= CENTER STAND BANNER ================= -->
+  <!-- Centred plaque container behind text -->
+  <g>
+    <!-- Drop shadow -->
+    <polygon points="692,21 1356,21 1372,64 1356,108 692,108 676,64" fill="#050e1f" opacity="0.5"/>
+    <!-- Outer plaque navy body -->
+    <polygon points="690,17 1358,17 1374,62 1358,107 690,107 674,62" fill="#091b3a" stroke="#07152e" stroke-width="3"/>
+    <!-- Inner gold border -->
+    <polygon points="695,21 1353,21 1367,62 1353,103 695,103 681,62" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+    <!-- Cyan broadcast accent lines -->
+    <line x1="702" y1="25" x2="1346" y2="25" stroke="#38bdf8" stroke-width="1.5" opacity="0.9"/>
+    <line x1="702" y1="99" x2="1346" y2="99" stroke="#38bdf8" stroke-width="1.5" opacity="0.9"/>
+  </g>
+
+  <!-- "MOO MOO STAND" in big bold white capitals with dark outline, centred -->
+  <g font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="62" letter-spacing="4" text-anchor="middle">
+    <!-- Deep bottom-cast shadow -->
+    <text x="1024" y="90" fill="#040914">MOO MOO STAND</text>
+    <!-- Dark heavy outline -->
+    <text x="1024" y="86" stroke="#07152e" stroke-width="13" stroke-linejoin="round" fill="#07152e">MOO MOO STAND</text>
+    <!-- Dark inner outline for sharp bevel definition -->
+    <text x="1024" y="86" stroke="#0c234b" stroke-width="6" stroke-linejoin="round" fill="#0c234b">MOO MOO STAND</text>
+    <!-- Primary clean bold white text -->
+    <text x="1024" y="86" fill="#ffffff">MOO MOO STAND</text>
+  </g>
+</svg>
