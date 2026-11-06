@@ -40,6 +40,11 @@ const DEFAULT_LAYOUT = {
   'shake-freeze': 'swing',
   'wobble-tower': 'swing',
   'flapjack-flip': 'swing',
+  'peek-a-barn': 'remote',
+  'straw-shot': 'swing',
+  'barn-blink': 'swing',
+  'barn-raiser': 'swing',
+  'haystack-hideout': 'swing',
 };
 
 function toast(msg) {
@@ -194,7 +199,7 @@ const fusion = new HeadingFusion();
 /** Games that run their own camera tracking: the shell's camera pauses while they play. */
 const OWN_CAMERA = new Set(['pose-match', 'farm-dash']);
 /** Games that never use camera assist: the shell's camera stays off while they play. */
-const NO_CAMERA = new Set(['fruit-slice', 'rapids-row', 'farm-kart', 'shake-freeze', 'wobble-tower', 'flapjack-flip']);
+const NO_CAMERA = new Set(['fruit-slice', 'rapids-row', 'farm-kart', 'shake-freeze', 'wobble-tower', 'flapjack-flip', 'peek-a-barn', 'straw-shot', 'barn-blink', 'haystack-hideout']);
 const cameraOff = (id) => OWN_CAMERA.has(id) || NO_CAMERA.has(id);
 const ownCameraGame = () => !!playing && cameraOff(playing.id);
 let camWanted = false;

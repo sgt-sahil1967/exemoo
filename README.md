@@ -33,6 +33,11 @@ npm start        # production (HTTP on $PORT; the host provides HTTPS)
 | Shake & Freeze | `shake-freeze` | swing: shake the phone, hold still on red | party minigame, 1–4 phones (2nd–4th pair their own PIN in the lobby), CPU rivals; static, see `games/shake-freeze/README.md` |
 | Wobble Tower | `wobble-tower` | swing: hold flat, tilt to balance, Action banks | party minigame, 1–4 phones, CPU rivals; static |
 | Flapjack Flip | `flapjack-flip` | swing: flick the phone like a pan | party minigame, 1–4 phones, CPU rivals; static |
+| Peek-a-Barn | `peek-a-barn` | remote: d-pad moves the cursor, GO opens a door | party memory game, 1–4 phones (2nd–4th pair their own PIN in the lobby), turn-based, CPU rivals; static, see `games/peek-a-barn/README.md` |
+| Straw Shot | `straw-shot` | swing: point the phone to aim, hold Action to draw, release to shoot; Recenter | party archery, 1–4 phones shoot at once (2nd–4th pair their own PIN in the lobby), CPU rivals; static, see `games/straw-shot/README.md` |
+| Barn Blink | `barn-blink` | swing: big Action button to react; flick the phone in Flick rounds; buzz cues via haptics | party reaction-time game, 1–4 phones (2nd–4th pair their own PIN in the lobby), CPU rivals; static, see `games/barn-blink/README.md` |
+| Barn Raiser | `barn-raiser` | laptop camera: hand steers the crane, raise the other hand to drop (or phone tilt + Action, or keys) | stacking party game, 1–4 players in turns (hot seat), CPU rivals; needs shell camera assist; static, see `games/barn-raiser/README.md` |
+| Haystack Hideout | `haystack-hideout` | swing: sweep/tilt the phone to aim a cursor (gyro), Action picks, Recenter re-centres | party minigame (memory hide-and-seek), 1–4 phones (2nd–4th pair their own PIN in the lobby), CPU rivals; static, see `games/haystack-hideout/README.md` |
 
 Deploy: see `DEPLOY.md` (Render blueprint / Docker image that builds the games itself, custom
 domain, TURN, env vars in `.env.example`). CI: `.github/workflows/ci.yml`.

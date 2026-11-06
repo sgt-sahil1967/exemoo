@@ -350,4 +350,178 @@ export const covers = {
     </g>
     <g stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".9"><path d="M96 132 q6 -10 0 -20 M112 128 q6 -10 0 -20"/></g>
     ${sparkle(70, 100, '#ffd21f')}${sparkle(258, 136, '#fff', 0.7)}`),
+  // ───────────── Peek-a-Barn (party memory) ─────────────
+  peek: svg(`${defs('pb', '#5ec2ff', '#c9f0ff')}
+    ${sky('pb')}${cloud(64, 40, 0.8)}${cloud(338, 84, 0.55)}${hills('pb', 6)}
+    ${shadow(200, 206, 124, 8)}
+    <g filter="url(#pbd)">
+      <path d="M84 206 V84 L200 24 L316 84 V206Z" fill="#ff3b30" ${S}/>
+      <g stroke="#c8402f" stroke-width="3" opacity=".6">${[108, 132, 156, 180, 204, 228, 252, 276].map((x) => `<path d="M${x} ${x < 200 ? 84 - (x - 84) * 0.5 : 84 - (316 - x) * 0.5} V204"/>`).join('')}</g>
+      <path d="M72 90 L200 18 L328 90" fill="none" stroke="${INK}" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M72 90 L200 18 L328 90" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="200" cy="60" r="13" fill="#ffd21f" ${S3}/><path d="M187 60 h26 M200 47 v26" stroke="${INK}" stroke-width="3"/>
+      ${[0, 1, 2, 3].flatMap((c) => [0, 1].map((r) => {
+        const x = 108 + c * 48, y = 88 + r * 58;
+        const open = (c === 1 && r === 0) || (c === 3 && r === 1);
+        const gold = c === 0 && r === 1;
+        if (open || gold) {
+          return `<rect x="${x}" y="${y}" width="40" height="52" rx="7" fill="${gold ? '#ffd21f' : '#fff6e0'}" ${S3}/>
+            ${gold ? `<path d="M${x + 20} ${y + 12} q-12 2 -13 22 h26 q-1 -20 -13 -22z" fill="#ffe27a" ${S3}/><circle cx="${x + 20}" cy="${y + 38}" r="3.5" fill="#e0a800" ${S3}/>`
+              : `<g transform="translate(${x + 20} ${y + 28}) scale(.36)"><path d="M0 -24 C22 -38 46 -18 40 10 C36 36 16 44 0 36 C-16 44 -36 36 -40 10 C-46 -18 -22 -38 0 -24Z" fill="#ff3b30" stroke="${INK}" stroke-width="9" stroke-linejoin="round"/><path d="M0 -24 L5 -42" stroke="${INK}" stroke-width="9" stroke-linecap="round"/><ellipse cx="16" cy="-38" rx="13" ry="6" transform="rotate(-28 16 -38)" fill="#2fc65a" stroke="${INK}" stroke-width="7"/><ellipse cx="-20" cy="-6" rx="7" ry="12" fill="#fff" opacity=".6"/></g>`}`;
+        }
+        return `<rect x="${x}" y="${y}" width="40" height="52" rx="7" fill="#ff3b30" ${S3}/>
+          <rect x="${x + 5}" y="${y + 5}" width="30" height="42" rx="4" fill="none" stroke="#fff" stroke-width="3.5"/>
+          <path d="M${x + 7} ${y + 7} L${x + 33} ${y + 45} M${x + 33} ${y + 7} L${x + 7} ${y + 45}" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>`;
+      }).join('')).join('')}
+      <rect x="199" y="83" width="50" height="62" rx="10" fill="none" stroke="${INK}" stroke-width="9"/>
+      <rect x="199" y="83" width="50" height="62" rx="10" fill="none" stroke="#2f7cff" stroke-width="4.5"/>
+      <rect x="211" y="72" width="26" height="16" rx="6" fill="#2f7cff" ${S3}/>
+      <g transform="translate(352 176)">
+        <ellipse cx="0" cy="8" rx="24" ry="20" fill="#ffe45c" ${S}/>
+        <circle cx="4" cy="-18" r="15" fill="#ffe45c" ${S}/>
+        <circle cx="9" cy="-21" r="3" fill="${INK}"/><circle cx="10" cy="-22" r="1" fill="#fff"/>
+        <path d="M17 -16 l10 3 l-10 4z" fill="#ff9a1f" ${S3}/>
+        <path d="M-8 4 q-10 -2 -14 -12" fill="none" ${S3}/>
+        <path d="M-16 24 q16 6 32 0" fill="none" stroke="#2fc65a" stroke-width="6" stroke-linecap="round"/>
+      </g>
+    </g>
+    ${sparkle(146, 54, '#ffd21f', 0.8)}${sparkle(290, 136, '#fff', 0.7)}${sparkle(116, 138, '#fff', 0.6)}`),
+  // ───────────── Straw Shot (party) ─────────────
+  straw: svg(`${defs('ss', '#5ec2ff', '#c9f0ff', `
+    <radialGradient id="ssb" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#e0a83c"/></radialGradient>`)}
+    ${sky('ss')}${cloud(70, 40, 0.8)}${cloud(250, 30, 0.6)}${hills('ss', 6)}
+    <g filter="url(#ssd)">
+      <path d="M210 150 L196 196 M270 150 L284 196" stroke="${INK}" stroke-width="13" stroke-linecap="round"/>
+      <path d="M210 150 L196 196 M270 150 L284 196" stroke="#c07a35" stroke-width="6" stroke-linecap="round"/>
+      ${shadow(240, 198, 56, 7)}
+      <circle cx="240" cy="108" r="66" fill="url(#ssb)" ${S}/>
+      <g stroke="#d9a640" stroke-width="3">${Array.from({ length: 20 }, (_, i) => { const a = (i / 20) * Math.PI * 2; return `<path d="M${240 + Math.cos(a) * 52} ${108 + Math.sin(a) * 52} L${240 + Math.cos(a + 0.08) * 63} ${108 + Math.sin(a + 0.08) * 63}"/>`; }).join('')}</g>
+      <circle cx="240" cy="108" r="50" fill="#fff" ${S3}/>
+      <circle cx="240" cy="108" r="40" fill="#2fc65a" ${S3}/>
+      <circle cx="240" cy="108" r="30" fill="#2f7cff" ${S3}/>
+      <circle cx="240" cy="108" r="20" fill="#ff3b30" ${S3}/>
+      <circle cx="240" cy="108" r="10" fill="#ffd21f" ${S3}/>
+      <ellipse cx="218" cy="80" rx="12" ry="6" fill="#fff" opacity=".5"/>
+      ${[[244, 104, '#ff3b30', -0.5], [228, 124, '#2f7cff', -0.3], [262, 90, '#ffd21f', -0.6]].map(([x, y, c, r]) => `<g transform="translate(${x} ${y}) rotate(${r * 57})">
+        <path d="M0 0 L0 30" stroke="${INK}" stroke-width="7" stroke-linecap="round"/><path d="M0 0 L0 30" stroke="#a8642a" stroke-width="3"/>
+        <path d="M0 26 l-8 10 l8 -3 l8 3z" fill="${c}" ${S3}/></g>`).join('')}
+      <g transform="translate(92 150) rotate(-38)">
+        <path d="M-58 8 L0 34 L58 8" fill="none" stroke="${INK}" stroke-width="3"/>
+        <path d="M-58 8 Q-30 -26 0 -26 Q30 -26 58 8" fill="none" stroke="${INK}" stroke-width="16" stroke-linecap="round"/>
+        <path d="M-58 8 Q-30 -26 0 -26 Q30 -26 58 8" fill="none" stroke="#d48a3a" stroke-width="9" stroke-linecap="round"/>
+        <rect x="-9" y="-33" width="18" height="14" rx="4" fill="#2fc65a" ${S3}/>
+        <path d="M0 34 L0 -54" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M0 34 L0 -54" stroke="#c98a45" stroke-width="4"/>
+        <path d="M0 -68 l-9 16 h18z" fill="#cfd6e6" ${S3}/>
+        <path d="M0 30 l-10 8 v-14 l10 -8z M0 30 l10 8 v-14 l-10 -8z" fill="#ff3b30" ${S3}/>
+      </g>
+      <g fill="none" stroke-linecap="round">
+        <circle cx="330" cy="150" r="17" stroke="${INK}" stroke-width="9"/><circle cx="330" cy="150" r="17" stroke="#2f7cff" stroke-width="4.5"/>
+        <path d="M330 126 v12 M330 162 v12 M306 150 h12 M342 150 h12" stroke="${INK}" stroke-width="9"/><path d="M330 126 v12 M330 162 v12 M306 150 h12 M342 150 h12" stroke="#2f7cff" stroke-width="4.5"/>
+      </g>
+      <path d="M352 30 V96" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M354 34 L330 38 L326 52 L354 54z" fill="#ff3b30" ${S3}/>
+      <path d="M330 38 L306 42 L304 50 L326 52z" fill="#fff" ${S3}/>
+    </g>
+    <g stroke="#ffe08a" stroke-width="4" stroke-linecap="round" opacity=".9"><path d="M30 70 h18 M96 52 h14 M150 30 h16 M300 70 h14"/></g>
+    ${sparkle(240, 108, '#fff', 0.7)}${sparkle(160, 52, '#ffd21f', 0.9)}`),
+  // ───────────── Barn Blink (party) ─────────────
+  blink: svg(`${defs('bb', '#5ec2ff', '#c9f0ff', `
+    <radialGradient id="bbg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#b6ff9a"/><stop offset=".55" stop-color="#2fc65a" stop-opacity=".55"/><stop offset="1" stop-color="#2fc65a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bbl" cx=".38" cy=".32" r=".7"><stop offset="0" stop-color="#8dff7a"/><stop offset="1" stop-color="#1fa548"/></radialGradient>`)}
+    ${sky('bb')}${cloud(44, 30, 0.7)}${cloud(330, 30, 0.6)}${hills('bb', 6)}
+    <g filter="url(#bbd)">
+      <path d="M322 150 v-56 l26 -24 l26 24 v56z" fill="#e8402f" ${S}/><path d="M314 98 l34 -34 l34 34" fill="none" ${S}/>
+      <rect x="336" y="114" width="24" height="36" fill="#fff6e0" ${S3}/><path d="M336 114 l24 36 M360 114 l-24 36" ${S3}/>
+      <rect x="174" y="120" width="12" height="70" rx="3" fill="#a8642a" ${S3}/><rect x="214" y="120" width="12" height="70" rx="3" fill="#a8642a" ${S3}/>
+      <rect x="140" y="18" width="120" height="120" rx="18" fill="#d48a3a" ${S}/>
+      <rect x="152" y="30" width="96" height="96" rx="12" fill="#fff6e0" ${S3}/>
+      <circle cx="200" cy="78" r="62" fill="url(#bbg)"/>
+      <circle cx="200" cy="78" r="34" fill="url(#bbl)" ${S}/>
+      <ellipse cx="189" cy="65" rx="11" ry="7" fill="#fff" opacity=".7"/>
+      <g transform="translate(70 196)">
+        <rect x="-6" y="-46" width="12" height="46" fill="#8a8fb0" ${S3}/><rect x="-24" y="-8" width="48" height="12" rx="5" fill="#3a3d5c" ${S3}/>
+        <rect x="-22" y="-52" width="44" height="9" rx="4" fill="#3a3d5c" ${S3}/><path d="M-19 -52 a19 12 0 0 1 38 0z" fill="#ff3b30" ${S3}/>
+        <path d="M-64 -104 L-4 -66" stroke="${INK}" stroke-width="21" stroke-linecap="round"/><path d="M-64 -104 L-4 -66" stroke="#fbfbff" stroke-width="13" stroke-linecap="round"/>
+        <ellipse cx="-2" cy="-62" rx="11" ry="8" fill="#3a3350" ${S3}/>
+      </g>
+      <g transform="translate(330 196)">
+        <rect x="-6" y="-46" width="12" height="46" fill="#8a8fb0" ${S3}/><rect x="-24" y="-8" width="48" height="12" rx="5" fill="#3a3d5c" ${S3}/>
+        <rect x="-22" y="-52" width="44" height="9" rx="4" fill="#3a3d5c" ${S3}/><path d="M-19 -52 a19 18 0 0 1 38 0z" fill="#2f7cff" ${S3}/>
+      </g>
+      <g transform="translate(96 60)"><rect x="-38" y="-17" width="76" height="34" rx="14" fill="#1b1b3a" opacity=".85"/><text x="0" y="8" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="22" fill="#ffd21f">187 ms</text></g>
+      <g ${S3} fill="none"><path d="M104 50 l14 8 M100 78 h16 M104 106 l14 -8 M296 50 l-14 8 M300 78 h-16 M296 106 l-14 -8"/></g>
+    </g>
+    ${shadow(200, 196, 40, 6)}${sparkle(262, 26, '#ffd21f', 0.9)}${sparkle(132, 132, '#fff', 0.7)}`),
+  // ───────────── Barn Raiser (camera stacking) ─────────────
+  barnraiser: svg(`${defs('br', '#5ec2ff', '#ffe2b8')}
+    ${sky('br')}${cloud(70, 52, 0.7)}${cloud(338, 112, 0.6)}${hills('br', 6)}
+    <rect x="-5" y="10" width="410" height="16" rx="4" fill="#2f7cff" ${S}/>
+    <path d="M0 13 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10 l14 -10 l14 10" fill="none" stroke="#1f5fd6" stroke-width="2.5"/>
+    ${shadow(200, 206, 70, 7)}
+    <g filter="url(#brd)">
+      <rect x="146" y="150" width="108" height="56" rx="4" fill="#ff3b30" ${S}/>
+      <rect x="180" y="168" width="40" height="38" rx="2" fill="#fff" ${S3}/>
+      <path d="M184 172 L216 204 M216 172 L184 204" stroke="#ff3b30" stroke-width="4"/>
+      <rect x="136" y="142" width="128" height="10" rx="3" fill="#a0602a" ${S3}/>
+      <rect x="160" y="122" width="80" height="20" rx="6" fill="#f7c843" ${S3}/><path d="M180 122 v20 M220 122 v20" stroke="#ff3b30" stroke-width="3"/>
+      <rect x="166" y="102" width="70" height="20" rx="4" fill="#e08a3c" ${S3}/><path d="M172 105 L230 119 M230 105 L172 119" stroke="#a2561e" stroke-width="3"/>
+      <rect x="170" y="82" width="62" height="20" rx="6" fill="#f7c843" ${S3}/><path d="M186 82 v20 M216 82 v20" stroke="#ff3b30" stroke-width="3"/>
+      <rect x="222" y="22" width="34" height="16" rx="4" fill="#ff3b30" ${S3}/>
+      <circle cx="230" cy="22" r="4" fill="#fff" ${S3}/><circle cx="248" cy="22" r="4" fill="#fff" ${S3}/>
+      <path d="M239 38 L246 54" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
+      <g transform="rotate(10 248 64)">
+        <rect x="216" y="56" width="62" height="20" rx="6" fill="#f7c843" ${S3}/><path d="M232 56 v20 M262 56 v20" stroke="#ff3b30" stroke-width="3"/>
+      </g>
+      <g transform="translate(64 116) rotate(-8)">
+        <rect x="-20" y="-6" width="40" height="44" rx="12" fill="#ffd9b0" ${S3}/>
+        <rect x="-19" y="-30" width="9" height="30" rx="4.5" fill="#ffd9b0" ${S3}/>
+        <rect x="-9" y="-36" width="9" height="36" rx="4.5" fill="#ffd9b0" ${S3}/>
+        <rect x="1" y="-34" width="9" height="34" rx="4.5" fill="#ffd9b0" ${S3}/>
+        <rect x="11" y="-27" width="9" height="28" rx="4.5" fill="#ffd9b0" ${S3}/>
+        <rect x="18" y="4" width="18" height="10" rx="5" transform="rotate(-35 18 9)" fill="#ffd9b0" ${S3}/>
+      </g>
+    </g>
+    <g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M22 66 v-12 h12 M106 66 v-12 h-12 M22 158 v12 h12 M106 158 v12 h-12"/></g>
+    <path d="M247 80 v40" stroke="#fff" stroke-width="3" stroke-dasharray="5 6"/>
+    <g fill="#fff" stroke="${INK}" stroke-width="3" stroke-linejoin="round"><path d="M126 112 l-14 -10 v20z" opacity=".55"/><path d="M148 112 l-14 -10 v20z"/></g>
+    ${sparkle(292, 92, '#ffd21f')}${sparkle(150, 70, '#fff', 0.7)}`),
+  // ───────────── Haystack Hideout ─────────────
+  hideout: svg(`${defs('hh', '#5ec2ff', '#d8f2ff', `
+    <radialGradient id="hhbeam" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6b0" stop-opacity=".85"/><stop offset="1" stop-color="#fff6b0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hhhay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe066"/><stop offset="1" stop-color="#e8a820"/></linearGradient>`)}
+    ${sky('hh')}${cloud(70, 34, 0.8)}${cloud(230, 24, 0.6)}${hills('hh', 4)}
+    <g filter="url(#hhd)">
+      <rect x="18" y="74" width="62" height="58" rx="3" fill="#e8352b" ${S}/>
+      <path d="M12 76 L49 46 L86 76Z" fill="#b8241c" ${S}/>
+      <rect x="34" y="100" width="30" height="32" fill="#fff" ${S3}/>
+      <path d="M36 102 L62 130 M62 102 L36 130" stroke="#e8352b" stroke-width="4"/>
+      ${shadow(110, 196, 40)}
+      <path d="M78 196 q-6 -52 14 -64 h36 q20 12 14 64z" fill="#b8743a" ${S}/>
+      <path d="M76 160 h68 M78 182 h64" stroke="${INK}" stroke-width="6"/><path d="M76 160 h68 M78 182 h64" stroke="#6c6f8c" stroke-width="3"/>
+      <ellipse cx="110" cy="132" rx="18" ry="5" fill="#d48a4a" ${S3}/>
+      ${shadow(318, 196, 44)}
+      <g fill="#2fb04a" ${S}><circle cx="296" cy="174" r="24"/><circle cx="340" cy="174" r="24"/><circle cx="306" cy="148" r="22"/><circle cx="334" cy="146" r="24"/></g>
+      <ellipse cx="318" cy="168" rx="38" ry="22" fill="#2fb04a"/>
+      <g fill="#ff3b30" stroke="${INK}" stroke-width="2"><circle cx="300" cy="160" r="4"/><circle cx="334" cy="152" r="4"/><circle cx="322" cy="178" r="4"/></g>
+      <g transform="translate(212 110)">
+        <path d="M-14 -16 l-12 -14 l4 18z M14 -16 l12 -14 l-4 18z" fill="#ff9db3" ${S3}/>
+        <ellipse cx="0" cy="0" rx="26" ry="23" fill="#ffb3c4" ${S}/>
+        <ellipse cx="0" cy="9" rx="11" ry="8" fill="#ff7f9c" ${S3}/>
+        <ellipse cx="-4" cy="9" rx="2" ry="3" fill="${INK}"/><ellipse cx="4" cy="9" rx="2" ry="3" fill="${INK}"/>
+        <ellipse cx="-10" cy="-5" rx="5" ry="6.5" fill="#fff" ${S3}/><ellipse cx="10" cy="-5" rx="5" ry="6.5" fill="#fff" ${S3}/>
+        <circle cx="-9" cy="-4" r="3" fill="${INK}"/><circle cx="11" cy="-4" r="3" fill="${INK}"/>
+        <ellipse cx="-8" cy="-14" rx="5" ry="3" fill="#fff" opacity=".5"/>
+      </g>
+      ${shadow(212, 198, 66, 8)}
+      <path d="M146 198 C142 140 178 118 212 118 C246 118 282 140 278 198Z" fill="url(#hhhay)" ${S}/>
+      <path d="M150 166 h124" stroke="#d48a3a" stroke-width="10"/><path d="M150 166 h124" stroke="${INK}" stroke-width="3" opacity=".5"/>
+      <g stroke="#c48a10" stroke-width="3.5" stroke-linecap="round"><path d="M172 150 l10 -8 M236 140 l12 6 M190 184 l12 -8 M246 182 l10 -10 M206 138 l6 10"/></g>
+      <path d="M170 136 q14 -12 30 -12" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>
+    </g>
+    <circle cx="214" cy="150" r="58" fill="url(#hhbeam)"/>
+    <g fill="none"><circle cx="214" cy="150" r="17" stroke="${INK}" stroke-width="11"/><circle cx="214" cy="150" r="17" stroke="#ff3b30" stroke-width="6"/><circle cx="214" cy="150" r="5" fill="#ff3b30" stroke="${INK}" stroke-width="3"/></g>
+    <g fill="none"><circle cx="330" cy="120" r="14" stroke="${INK}" stroke-width="10"/><circle cx="330" cy="120" r="14" stroke="#2f7cff" stroke-width="5"/></g>
+    <g fill="none"><circle cx="120" cy="114" r="14" stroke="${INK}" stroke-width="10"/><circle cx="120" cy="114" r="14" stroke="#2fc65a" stroke-width="5"/></g>
+    <g transform="translate(366 58)"><circle r="20" fill="#fff" ${S3}/><text y="9" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="28" fill="${INK}">?</text></g>
+    ${sparkle(176, 108, '#ffd21f', 0.8)}${sparkle(258, 100, '#fff', 0.7)}`),
 };
