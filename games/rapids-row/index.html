@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rapids Row — Exemoo</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#8fd6ff}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+#dbg{position:fixed;left:8px;bottom:8px;z-index:50;font:12px/1.35 ui-monospace,monospace;color:#fff;background:#1b1b3acc;padding:6px 8px;border-radius:8px;white-space:pre;pointer-events:none}
+#dbg[hidden]{display:none}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="ui"></div>
+<div id="dbg" hidden></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

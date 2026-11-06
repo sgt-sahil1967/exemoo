@@ -14,11 +14,12 @@
  *   idle  ──fast forward motion through address without any backswing (full swing only)──▶
  *           topped shot (low power, low quality)
  *
- * Full swing thresholds (AIM): takeaway 25°, top reversal 40°/s & 6° drop, minimum peak 150°/s.
+ * Full swing thresholds (AIM): takeaway 12°, top reversal 40°/s & 3° drop, minimum peak 60°/s (low
+ * enough for soft chips).
  *   power: 250°/s → 0.2, 900°/s → 1.0 (linear, extrapolated, capped 1.15), × sensitivity; then
  *   capped by backswing length: cap = 0.3 + 0.85·(θmax / 0.85π) (a full swing needs a full
  *   backswing, exactly like Wii Sports).
- * Putt thresholds (PUTT): takeaway 5°, reversal 8°/s & 1°, minimum peak 15°/s;
+ * Putt thresholds (PUTT): takeaway 3°, reversal 8°/s & 0.5°, minimum peak 10°/s;
  *   power: 40°/s → 0.05, 220°/s → 1.1 (no backswing cap).
  * curve = face·faceWeight + (path/20°)·pathWeight (+ overswing randomness), deadzone, clamp ±1.
  */
@@ -62,11 +63,11 @@ export interface SwingTuning {
 
 export const AIM_TUNING: SwingTuning = {
   putt: false,
-  startAngle: 25 * DEG,
-  addressZone: 20 * DEG,
+  startAngle: 12 * DEG,
+  addressZone: 10 * DEG,
   reverseRate: 40 * DEG,
-  topDrop: 6 * DEG,
-  minPeak: 150 * DEG,
+  topDrop: 3 * DEG,
+  minPeak: 60 * DEG,
   speedLo: 250 * DEG,
   powerLo: 0.2,
   speedHi: 900 * DEG,
@@ -85,11 +86,11 @@ export const AIM_TUNING: SwingTuning = {
 
 export const PUTT_TUNING: SwingTuning = {
   putt: true,
-  startAngle: 5 * DEG,
-  addressZone: 4 * DEG,
+  startAngle: 3 * DEG,
+  addressZone: 2.5 * DEG,
   reverseRate: 8 * DEG,
-  topDrop: 1 * DEG,
-  minPeak: 15 * DEG,
+  topDrop: 0.5 * DEG,
+  minPeak: 10 * DEG,
   speedLo: 40 * DEG,
   powerLo: 0.05,
   speedHi: 220 * DEG,
@@ -121,6 +122,8 @@ export class SwingDetector {
   enabled = true;
   sensitivity = 1;
   holdToSwing = true;
+  /** Allow the "topped" no-backswing shot (off until the grip direction is known). */
+  allowTopped = true;
   /** Random source for overswing scatter (tests inject a fixed one). */
   rng: () => number = Math.random;
 
@@ -142,6 +145,11 @@ export class SwingDetector {
 
   get phase(): SwingPhase {
     return this._phase;
+  }
+
+  /** Near address since the last swing, i.e. a takeaway would start a backswing. */
+  get isReady(): boolean {
+    return this.ready;
   }
 
   /** θmax of the current backswing (0 when idle). */
@@ -196,7 +204,7 @@ export class SwingDetector {
           return null;
         }
         // Topped: lunging through address with no backswing.
-        if (t.topSpeed > 0 && prev && prev.theta >= 0 && s.theta < 0 && -s.omega * this.sensitivity > t.topSpeed) {
+        if (t.topSpeed > 0 && this.allowTopped && prev && prev.theta >= 0 && s.theta < 0 && -s.omega * this.sensitivity > t.topSpeed) {
           return this.emit(s, {
             power: Math.min(0.3, speedToPower(-s.omega * this.sensitivity, t)),
             quality: 0.15,
@@ -292,11 +300,13 @@ export class SwingDetector {
     const downMs = Math.max(1, s.t - this.tTop);
     const transMs = this.tPeak - this.tTop;
     if (!t.putt) {
-      if (backMs < 300) quality -= 0.3 * (1 - backMs / 300);
+      // Soft chips are short and quick by nature: judge tempo/takeaway less the gentler the shot.
+      const firm = clamp(power / 0.6, 0, 1);
+      if (backMs < 300) quality -= 0.3 * (1 - backMs / 300) * firm;
       const ratio = backMs / downMs;
-      if (ratio < 1.5) quality -= 0.15 * (1 - ratio / 1.5);
-      if (transMs < 60) quality -= 0.15 * (1 - transMs / 60);
-      if (backswing < 0.35) quality -= 0.35 * (1 - backswing / 0.35); // half-hearted takeaway
+      if (ratio < 1.5) quality -= 0.15 * (1 - ratio / 1.5) * firm;
+      if (transMs < 60) quality -= 0.15 * (1 - transMs / 60) * firm;
+      if (backswing < 0.35) quality -= 0.35 * (1 - backswing / 0.35) * firm; // half-hearted takeaway
       if (power > 1) quality -= (power - 1) * 1.5;
       if (Math.abs(path) > 15 * DEG) quality -= 0.1;
     } else {

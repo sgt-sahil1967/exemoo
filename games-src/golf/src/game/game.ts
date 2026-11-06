@@ -311,7 +311,9 @@ export class Game {
     this.hole = h;
     this.ball.setHole(h);
     const [lo, hi] = WIND_RANGE[this.setup?.wind ?? 'normal'];
-    this.wind = { yaw: Math.random() * Math.PI * 2, speed: lo + Math.random() * (hi - lo) };
+    // Hole 1 of a round is always calm so new players can learn the swing first.
+    const calm = this.round !== null && def.number === 1;
+    this.wind = { yaw: Math.random() * Math.PI * 2, speed: calm ? 0 : lo + Math.random() * (hi - lo) };
     this.ball.setWind(this.wind);
     this.scene.setHole(h);
     this.scene.setWind(this.wind);

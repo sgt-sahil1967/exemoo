@@ -1,0 +1,44 @@
+{
+  "kind": "sfx",
+  "duration": 0.08,
+  "layers": [
+    {
+      "source": "sine",
+      "start": 0,
+      "dur": 0.035,
+      "gain": 1,
+      "freq": {
+        "start": 1350,
+        "end": 650,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.025,
+        "sustain": 0,
+        "release": 0.005
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0,
+      "dur": 0.02,
+      "gain": 0.3,
+      "filter": {
+        "type": "highpass",
+        "cutoff": {
+          "start": 2800,
+          "end": 2800
+        },
+        "q": 1.2
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.012,
+        "sustain": 0,
+        "release": 0.005
+      }
+    }
+  ]
+}

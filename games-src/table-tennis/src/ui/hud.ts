@@ -51,6 +51,8 @@ export class Hud {
   private calloutText: HTMLDivElement;
   private calloutSub: HTMLDivElement;
   private promptEl: HTMLDivElement;
+  private gradeEl: Record<'main' | Side, HTMLDivElement>;
+  private gradeTimer: Record<'main' | Side, number> = { main: 0, player: 0, opponent: 0 };
   private connEl: HTMLDivElement;
   private connText: HTMLSpanElement;
   private meters: Record<'main' | Side, MeterParts>;
@@ -118,6 +120,7 @@ export class Hud {
     this.calloutEl = h('div', { class: 'callout', 'aria-live': 'polite' }, this.calloutText, this.calloutSub);
 
     this.promptEl = h('div', { class: 'prompt' });
+    this.gradeEl = { main: h('div', { class: 'grade' }), player: h('div', { class: 'grade g-player' }), opponent: h('div', { class: 'grade g-opponent' }) };
 
     this.connText = h('span', { class: 'conn-text' });
     this.connEl = h('div', { class: 'conn chip' }, h('span', { class: 'status-dot' }), this.connText);
@@ -180,6 +183,9 @@ export class Hud {
       h('div', { class: 'hud-tc' }, this.board, this.rallyEl, smLabel),
       h('div', { class: 'hud-tr' }, this.connEl),
       this.calloutEl,
+      this.gradeEl.main,
+      this.gradeEl.player,
+      this.gradeEl.opponent,
       h('div', { class: 'hud-bl' }, meter),
       h('div', { class: 'hud-bc' }, this.promptEl),
       h('div', { class: 'hud-br' }, smBox, this.speedEl),
@@ -278,6 +284,17 @@ export class Hud {
     replay(this.calloutEl, 'play');
     clearTimeout(this.calloutTimer);
     this.calloutTimer = window.setTimeout(() => this.calloutEl.classList.remove('play'), 1700);
+  }
+
+  /** Small pop-up under the action rating each hit (PERFECT / GOOD / EARLY / LATE / hints). */
+  hitGrade(text: string, tone: CalloutTone, sub?: string, side?: Side): void {
+    const key = this.splitOn && side ? side : 'main';
+    const el = this.gradeEl[key];
+    el.className = `grade${key === 'main' ? '' : ` g-${key}`} tone-${tone}`;
+    el.replaceChildren(h('b', null, text), ...(sub ? [h('small', null, sub)] : []));
+    replay(el, 'play');
+    clearTimeout(this.gradeTimer[key]);
+    this.gradeTimer[key] = window.setTimeout(() => el.classList.remove('play'), 1100);
   }
 
   setPrompt(text: string | null, side?: Side): void {

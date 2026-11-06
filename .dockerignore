@@ -1,4 +1,12 @@
-node_modules
-games-src
-server/.cert
+# Keep the build context small and free of local state.
+**/node_modules
 **/.DS_Store
+.git
+.github
+server/.cert
+swing_logs
+games-src/*/dist
+*.log
+.env
+.env.*
+!.env.example

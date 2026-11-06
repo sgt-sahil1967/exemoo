@@ -78,6 +78,7 @@ const match = new Match({
       const s = match.phoneScore(side);
       if (s) sendTo(side, { t: 'score', ...s });
     } else if ('power' in msg) sendTo('player', { t: 'power', ...match.phonePower() });
+    else if ('sound' in msg) sendTo(side, { t: 'sound', name: msg.sound, q: msg.q });
     else sendTo(side, { t: 'screen', screen: msg.screen, label: msg.label });
   },
 });
@@ -246,6 +247,9 @@ function onButton(b: ControllerButton, from: Side = 'player') {
   }
   if (!inMenu) {
     if (b === 'pause' || b === 'back') setPaused(true);
+    // Tap-to-hit fallback: the phone's big button is a swing; ◀ ▶ pick the side of the table to aim at.
+    else if (b === 'action') match.tap(from);
+    else if (b === 'left' || b === 'right') match.nudgeAim(from, b === 'left' ? -1 : 1);
     return;
   }
   switch (b) {
@@ -311,7 +315,7 @@ ui.onVersusPair = () => {
 };
 ui.onUseMouse = () => {
   ui.show('main');
-  ui.toast('Mouse: move to aim, flick or click to swing · Shift = backspin');
+  ui.toast('Mouse: click (or Space) when the ring turns green · move left/right to aim');
 };
 ui.onResetStats = () => {
   stats = freshStats();

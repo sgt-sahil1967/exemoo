@@ -59,7 +59,8 @@ export class PhoneInput implements PaddleInput {
   }
 
   private handedness: Handedness;
-  private readonly detector = new SwingDetector();
+  /** Slightly lower trigger than the detector default: any deliberate flick should count as a hit. */
+  private readonly detector = new SwingDetector({ on: 0.21, off: 0.12 });
   private swingCbs = new Set<(e: SwingEvent) => void>();
   private buttonCbs = new Set<(b: ControllerButton) => void>();
   private unsubs: Array<() => void> = [];

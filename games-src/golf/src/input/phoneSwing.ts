@@ -8,6 +8,10 @@
  *      (SEN1 legacy packets, some browsers)
  *   3. swing-plane quantities from the RAW quaternion (θ, in-plane ω, face twist, path) →
  *      SwingDetector (see swingDetector.ts for the state machine & thresholds)
+ *      Grip direction: holding the phone screen-away instead of screen-toward-you mirrors the
+ *      device x axis, which flips which side reads as the backswing. A golfer always takes the club
+ *      back first, so a takeaway on the "wrong" side from address flips `grip` (θ, ω, path × grip).
+ *      The face twist is about the shaft itself, so it is unaffected and follows handedness only.
  *   4. auto-calibration: in 'aim'/'putt', phone still (< 14°/s) and pointing down (shaft within
  *      ~55° of gravity) for 0.6 s while the detector is idle → capture address (ClubFrame)
  *   5. SEN2 button bitmask edges → onButton, de-duplicated against reliable {t:'button'} messages
@@ -85,6 +89,9 @@ export class PhoneSwingInput implements SwingInput {
   private stillMs = 0;
   private calThisStill = false;
   private theta = 0;
+  /** +1 / −1: which side of address the backswing goes for the way this phone is held. */
+  private grip = 1;
+  private gripKnown = false;
   private omegaPlane = 0;
   private face = 0;
   private prevMask = 0;
@@ -203,6 +210,8 @@ export class PhoneSwingInput implements SwingInput {
       this._calibrated = false;
       this.calibration = 0;
       this.gyroCheck.reset();
+      this.grip = 1;
+      this.gripKnown = false;
       this.dropLive();
     } else if (m.t === 'button') {
       this.fireButton(m.b, 'msg');
@@ -320,14 +329,20 @@ export class PhoneSwingInput implements SwingInput {
     this.theta = theta;
     this.omegaPlane = this.frame.planeRate(this.omegaEarth);
     this.face = clamp(this.frame.twist(meas) / FACE_FULL, -1, 1);
-    const ev = this.detector.push({
+    const det = this.detector;
+    if (det.phase === 'idle' && det.isReady && theta * this.grip < -det.tuning.startAngle && this.omegaPlane * this.grip < 0) {
+      this.grip = -this.grip; // takeaway went the other way: the phone is held mirrored
+    }
+    det.allowTopped = this.gripKnown;
+    const ev = det.push({
       t: now,
-      theta,
-      omega: this.omegaPlane,
+      theta: theta * this.grip,
+      omega: this.omegaPlane * this.grip,
       face: this.face,
-      path: this.frame.path(this.omegaEarth, meas),
+      path: this.frame.path(this.omegaEarth, meas) * this.grip,
       armed: this.pose.armed,
     });
+    if (det.phase !== 'idle') this.gripKnown = true;
     if (ev) this.onImuSwing(ev, now);
   }
 
@@ -389,7 +404,7 @@ export class PhoneSwingInput implements SwingInput {
     const putt = this.mode === 'putt';
     const full = putt ? PUTT_TUNING.backFull : AIM_TUNING.backFull;
     const speed = live ? clamp(Math.abs(this.omegaPlane) / (putt ? 220 * DEG : 900 * DEG), 0, 1) : 0;
-    const theta = live && this._calibrated ? this.theta : 0;
+    const theta = live && this._calibrated ? this.theta * this.grip : 0;
     const face = live && this._calibrated ? this.face : 0;
     const tau = speed > 0.12 ? 0.012 : 0.05;
     const k = dt > 0 ? 1 - Math.exp(-dt / tau) : 1;

@@ -1,0 +1,106 @@
+{
+  "kind": "sfx",
+  "duration": 6,
+  "layers": [
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0,
+      "dur": 6,
+      "gain": 1.2,
+      "amp": {
+        "attack": 0.05,
+        "decay": 0,
+        "sustain": 1,
+        "release": 0.05
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 1600,
+          "end": 1600
+        },
+        "q": 0.8
+      },
+      "tremolo": {
+        "hz": 2.3,
+        "depth": 0.25
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "white",
+      "start": 0,
+      "dur": 6,
+      "gain": 0.75,
+      "amp": {
+        "attack": 0.05,
+        "decay": 0,
+        "sustain": 1,
+        "release": 0.05
+      },
+      "filter": {
+        "type": "highpass",
+        "cutoff": {
+          "start": 4200,
+          "end": 4200
+        },
+        "q": 0.7
+      },
+      "tremolo": {
+        "hz": 3.7,
+        "depth": 0.3
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "brown",
+      "start": 0,
+      "dur": 6,
+      "gain": 1.1,
+      "amp": {
+        "attack": 0.05,
+        "decay": 0,
+        "sustain": 1,
+        "release": 0.05
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 350,
+          "end": 350
+        },
+        "q": 1
+      },
+      "tremolo": {
+        "hz": 1.3,
+        "depth": 0.2
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0,
+      "dur": 6,
+      "gain": 0.85,
+      "amp": {
+        "attack": 0.05,
+        "decay": 0,
+        "sustain": 1,
+        "release": 0.05
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 1000,
+          "end": 1000
+        },
+        "q": 1.2
+      },
+      "tremolo": {
+        "hz": 1.9,
+        "depth": 0.35
+      }
+    }
+  ]
+}

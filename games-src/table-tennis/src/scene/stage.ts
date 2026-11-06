@@ -26,6 +26,7 @@ import { Avatar } from './avatar';
 import { BallView } from './ball';
 import { CameraRig } from './camera';
 import { FxSystem, pointScale } from './fx';
+import { HitCues, type HitCue } from './hitCue';
 import { ScoreboardView } from './scoreboard';
 import { TableView } from './table';
 import { disposeTree } from './util';
@@ -40,6 +41,7 @@ export class Stage {
   readonly camera: PerspectiveCamera;
   readonly renderer: WebGLRenderer;
   readonly scene = new Scene();
+  private readonly cues = new HitCues();
   readonly fx: {
     bounce(pos: Vector3, side: Side): void;
     hit(pos: Vector3, power: number, side: Side): void;
@@ -121,7 +123,7 @@ export class Stage {
     this.spot.distance = 0;
     this.scene.add(this.spot, this.spot.target);
 
-    this.scene.add(this.table.group, this.ball.group, this.fxs.group, this.board.group);
+    this.scene.add(this.table.group, this.ball.group, this.fxs.group, this.board.group, this.cues.group);
     this.board.group.position.set(-(HALF_W + 1.05), 0, -0.15);
     this.board.group.rotation.y = 0.42;
 
@@ -280,6 +282,11 @@ export class Stage {
     this.avatars[side].setColor(color);
   }
 
+  /** Timing ring / landing marker / aim pads for a human side (null hides them). */
+  setHitCue(side: Side, cue: HitCue | null): void {
+    this.cues.set(side, cue);
+  }
+
   setTrajectory(points: Vector3[] | null): void {
     this.fxs.setTrajectory(points);
   }
@@ -327,6 +334,7 @@ export class Stage {
     this.camera.updateMatrixWorld();
     this.ball.update(dt, this.camera);
     this.fxs.update(dt);
+    this.cues.update(dt);
     const hPx = this.renderer.domElement.height;
     pointScale.value = hPx / (2 * Math.tan(MathUtils.degToRad(this.camera.fov) / 2));
   }

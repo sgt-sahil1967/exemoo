@@ -1,0 +1,81 @@
+{
+  "kind": "sfx",
+  "duration": 0.7,
+  "layers": [
+    {
+      "source": "square",
+      "start": 0,
+      "dur": 0.5,
+      "gain": 0.7,
+      "freq": {
+        "start": 840,
+        "end": 880,
+        "curve": "exp",
+        "vibratoHz": 0,
+        "vibratoDepth": 0
+      },
+      "amp": {
+        "attack": 0.02,
+        "decay": 0.08,
+        "sustain": 0.85,
+        "release": 0.15
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 3500,
+          "end": 3000,
+          "curve": "lin"
+        },
+        "q": 1.2
+      }
+    },
+    {
+      "source": "saw",
+      "start": 0,
+      "dur": 0.5,
+      "gain": 0.5,
+      "freq": {
+        "start": 840,
+        "end": 880,
+        "curve": "exp",
+        "vibratoHz": 0,
+        "vibratoDepth": 0
+      },
+      "amp": {
+        "attack": 0.02,
+        "decay": 0.08,
+        "sustain": 0.85,
+        "release": 0.15
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 4500,
+          "end": 3500,
+          "curve": "lin"
+        },
+        "q": 1
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0,
+      "dur": 0.5,
+      "gain": 0.6,
+      "freq": {
+        "start": 420,
+        "end": 440,
+        "curve": "exp",
+        "vibratoHz": 0,
+        "vibratoDepth": 0
+      },
+      "amp": {
+        "attack": 0.015,
+        "decay": 0.1,
+        "sustain": 0.8,
+        "release": 0.15
+      }
+    }
+  ]
+}

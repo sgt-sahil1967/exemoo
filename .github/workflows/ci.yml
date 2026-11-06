@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            games-src/*/package-lock.json
+      - name: Install server dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Server, pairing and reconnect tests
+        run: npm test
+      - name: Build every game from games-src (npm ci + tsc + vite)
+        run: npm run build:ci
+      - name: Deploy audit (sizes, local paths, LAN IPs, external hosts)
+        run: npm run check:deploy
+      - name: Smoke test the production server
+        run: |
+          NODE_ENV=production PORT=8080 node server/index.js &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8080/readyz
+          curl -fsS -o /dev/null http://127.0.0.1:8080/pad
+          for g in $(ls games); do [ -f "games/$g/index.html" ] && curl -fsS -o /dev/null "http://127.0.0.1:8080/play/$g/"; done
+          kill %1
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: test-and-build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: exemoo:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run image and check health
+        run: |
+          docker run -d --name exemoo -p 8080:8080 exemoo:ci
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fsS -o /dev/null http://127.0.0.1:8080/
+          docker stop -t 15 exemoo
+          docker logs exemoo | tail -5

@@ -48,13 +48,16 @@ export interface DifficultyProfile {
   pressure: number;
   /** Ready position distance behind the end line. */
   readyDepth: number;
+  /** Hard cap on shot speed (m/s) so lower levels give rallies a human can follow. */
+  maxSpeed: number;
 }
 
 export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
-  rookie: { reaction: 0.3, moveSpeed: 2.4, accel: 7, reach: 0.3, error: 0.55, whiff: 0.05, speedScale: 0.72, spinScale: 0.5, aggression: 0.15, openCourt: 0.2, margin: 0.3, variety: 0.3, pressure: 0.45, readyDepth: 0.45 },
-  club: { reaction: 0.2, moveSpeed: 3.4, accel: 10, reach: 0.42, error: 0.34, whiff: 0.025, speedScale: 0.83, spinScale: 0.7, aggression: 0.35, openCourt: 0.45, margin: 0.22, variety: 0.5, pressure: 0.3, readyDepth: 0.5 },
-  pro: { reaction: 0.14, moveSpeed: 4.0, accel: 14, reach: 0.48, error: 0.24, whiff: 0.01, speedScale: 0.93, spinScale: 0.88, aggression: 0.55, openCourt: 0.7, margin: 0.16, variety: 0.75, pressure: 0.2, readyDepth: 0.6 },
-  legend: { reaction: 0.08, moveSpeed: 5.2, accel: 20, reach: 0.62, error: 0.12, whiff: 0.002, speedScale: 1.0, spinScale: 1.0, aggression: 0.75, openCourt: 0.9, margin: 0.12, variety: 1.0, pressure: 0.1, readyDepth: 0.65 },
+  // Rookie/Club are tuned for long, friendly rallies: slow, little spin, safe margins, aimed near the middle.
+  rookie: { reaction: 0.26, moveSpeed: 3.0, accel: 9, reach: 0.45, error: 0.3, whiff: 0.03, speedScale: 0.6, spinScale: 0.25, aggression: 0.05, openCourt: 0.05, margin: 0.32, variety: 0.25, pressure: 0.3, readyDepth: 0.45, maxSpeed: 6.8 },
+  club: { reaction: 0.2, moveSpeed: 3.4, accel: 10, reach: 0.45, error: 0.27, whiff: 0.02, speedScale: 0.75, spinScale: 0.5, aggression: 0.25, openCourt: 0.35, margin: 0.24, variety: 0.45, pressure: 0.3, readyDepth: 0.5, maxSpeed: 9 },
+  pro: { reaction: 0.14, moveSpeed: 4.0, accel: 14, reach: 0.48, error: 0.22, whiff: 0.01, speedScale: 0.93, spinScale: 0.88, aggression: 0.55, openCourt: 0.7, margin: 0.16, variety: 0.75, pressure: 0.2, readyDepth: 0.6, maxSpeed: 13 },
+  legend: { reaction: 0.08, moveSpeed: 5.2, accel: 20, reach: 0.62, error: 0.12, whiff: 0.002, speedScale: 1.0, spinScale: 1.0, aggression: 0.75, openCourt: 0.9, margin: 0.12, variety: 1.0, pressure: 0.1, readyDepth: 0.65, maxSpeed: 99 },
 };
 
 interface StrokeAnim {
@@ -244,7 +247,7 @@ export class AIPlayer {
     let depth: number, speed: number, top: number;
     if (roll < longP) {
       depth = HALF_L - d.margin * 0.8 - r() * 0.15;
-      speed = 6 + 2.5 * d.speedScale * r();
+      speed = Math.min(6 + 2.5 * d.speedScale * r(), d.maxSpeed);
       top = (150 + 250 * r()) * d.spinScale;
     } else {
       depth = 0.38 + r() * 0.25;
@@ -328,6 +331,7 @@ export class AIPlayer {
       default: speed = 8; top = 0;
     }
     speed *= kind === 'push' || kind === 'chop' ? 1 : lerp(1, d.speedScale, 0.9);
+    speed = Math.min(speed, d.maxSpeed);
     top *= d.spinScale;
     const sideSpin = (r() * 2 - 1) * 120 * d.variety * d.spinScale;
     const spin = this.spinVector(p.pos, target, top, sideSpin);

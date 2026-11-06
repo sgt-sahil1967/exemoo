@@ -1,0 +1,86 @@
+{
+  "kind": "sfx",
+  "duration": 0.4,
+  "layers": [
+    {
+      "source": "sine",
+      "start": 0,
+      "dur": 0.08,
+      "gain": 0.7,
+      "freq": {
+        "start": 988,
+        "end": 988
+      },
+      "amp": {
+        "attack": 0.003,
+        "decay": 0.05,
+        "sustain": 0.2,
+        "release": 0.03
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0,
+      "dur": 0.08,
+      "gain": 0.35,
+      "freq": {
+        "start": 1976,
+        "end": 1976
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.04,
+        "sustain": 0.1,
+        "release": 0.03
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.08,
+      "dur": 0.25,
+      "gain": 0.8,
+      "freq": {
+        "start": 1319,
+        "end": 1319
+      },
+      "amp": {
+        "attack": 0.003,
+        "decay": 0.12,
+        "sustain": 0.1,
+        "release": 0.1
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0.08,
+      "dur": 0.22,
+      "gain": 0.45,
+      "freq": {
+        "start": 2637,
+        "end": 2637
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.1,
+        "sustain": 0.05,
+        "release": 0.08
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.08,
+      "dur": 0.18,
+      "gain": 0.25,
+      "freq": {
+        "start": 3951,
+        "end": 3951
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.06,
+        "sustain": 0,
+        "release": 0.05
+      }
+    }
+  ]
+}

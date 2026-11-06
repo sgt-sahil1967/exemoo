@@ -59,6 +59,8 @@ interface SimOpts {
   gyroScale?: number;
   noGyro?: boolean;
   seed?: number;
+  /** −1 = phone held mirrored (screen facing away): the backswing reads on the other side. */
+  grip?: 1 | -1;
 }
 
 function simulate(segs: Seg[], o: SimOpts = {}) {
@@ -73,7 +75,7 @@ function simulate(segs: Seg[], o: SimOpts = {}) {
   const events: SwingEvent[] = [];
   input.onSwing((e) => events.push(e));
   // plane normal: rotation about +N moves the shaft toward the backswing side
-  const N = hand === 'right' ? new Vector3(0, -1, 0) : new Vector3(0, 1, 0);
+  const N = new Vector3(0, hand === 'right' ? -1 : 1, 0).multiplyScalar(o.grip ?? 1);
   const q = Q0.clone();
   let seq = 0;
   let seed = o.seed ?? 7;
@@ -219,6 +221,25 @@ describe('PhoneSwingInput — full swing', () => {
     expect(open.curve).toBeGreaterThan(0.2);
   });
 
+  it('phone held mirrored → still a normal right-handed swing', () => {
+    const { events } = simulate([...fullSwing(900), ...fullSwing(900, { twist: 18 })], { grip: -1 });
+    expect(events).toHaveLength(2);
+    expect(events[0].power).toBeGreaterThan(0.9);
+    expect(Math.abs(events[0].curve)).toBeLessThan(0.05);
+    expect(events[1].curve).toBeGreaterThan(0.2); // face still follows handedness
+    const { input } = simulate([still(800), { ms: 900, rate: sinRate(90, 900) }, still(200)], { grip: -1 });
+    expect(input.pose.shaftAngle).toBeCloseTo(Math.PI / 2, 1); // golfer on screen swings back too
+  });
+
+  it('soft chip with a short backswing registers', () => {
+    const chip: Seg[] = [still(800, true), { ms: 400, rate: sinRate(30, 400), armed: true }, { ms: 250, rate: (u) => -120 * Math.sin(Math.PI * u), armed: true }, still(400, true)];
+    const { events } = simulate(chip);
+    expect(events).toHaveLength(1);
+    expect(events[0].power).toBeGreaterThan(0.03);
+    expect(events[0].power).toBeLessThan(0.2);
+    expect(events[0].quality).toBeGreaterThan(0.7);
+  });
+
   it('works without a gyro (quaternion differencing, SEN1)', () => {
     const { events } = simulate(fullSwing(900), { noGyro: true });
     expect(events).toHaveLength(1);
@@ -294,6 +315,13 @@ describe('PhoneSwingInput — putting', () => {
     expect(events[0].power).toBeGreaterThan(0.4);
     expect(events[0].power).toBeLessThan(0.75);
     expect(events[0].practice).toBe(false);
+  });
+
+  it('tiny tap-in putt registers', () => {
+    const tap: Seg[] = [still(800, true), { ms: 400, rate: sinRate(4, 400), armed: true }, { ms: 200, rate: (u) => -40 * Math.sin(Math.PI * u), armed: true }, still(300, true)];
+    const { events } = simulate(tap, { mode: 'putt' });
+    expect(events).toHaveLength(1);
+    expect(events[0].power).toBeLessThan(0.2);
   });
 
   it('putt power grows with stroke speed', () => {

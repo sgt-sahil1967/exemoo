@@ -9,8 +9,10 @@
  * Protocol (JSON text frames):
  *   game  → {type:'create_room', pin?, resume?}  → {type:'joined', role:'game', room, token, resume, peer, expires_in, features}
  *   game  → {type:'resume_room', room, token}    → same 'joined' (token = the game's previous token or resume key)
- *   phone → {type:'join_room', room}             → {type:'joined', role:'controller', room, token, peer, ...}
- *   both  ← {type:'peer_connected'|'peer_disconnected', role}
+ *   phone → {type:'join_room', room, resume?}    → {type:'joined', role:'controller', room, token, resume, resumed, peer, ...}
+ *                                                  (resume = the controller key from an earlier 'joined': a reloaded
+ *                                                  pad presents it and is reported as resumed)
+ *   both  ← {type:'peer_connected'|'peer_disconnected', role, resumed?}
  *   both  → {type:'offer'|'answer'|'candidate', token, ...}   forwarded to the peer with `from`
  *   both  → {type:'relay', token, payload|data}               forwarded to the peer with `from` (WebRTC fallback)
  *   both  → binary frames                                     forwarded verbatim (sensor packets in fallback mode)
@@ -18,18 +20,24 @@
  *   both  ← {type:'replaced'} | {type:'room_closed'|'room_expired', reason} | {type:'error', code, message}
  *
  * Rooms live while their game screen is connected. When the game leaves, the room is kept for
- * `gameGraceMs` so a reloaded tab can resume the same PIN; after that it is closed.
+ * `gameGraceMs` so a reloaded tab (or a laptop waking up) can resume the same PIN; after that it is
+ * closed. A room with no game and no traffic for `idleTtlMs` is reaped.
+ *
+ * Abuse limits: per-IP room creation, failed PIN guesses and open sockets; a global socket cap;
+ * frame size (`maxPayload`); a per-socket message rate (token bucket) that closes floods with 1008.
+ * `close()` ends every socket with 1012 (service restart) so clients reconnect at once to the next
+ * instance, where the screen re-creates its room with the same PIN.
  */
 import crypto from 'node:crypto';
 import { WebSocketServer } from 'ws';
 
 const DEFAULTS = {
   /** Room whose game left is closed after this long (time to reload and resume). */
-  gameGraceMs: 60_000,
+  gameGraceMs: 5 * 60_000,
   /** Room with no traffic at all is closed after this long. */
   idleTtlMs: 30 * 60_000,
   /** Heartbeat interval; a socket that misses one pong is terminated. */
-  heartbeatMs: 20_000,
+  heartbeatMs: 15_000,
   /** Max inbound frame size (bytes). */
   maxPayload: 64 * 1024,
   /** Upper bound on rooms held in memory. */
@@ -38,12 +46,17 @@ const DEFAULTS = {
   createPerMinute: 30,
   joinFailPerMinute: 20,
   socketsPerIp: 60,
+  /** Global cap on open signalling sockets. */
+  maxSockets: 5000,
+  /** Per-socket message rate: sustained messages/s and burst (sensor relay is ~60/s). */
+  msgPerSecond: 200,
+  msgBurst: 400,
   /** Max bytes queued to a peer before binary sensor frames are dropped. */
   maxBuffered: 256 * 1024,
   log: () => {},
 };
 
-const FEATURES = ['relay', 'binary_relay', 'resume', 'resume_room', 'rejoin'];
+const FEATURES = ['relay', 'binary_relay', 'resume', 'resume_room', 'rejoin', 'controller_resume'];
 const SIGNAL_TYPES = new Set(['offer', 'answer', 'candidate']);
 
 const randomToken = () => crypto.randomBytes(16).toString('hex');
@@ -57,7 +70,7 @@ function send(socket, message) {
 const fail = (socket, code, message) => send(socket, { type: 'error', code, message });
 
 /** Counts events per key over a sliding minute. */
-function rateLimiter() {
+export function rateLimiter() {
   const hits = new Map();
   return {
     take(key, limit) {
@@ -86,13 +99,14 @@ export function createSignalingHub(options = {}) {
   const creates = rateLimiter();
   const joinFails = rateLimiter();
   const socketsByIp = new Map();
-  const stats = { roomsCreated: 0, pairs: 0, relayedJson: 0, relayedBinary: 0, droppedBinary: 0 };
+  const stats = { roomsCreated: 0, pairs: 0, resumes: 0, relayedJson: 0, relayedBinary: 0, droppedBinary: 0, floods: 0, refused: 0 };
+  let closing = false;
 
   // ─────────────────────────────── rooms ───────────────────────────────
   function newRoom(wantPin) {
     let pin = isPin(wantPin) && !rooms.has(wantPin) ? wantPin : null;
     while (!pin || rooms.has(pin)) pin = randomPin();
-    const room = { pin, resume: randomToken(), game: null, controller: null, gameToken: null, gameLeftAt: 0, lastActivity: Date.now() };
+    const room = { pin, resume: randomToken(), controllerResume: null, game: null, controller: null, gameToken: null, gameLeftAt: 0, lastActivity: Date.now() };
     rooms.set(pin, room);
     stats.roomsCreated++;
     log(`room ${pin} created`);
@@ -127,7 +141,7 @@ export function createSignalingHub(options = {}) {
     return true;
   }
 
-  function attach(socket, room, role, token) {
+  function attach(socket, room, role, token, resumed = false) {
     const existing = room[role];
     if (existing && existing.socket !== socket) {
       // A newer connection replaces a stale one (phone or game reconnected before the old socket died).
@@ -154,15 +168,17 @@ export function createSignalingHub(options = {}) {
       role,
       room: room.pin,
       token,
-      resume: role === 'game' ? room.resume : undefined,
+      resume: role === 'game' ? room.resume : room.controllerResume,
+      resumed,
       peer: !!peer,
       expires_in: Math.floor(cfg.idleTtlMs / 1000),
       features: FEATURES,
     });
-    log(`room ${room.pin}: ${role} joined (${socket.ip})`);
+    log(`room ${room.pin}: ${role} ${resumed ? 'resumed' : 'joined'} (${socket.ip})`);
+    if (resumed) stats.resumes++;
     if (peer) {
       stats.pairs++;
-      send(peer.socket, { type: 'peer_connected', role });
+      send(peer.socket, { type: 'peer_connected', role, resumed });
       send(socket, { type: 'peer_connected', role: otherRole(role) });
     }
   }
@@ -194,7 +210,7 @@ export function createSignalingHub(options = {}) {
         // Resume: a reloaded game reclaims its room (the phone may still be in it).
         const existing = isPin(message.pin) ? rooms.get(message.pin) : null;
         if (existing && roomAlive(existing) && typeof message.resume === 'string' && message.resume === existing.resume) {
-          return attach(socket, existing, 'game', randomToken());
+          return attach(socket, existing, 'game', randomToken(), true);
         }
         if (!creates.take(socket.ip, cfg.createPerMinute)) return fail(socket, 'rate_limited', 'Too many rooms created. Try again in a minute.');
         if (rooms.size >= cfg.maxRooms) return fail(socket, 'server_full', 'The server is busy. Try again shortly.');
@@ -207,7 +223,7 @@ export function createSignalingHub(options = {}) {
         if (!roomAlive(room) || !key || (key !== room.gameToken && key !== room.resume)) {
           return fail(socket, 'room_not_found', 'That room cannot be resumed.');
         }
-        return attach(socket, room, 'game', room.gameToken || randomToken());
+        return attach(socket, room, 'game', room.gameToken || randomToken(), true);
       }
       case 'join_room': {
         if (session) return fail(socket, 'already_joined', 'This socket is already attached to a room.');
@@ -218,7 +234,11 @@ export function createSignalingHub(options = {}) {
           if (!joinFails.take(socket.ip, cfg.joinFailPerMinute)) return fail(socket, 'rate_limited', 'Too many attempts. Try again in a minute.');
           return fail(socket, 'room_not_found', 'That pairing PIN is invalid or expired.');
         }
-        return attach(socket, room, 'controller', randomToken());
+        // Same phone coming back (reload, reconnect) keeps its key; a different phone gets a new one,
+        // which invalidates the old phone's key.
+        const resumed = typeof message.resume === 'string' && !!room.controllerResume && message.resume === room.controllerResume;
+        if (!resumed) room.controllerResume = randomToken();
+        return attach(socket, room, 'controller', randomToken(), resumed);
       }
       case 'ping':
         return send(socket, { type: 'pong', timestamp_ms: Date.now() });
@@ -265,8 +285,19 @@ export function createSignalingHub(options = {}) {
     socket.ip = clientIp(req, cfg.trustProxy);
     socket.isAlive = true;
     socket.on('pong', () => (socket.isAlive = true));
+    socket.bucket = cfg.msgBurst;
+    socket.bucketAt = Date.now();
     socket.on('message', (raw, isBinary) => {
       socket.isAlive = true;
+      // Token bucket: a client flooding messages is cut off (the real pad sends ~60 sensor frames/s).
+      const now = Date.now();
+      socket.bucket = Math.min(cfg.msgBurst, socket.bucket + ((now - socket.bucketAt) * cfg.msgPerSecond) / 1000);
+      socket.bucketAt = now;
+      if (--socket.bucket < 0) {
+        stats.floods++;
+        log(`flood from ${socket.ip}: closing socket`);
+        return socket.close(1008, 'rate limit');
+      }
       if (isBinary) return handleBinary(socket, raw);
       let msg;
       try {
@@ -289,11 +320,14 @@ export function createSignalingHub(options = {}) {
   function handleUpgrade(req, socket, head) {
     const ip = clientIp(req, cfg.trustProxy);
     const n = socketsByIp.get(ip) || 0;
-    if (n >= cfg.socketsPerIp) {
-      socket.write('HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\n\r\n');
+    const refuse = (status) => {
+      stats.refused++;
+      socket.write(`HTTP/1.1 ${status}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
       socket.destroy();
-      return;
-    }
+    };
+    if (closing) return refuse('503 Service Unavailable');
+    if (n >= cfg.socketsPerIp) return refuse('429 Too Many Requests');
+    if (wss.clients.size >= cfg.maxSockets) return refuse('503 Service Unavailable');
     socketsByIp.set(ip, n + 1);
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
   }
@@ -325,14 +359,34 @@ export function createSignalingHub(options = {}) {
     rooms,
     stats,
     handleUpgrade,
+    clientIp: (req) => clientIp(req, cfg.trustProxy),
     get clients() {
       return wss.clients.size;
     },
-    close() {
+    /**
+     * Stop. With `graceful`, sockets are closed with 1012 (service restart) so clients reconnect to
+     * the next instance right away; stragglers are terminated after `graceMs`.
+     */
+    close({ graceful = false, graceMs = 1000 } = {}) {
+      closing = true;
       clearInterval(heartbeat);
       clearInterval(sweeper);
-      for (const s of wss.clients) s.terminate();
-      wss.close();
+      if (!graceful) {
+        for (const s of wss.clients) s.terminate();
+        wss.close();
+        return Promise.resolve();
+      }
+      for (const s of wss.clients) s.close(1012, 'server restart');
+      return new Promise((resolve) => {
+        const t0 = Date.now();
+        const check = setInterval(() => {
+          if (wss.clients.size && Date.now() - t0 < graceMs) return;
+          clearInterval(check);
+          for (const s of wss.clients) s.terminate();
+          wss.close();
+          resolve();
+        }, 25);
+      });
     },
   };
 }

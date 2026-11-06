@@ -1,0 +1,176 @@
+{
+  "kind": "sfx",
+  "duration": 0.9,
+  "layers": [
+    {
+      "source": "square",
+      "start": 0,
+      "dur": 0.25,
+      "gain": 0.6,
+      "freq": {
+        "start": 523.25,
+        "end": 523.25,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.12,
+        "sustain": 0.1,
+        "release": 0.08
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 2500,
+          "end": 600,
+          "curve": "exp"
+        },
+        "q": 1.2
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0,
+      "dur": 0.25,
+      "gain": 0.5,
+      "freq": {
+        "start": 523.25,
+        "end": 523.25
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.15,
+        "sustain": 0.1,
+        "release": 0.08
+      }
+    },
+    {
+      "source": "square",
+      "start": 0.1,
+      "dur": 0.25,
+      "gain": 0.6,
+      "freq": {
+        "start": 659.25,
+        "end": 659.25,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.12,
+        "sustain": 0.1,
+        "release": 0.08
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 3000,
+          "end": 700,
+          "curve": "exp"
+        },
+        "q": 1.2
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0.1,
+      "dur": 0.25,
+      "gain": 0.5,
+      "freq": {
+        "start": 659.25,
+        "end": 659.25
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.15,
+        "sustain": 0.1,
+        "release": 0.08
+      }
+    },
+    {
+      "source": "square",
+      "start": 0.2,
+      "dur": 0.25,
+      "gain": 0.65,
+      "freq": {
+        "start": 783.99,
+        "end": 783.99,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.12,
+        "sustain": 0.1,
+        "release": 0.08
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 3500,
+          "end": 800,
+          "curve": "exp"
+        },
+        "q": 1.2
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0.2,
+      "dur": 0.25,
+      "gain": 0.5,
+      "freq": {
+        "start": 783.99,
+        "end": 783.99
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.15,
+        "sustain": 0.1,
+        "release": 0.08
+      }
+    },
+    {
+      "source": "square",
+      "start": 0.3,
+      "dur": 0.45,
+      "gain": 0.7,
+      "freq": {
+        "start": 1046.5,
+        "end": 1046.5,
+        "curve": "exp",
+        "vibratoHz": 8,
+        "vibratoDepth": 0.15
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.2,
+        "sustain": 0.2,
+        "release": 0.2
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 4500,
+          "end": 1200,
+          "curve": "exp"
+        },
+        "q": 1.5
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.3,
+      "dur": 0.5,
+      "gain": 0.6,
+      "freq": {
+        "start": 2093,
+        "end": 2093
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.25,
+        "sustain": 0.05,
+        "release": 0.2
+      }
+    }
+  ]
+}

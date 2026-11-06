@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><title>UI dev</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>body{margin:0;background:linear-gradient(#7fd0ff,#2bb5e8 60%,#5fd03a);height:100vh;overflow:hidden}
+#dev{position:fixed;bottom:4px;left:4px;z-index:10;display:flex;gap:4px;flex-wrap:wrap}#dev button{font:12px sans-serif;padding:2px 6px}
+#cover{position:fixed;top:8px;left:8px;width:400px;z-index:5;border:5px solid #1b1b3a;border-radius:20px;overflow:hidden;display:none}</style></head>
+<body><div id="ui"></div><div id="cover"></div><div id="dev"></div>
+<script type="module">
+import { createUI } from './js/ui.js'; import { rapidsRowCover } from './js/cover.js';
+const ui = createUI(document.getElementById('ui')); window.ui = ui;
+document.getElementById('cover').innerHTML = rapidsRowCover();
+let raf = 0, t0 = 0;
+const qr = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#fff"/><path d="M1 1h3v3H1zM6 1h3v3H6zM1 6h3v3H1zM5 5h1v1H5zM7 6h2v1H7zM6 8h3v1H6z" fill="#000"/></svg>');
+const pk = (c) => ({ connected: c, label: '', pin: '4821', qrSrc: qr, url: 'http://192.168.1.20:8080/pad' });
+function stop() { cancelAnimationFrame(raf); }
+const S = {
+  title: () => { stop(); ui.hideAll(); ui.showTitle({ onPlay: () => S.pairing(), onKeyboard: () => S.countdown() }); },
+  pairing: () => { stop(); ui.hideAll(); ui.showPairing({ p1: { ...pk(false), label: 'Uses your Exemoo phone' }, p2: pk(false), onStart: () => S.hud(), onBack: S.title }); },
+  pairing1: () => ui.showPairing({ p1: { ...pk(true), label: 'Uses your Exemoo phone' }, p2: pk(false), onStart: () => {}, onBack: S.title }),
+  pairing2: () => ui.showPairing({ p1: pk(true), p2: pk(true), onStart: () => {}, onBack: S.title }),
+  countdown: () => { stop(); ui.hideAll(); let n = 3; ui.showCountdown(n); const iv = setInterval(() => { n--; ui.showCountdown(n); if (n < 0) clearInterval(iv); }, 900); },
+  hud: () => { stop(); ui.hideAll(); ui.hud.setGates([0.18, 0.4, 0.62, 0.85]); ui.hud.show(); t0 = performance.now();
+    const f = (now) => { const t = (now - t0) / 1000; const w = (a) => Math.max(0, Math.sin(t * a) * .5 + .5);
+      ui.hud.update({ time: t, progress: (t / 40) % 1, speed: 4 + 4 * w(1), coins: Math.floor(t / 3) % 31, coinsTotal: 30, zone: 'Cow Meadow',
+        p1: { power: w(2), rate: 1 + w(2) * 1.5, reverse: false }, p2: { power: w(1.4), rate: 1.2, reverse: (t % 8) > 5 }, sync: w(.7) });
+      raf = requestAnimationFrame(f); }; raf = requestAnimationFrame(f); },
+  toast: () => { ui.toast('Coin streak!', '#2fc65a'); ui.toast('Ouch! Rock', '#ff3b30'); },
+  banner: () => ui.banner('CHECKPOINT!'),
+  pause: () => ui.showPause({ onResume: S.hud, onRestart: S.countdown, onQuit: S.title }),
+  results: () => { stop(); ui.hideAll(); ui.showResults({ time: 187.34, coins: 24, coinsTotal: 30, best: 187.34, stars: 2, hits: 5, onAgain: S.countdown, onQuit: S.title }); },
+  cover: () => { const c = document.getElementById('cover'); c.style.display = c.style.display === 'block' ? 'none' : 'block'; },
+};
+for (const k in S) { const b = document.createElement('button'); b.textContent = k; b.onclick = S[k]; document.getElementById('dev').append(b); }
+S.title();
+</script></body></html>

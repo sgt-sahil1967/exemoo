@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Farm Kart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/play/farm-kart/assets/index--ih4HOaX.js"></script>
+  <link rel="stylesheet" crossorigin href="/play/farm-kart/assets/index-CT3IkC-o.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="hud"></canvas>
+
+<!-- TITLE -->
+<div id="title" class="screen">
+  <h1 class="logo display" aria-label="Farm Kart">
+    <span class="word"><span>F</span><span>A</span><span>R</span><span>M</span></span>
+    <span class="word"><span>K</span><span>A</span><span>R</span><span>T</span></span>
+  </h1>
+  <p class="tag">Four farmyard Grand Prix tracks</p>
+  <div class="cast" id="cast"></div>
+  <button class="btn yellow xl" id="btn-play">Start Engines</button>
+  <button class="btn blue" id="btn-settings-title"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.4 4.9-.1-2.8 2-1.6-2-3.5-2.4.9-2.3-1.4L15.2 2h-4l-.4 2.5-2.3 1.4L6 5 4 8.5l2 1.6-.1 2.8-2 1.6 2 3.5 2.5-.9 2.3 1.4.4 2.5h4l.4-2.5 2.3-1.4 2.5.9 2-3.5z" fill="#fff" stroke="#1b1b3a" stroke-width="2" stroke-linejoin="round"/></svg> Settings</button>
+  <p class="hint-pill">
+    <svg class="ico" viewBox="0 0 26 32" aria-hidden="true"><rect x="3" y="2" width="20" height="28" rx="4" fill="#fff" stroke="#1b1b3a" stroke-width="3"/><rect x="7" y="6" width="12" height="17" rx="2" fill="#bfe8ff"/><circle cx="13" cy="26" r="1.6" fill="#1b1b3a"/></svg>
+    Your phone is the steering wheel &middot; up to 4 players
+  </p>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="screen hidden">
+  <div class="setup-wrap">
+    <h1 class="heading display">Race Setup</h1>
+
+    <section class="block">
+      <h2 class="block-title display">Pick a track</h2>
+      <div id="map-cards"></div>
+    </section>
+
+    <div class="options">
+      <div class="field"><label>Players</label><div class="seg" id="seg-players"></div></div>
+      <div class="field"><label>CPU racers</label><div class="seg" id="seg-cpu"></div></div>
+      <div class="field"><label>Laps</label><div class="seg" id="seg-laps"></div></div>
+      <div class="field"><label>Difficulty</label><div class="seg" id="seg-diff"></div></div>
+    </div>
+
+    <div class="players-row">
+      <div id="phone-panel" class="phone-panel">
+        <div class="qr-frame"><canvas id="qr" width="170" height="170"></canvas></div>
+        <div class="phone-info">
+          <h3 class="display">
+            <svg class="ico" viewBox="0 0 26 32" aria-hidden="true"><rect x="3" y="2" width="20" height="28" rx="4" fill="#fff" stroke="#1b1b3a" stroke-width="3"/><rect x="7" y="6" width="12" height="17" rx="2" fill="#bfe8ff"/><circle cx="13" cy="26" r="1.6" fill="#1b1b3a"/></svg>
+            Join with your phone
+          </h3>
+          <p>Connect to the same Wi-Fi, then scan the code or open:</p>
+          <code id="join-url">...</code>
+          <div class="room-row">
+            <span class="room-label">Room code</span><span class="room-code display" id="room-code">----</span>
+            <button class="btn small" id="btn-newcode" title="Make a new code and disconnect every phone">New code</button>
+          </div>
+          <p class="small">Scan this to join as the next free player, or scan the QR on a player card to take that seat.
+            First time only: your phone warns about the certificate. Tap <b>Show Details, then visit this website</b> (iPhone) or <b>Advanced, then Proceed</b> (Android).</p>
+          <div id="phone-status"></div>
+        </div>
+      </div>
+      <div id="player-cards"></div>
+    </div>
+
+    <div class="controls-help">
+      <div class="help-item">
+        <svg class="ico" viewBox="0 0 26 32" aria-hidden="true"><rect x="3" y="2" width="20" height="28" rx="4" fill="#fff" stroke="#1b1b3a" stroke-width="3"/><rect x="7" y="6" width="12" height="17" rx="2" fill="#bfe8ff"/><circle cx="13" cy="26" r="1.6" fill="#1b1b3a"/></svg>
+        <div><b>Phone</b> Hold it sideways like a steering wheel and turn it to steer. Gas is automatic. Hold <kbd>BRAKE</kbd> to slow down or reverse,
+          hold <kbd>DRIFT</kbd> while turning to charge a mini-turbo, tap <kbd>ITEM</kbd> to use it. Pick your racer and the track, and start the race, right from the phone.</div>
+      </div>
+      <div class="help-item">
+        <svg class="ico" viewBox="0 0 40 28" aria-hidden="true"><rect x="2" y="3" width="36" height="22" rx="5" fill="#fff" stroke="#1b1b3a" stroke-width="3"/><g fill="#1b1b3a"><rect x="7" y="8" width="4" height="4" rx="1"/><rect x="14" y="8" width="4" height="4" rx="1"/><rect x="21" y="8" width="4" height="4" rx="1"/><rect x="28" y="8" width="4" height="4" rx="1"/><rect x="11" y="16" width="18" height="4" rx="1"/></g></svg>
+        <div><b>Keys A</b> <kbd>W</kbd> gas <kbd>S</kbd> brake <kbd>A</kbd><kbd>D</kbd> steer <kbd>Space</kbd> drift <kbd>E</kbd> item
+          <span class="sep"></span><b>Keys B</b> Arrow keys <kbd>Right Shift</kbd> drift <kbd>Enter</kbd> item</div>
+      </div>
+      <div class="help-item">
+        <svg class="ico" viewBox="0 0 44 28" aria-hidden="true"><path d="M10 4h24a8 8 0 0 1 8 8l1 9a4 4 0 0 1-7 3l-5-5H13l-5 5a4 4 0 0 1-7-3l1-9a8 8 0 0 1 8-8z" fill="#fff" stroke="#1b1b3a" stroke-width="3" stroke-linejoin="round"/><path d="M12 9v7M8.5 12.5h7" stroke="#1b1b3a" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="10" r="2.2" fill="#ff3b30"/><circle cx="35" cy="14" r="2.2" fill="#2fc65a"/></svg>
+        <div><b>Gamepad</b> Stick steer <kbd>A</kbd>/<kbd>RT</kbd> gas <kbd>B</kbd>/<kbd>LT</kbd> brake <kbd>RB</kbd>/<kbd>X</kbd> drift <kbd>Y</kbd>/<kbd>LB</kbd> item
+          <span class="sep"></span><kbd>Esc</kbd> pause</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn blue" id="btn-back">Back</button>
+      <button class="btn" id="btn-settings-setup"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.4 4.9-.1-2.8 2-1.6-2-3.5-2.4.9-2.3-1.4L15.2 2h-4l-.4 2.5-2.3 1.4L6 5 4 8.5l2 1.6-.1 2.8-2 1.6 2 3.5 2.5-.9 2.3 1.4.4 2.5h4l.4-2.5 2.3-1.4 2.5.9 2-3.5z" fill="#fff" stroke="#1b1b3a" stroke-width="2" stroke-linejoin="round"/></svg> Settings</button>
+      <button class="btn green xl" id="btn-go">Race!</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div id="pause" class="screen hidden dim">
+  <div class="card">
+    <h1 class="heading display">Paused</h1>
+    <div class="col">
+      <button class="btn yellow xl" id="btn-resume">Resume</button>
+      <button class="btn blue" id="btn-restart">Restart Race</button>
+      <button class="btn blue" id="btn-settings-pause"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.4 4.9-.1-2.8 2-1.6-2-3.5-2.4.9-2.3-1.4L15.2 2h-4l-.4 2.5-2.3 1.4L6 5 4 8.5l2 1.6-.1 2.8-2 1.6 2 3.5 2.5-.9 2.3 1.4.4 2.5h4l.4-2.5 2.3-1.4 2.5.9 2-3.5z" fill="#fff" stroke="#1b1b3a" stroke-width="2" stroke-linejoin="round"/></svg> Settings</button>
+      <button class="btn" id="btn-quit">Quit to Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="screen hidden dim">
+  <div class="card wide">
+    <h1 class="heading display">Results</h1>
+    <div class="table-wrap"><table id="results-table"></table></div>
+    <div class="actions">
+      <button class="btn blue" id="btn-menu">Main Menu</button>
+      <button class="btn green xl" id="btn-again">Race Again</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="screen hidden dim">
+  <div class="card wide settings-card">
+    <h1 class="heading display">Settings</h1>
+    <div id="settings-body"></div>
+    <div class="actions">
+      <button class="btn" id="btn-settings-reset">Reset to defaults</button>
+      <button class="btn green xl" id="btn-settings-done">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="fps" class="fps hidden"></div>
+<div id="loading" class="hidden">Loading...</div>
+
+</body>
+</html>

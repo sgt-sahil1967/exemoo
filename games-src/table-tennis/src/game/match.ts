@@ -25,7 +25,10 @@ import { findIntercept, solveServe, solveShot, type Intercept } from '../physics
 import { Referee, Scoreboard } from './rules';
 import { AIPlayer, type AIPlan } from './ai';
 import { challengeById, type ChallengeId } from './challenges';
+import { HIT, aimZone, cueState, gradeSwing, planShot, ringFill, timingWindow, type Grade, type Zone } from './hitTiming';
+import { LESSONS, type Lesson } from './lessons';
 import type { Stage } from '../scene/stage';
+import type { HitCue } from '../scene/hitCue';
 import type { ResultData, StartConfig, UI } from '../ui/ui';
 import type { Sfx } from '../audio/sfx';
 
@@ -49,7 +52,10 @@ export interface MatchDeps {
   stats: () => CareerStats;
   saveStats: () => void;
   /** Sends phase/score info to the phone screen. */
-  phone: (msg: { screen: 'menu' | 'calibrate' | 'serve' | 'rally' | 'paused' | 'result'; label?: string } | { score: true } | { power: true }, side?: Side) => void;
+  phone: (
+    msg: { screen: 'menu' | 'calibrate' | 'serve' | 'rally' | 'paused' | 'result'; label?: string } | { score: true } | { power: true } | { sound: 'bat'; q: number },
+    side?: Side,
+  ) => void;
 }
 
 /** Per-match tallies for the result screen. */
@@ -75,12 +81,6 @@ const DIFF_NAMES: Record<Difficulty, string> = { rookie: 'Pip', club: 'Max', pro
  * Works for positions, velocities and spin vectors alike, and is its own inverse.
  */
 const mir = (v: Vector3, s: 1 | -1) => (s > 0 ? v.clone() : new Vector3(-v.x, v.y, -v.z));
-/**
- * Five lanes across each player's end (left, mid-left, mid, mid-right, right), in the side's local frame.
- * The player picks a lane by aiming; the ball can only be hit when it comes down the bat's lane.
- */
-const LANE_W = 0.36;
-const laneOf = (x: number) => Math.max(-2, Math.min(2, Math.round(x / LANE_W)));
 
 /** A human-controlled end: movement and paddle driven by a PaddleInput with auto-positioning. */
 class HumanSide {
@@ -89,13 +89,24 @@ class HumanSide {
   vel = new Vector3();
   paddlePos = new Vector3();
   paddleRot = new Quaternion();
-  /** Lane the bat is in, −2 (left) … 2 (right), in this side's frame. */
-  lane = 0;
   backhand = false;
   /** 0..1 swing follow-through animation; <0 when idle. */
   swingT = -1;
   swingPower = 0;
-  pending: { e: SwingEvent; at: number } | null = null;
+  /** Swings / taps waiting to be played at the ideal contact moment (match clock). */
+  pending: { e: SwingEvent; at: number }[] = [];
+  /** Per incoming ball: feedback already shown. */
+  tooEarlyShown = false;
+  missShown = false;
+  /** Where the incoming ball will bounce on this half (null once it has). */
+  landing: Vector3 | null = null;
+  /** Aim chosen with the phone's ◀ ▶ buttons for the next shot (overrides pointing). */
+  aimOverride: Zone | null = null;
+  lastZone: Zone = 0;
+  lastGrade: Grade | null = null;
+  /** Debug autoplayer (?auto=jitter): when it will swing at the current ball. */
+  autoAt: number | null = null;
+  autoDone = false;
   intercept: (Intercept & { at: number }) | null = null;
   interceptDirty = true;
   trajTimer = 0;
@@ -113,8 +124,13 @@ class HumanSide {
     this.vel.set(0, 0, 0);
     this.target.copy(this.body);
     this.swingT = -1;
-    this.pending = null;
+    this.pending = [];
     this.intercept = null;
+    this.landing = null;
+    this.aimOverride = null;
+    this.tooEarlyShown = this.missShown = false;
+    this.autoAt = null;
+    this.autoDone = false;
     this.lastKind = null;
   }
 
@@ -132,7 +148,7 @@ class HumanSide {
     this.vel.x += ax * dt;
     this.vel.z += az * dt;
     const sp = Math.hypot(this.vel.x, this.vel.z);
-    const max = 4.2;
+    const max = 5;
     if (sp > max) this.vel.multiplyScalar(max / sp);
     this.body.addScaledVector(this.vel, dt);
     if (this.swingT >= 0) {
@@ -150,6 +166,8 @@ class HumanSide {
 interface Feed {
   speed: [number, number];
   spin: 'top' | 'back' | 'mixed' | 'none' | 'high';
+  /** Lateral spread (× half table width); default 1.3. */
+  spread?: number;
 }
 
 export class Match {
@@ -186,6 +204,12 @@ export class Match {
   // Slow-mo power-up (vs-AI matches): charges left this game and real seconds remaining.
   private powerCharges = 0;
   private powerT = 0;
+  /** Eased approach slow-mo factor (see update). */
+  private approachK = 1;
+  /** Match clock of the latest strike or serve. */
+  private lastHitAt = 0;
+  /** Guided lesson (Learn to Play), null otherwise. */
+  private lesson: (Lesson & { step: number; count: number }) | null = null;
 
   // Challenge / practice state
   private machine = false;
@@ -263,6 +287,8 @@ export class Match {
     this.oppPlan = this.autoPlan = null;
     this.chal = null;
     this.machine = false;
+    this.lesson = null;
+    this.approachK = 1;
     this.auto = cfg.mode === 'demo' ? new AIPlayer('player', 'pro') : null;
     const { stage, ui } = this.d;
     stage.setTargets([]);
@@ -278,9 +304,10 @@ export class Match {
     } else if (cfg.mode === 'practice') {
       this.board = null;
       this.machine = true;
-      this.feed = { speed: [6.5, 10], spin: 'mixed' };
+      this.feed = { speed: [5.5, 8], spin: 'mixed' };
       this.practiceStreak = 0;
       ui.hud.setChallenge({ name: 'Practice', score: 0, best: this.practiceBest, detail: 'Return the machine balls' });
+      this.setLesson(0);
     } else if (cfg.mode === 'challenge') {
       this.board = null;
       const def = challengeById(cfg.challengeId)!;
@@ -324,6 +351,9 @@ export class Match {
 
   stop() {
     this.active = false;
+    this.lesson = null;
+    this.d.stage.setHitCue('player', null);
+    this.d.stage.setHitCue('opponent', null);
     this.phase = 'idle';
     this.ballVisible = false;
     this.d.ui.hud.show(false);
@@ -396,7 +426,7 @@ export class Match {
     if (this.machine) {
       // Machine feeds: no serve, the "point" starts with a feed after a beat.
       this.ballVisible = false;
-      this.d.ui.hud.setPrompt(null);
+      this.d.ui.hud.setPrompt(this.lesson?.title ?? null);
       return;
     }
     if (this.board) this.server = this.board.server();
@@ -406,8 +436,8 @@ export class Match {
     const humanServes = !!this.humans[this.server];
     if (this.versus) {
       this.d.ui.hud.setPrompt(null, other(this.server));
-      this.d.ui.hud.setPrompt('Swing to serve', this.server);
-    } else this.d.ui.hud.setPrompt(humanServes ? 'Swing to serve' : null);
+      this.d.ui.hud.setPrompt('Swing or tap to serve', this.server);
+    } else this.d.ui.hud.setPrompt(humanServes ? 'Swing (or tap the phone button) to serve' : null);
     this.d.stage.setCameraMode(this.mode === 'demo' ? 'menu' : 'serve');
     for (const side of ['player', 'opponent'] as const) {
       if (!this.humans[side]) continue;
@@ -456,8 +486,8 @@ export class Match {
     this.phase = 'dead';
     this.phaseT = 0;
     this.oppPlan = this.autoPlan = null;
-    if (this.humans.player) this.humans.player.pending = null;
-    if (this.humans.opponent) this.humans.opponent.pending = null;
+    if (this.humans.player) this.humans.player.pending = [];
+    if (this.humans.opponent) this.humans.opponent.pending = [];
     this.d.stage.setTrajectory(null);
     const { ui, sfx, stage } = this.d;
     const playerWon = r.winner === 'player';
@@ -630,7 +660,7 @@ export class Match {
     const f = this.feed;
     const x = (Math.random() - 0.5) * 0.6;
     const from = new Vector3(x, TOP + (f.spin === 'high' ? 0.45 : 0.25), -HALF_L - 0.25);
-    const tx = (Math.random() - 0.5) * (HALF_W * 1.3);
+    const tx = (Math.random() - 0.5) * (HALF_W * (f.spread ?? 1.3));
     let tz = HALF_L * (0.45 + Math.random() * 0.45);
     let speed = MathUtils.lerp(f.speed[0], f.speed[1], Math.random());
     const kind = f.spin === 'mixed' ? (['top', 'back', 'none'] as const)[Math.floor(Math.random() * 3)] : f.spin;
@@ -663,6 +693,10 @@ export class Match {
     const { ui, sfx, stage } = this.d;
     // In a drill the machine never returns: a clean return ends as a "winner" for the player.
     const ok = r.winner === 'player';
+    if (this.mode === 'practice' && this.lesson) {
+      if (!ok && r.rally > 1) ui.hud.callout('SO CLOSE', 'neutral', 'It counts — the ball just has to come back');
+      return;
+    }
     if (this.mode === 'practice') {
       this.practiceStreak = ok ? this.practiceStreak + 1 : 0;
       this.practiceBest = Math.max(this.practiceBest, this.practiceStreak);
@@ -849,14 +883,19 @@ export class Match {
   }
 
   // ───────────────────────────── human hitting ─────────────────────────────
-  private onSwing(side: Side, e: SwingEvent) {
+  private onSwing(side: Side, e: SwingEvent, tap = false) {
     const h = this.humans[side];
     if (!h || !this.active || this.paused || this.mode === 'demo') return;
-    this.d.ui.hud.setSwingMeter(e.power, side);
+    if (!tap) this.d.ui.hud.setSwingMeter(e.power, side);
     if (this.phase === 'serve' && this.server === side && !this.machine) {
       // One gesture serves: the toss is automatic and the swing is replayed at the contact moment.
-      h.pending = { e, at: this.clock };
+      h.pending = [{ e, at: this.clock }];
       this.toss();
+      return;
+    }
+    if (this.phase === 'toss' && this.server === side) {
+      // A tap followed by a real swing: keep the stronger one.
+      if (h.pending[0] && e.power > h.pending[0].e.power) h.pending[0].e = e;
       return;
     }
     if (this.phase !== 'rally' || this.ref.expecting !== side) {
@@ -865,127 +904,155 @@ export class Match {
       this.d.sfx.whoosh(e.power * 0.6);
       return;
     }
-    h.pending = { e, at: this.clock };
+    h.pending.push({ e, at: this.clock });
+    if (h.pending.length > 4) h.pending.shift();
   }
 
-  private tolerance() {
+  /** Fallback "tap to hit": the phone's big button (or Enter) counts as a medium swing. */
+  tap(side: Side) {
+    const input = this.inputFor(side);
+    if (!input || !this.humans[side]) return;
+    const paddle = { ...input.state, orientation: input.state.orientation.clone() };
+    this.onSwing(side, { time: performance.now(), power: 0.5, dir: { x: 0, y: 0.15, z: 1 }, paddle }, true);
+  }
+
+  /** Phone ◀ ▶ (or arrow keys): choose left / right for the next shot; pressing the other way recentres. */
+  nudgeAim(side: Side, dir: -1 | 1) {
+    const h = this.humans[side];
+    if (!h || !this.active || this.paused) return;
+    const cur = h.aimOverride ?? 0;
+    h.aimOverride = (cur === -dir ? 0 : dir) as Zone;
+    this.d.sfx.ui('move');
+  }
+
+  /** Timing window for the current assist level (lessons are extra forgiving). */
+  private timing() {
     const a = this.d.settings().assist;
-    // Assist widens the timing window and the up/down + depth reach; left/right is decided by lanes.
-    return { early: 0.2 + 0.18 * a, late: 0.12 + 0.14 * a, reach: 0.3 + 0.3 * a };
+    return timingWindow(this.lesson ? Math.max(a, 0.85) : a);
   }
 
-  /** True if this human can hit the ball right now. */
+  /** True if this human can hit the ball right now (the game moves the paddle; only the bounce and height matter). */
   private humanCanStrike(h: HumanSide): boolean {
     if (!this.ref.readyToStrike) return false;
     const p = this.ball.state.pos;
-    if (p.y < TOP - 0.15 || p.y > TOP + 0.9) return false;
-    // Lane rule: the ball must be in the same lane as the bat.
-    if (laneOf(mir(p, h.s).x) !== h.lane) return false;
-    const reach = this.tolerance().reach;
-    const dz = p.z - h.paddlePos.z;
-    const dy = (p.y - h.paddlePos.y) * 0.6;
-    return Math.hypot(dy, dz) < reach + 0.12;
+    if (p.y < TOP - 0.12 || p.y > TOP + 1.1) return false;
+    return h.s * p.z > -0.05;
   }
 
   private fakeSwing(power: number) {
     const paddle = { ...this.d.input().state, aimX: (Math.random() - 0.5) * 1.4, aimY: Math.random() * 0.6 - 0.2 };
-    this.onSwing('player', { time: performance.now(), power, dir: { x: (Math.random() - 0.5) * 0.4, y: 0.4, z: 0.9 }, paddle });
+    this.onSwing('player', { time: performance.now(), power, dir: { x: (Math.random() - 0.5) * 0.4, y: 0.2, z: 0.9 }, paddle });
+  }
+
+  private gradeFx(h: HumanSide, text: string, tone: 'gold' | 'good' | 'neutral' | 'bad', sub?: string) {
+    if (this.mode === 'demo') return;
+    this.d.ui.hud.hitGrade(text, tone, sub, this.versus ? h.side : undefined);
   }
 
   private updateHumanStrike(h: HumanSide) {
-    if (this.autoSwing && h.side === 'player' && !h.pending && this.phase === 'rally' && this.ref.expecting === 'player' && h.intercept) {
-      const tt = h.intercept.at + h.intercept.t - this.clock;
-      if (tt < 0.06 + (Math.random() - 0.5) * this.autoSwing) this.fakeSwing(0.35 + Math.random() * 0.5);
-    }
-    const ps = h.pending;
-    if (!ps || this.phase !== 'rally' || this.ref.expecting !== h.side) return;
-    const tol = this.tolerance();
     const ic = h.intercept;
-    const age = this.clock - ps.at;
-    const icAbs = ic ? ic.at + ic.t : Infinity;
-    const timeToIc = icAbs - this.clock;
-    // Strike when the ball reaches the ideal point, or immediately if it's already in reach and past it.
-    const arrived = timeToIc <= 0.012;
-    const passing = h.s * this.ball.state.vel.z > 0 && h.s * this.ball.state.pos.z > h.s * h.paddlePos.z - 0.05;
-    if (this.humanCanStrike(h) && (arrived || passing)) {
-      const delta = ps.at - icAbs; // <0 early, >0 late (relative to ideal contact)
-      const q = delta < 0 ? 1 - clamp(-delta / tol.early, 0, 1) : 1 - clamp(delta / tol.late, 0, 1);
-      h.pending = null;
-      this.humanHit(h, ps.e, Math.max(0.05, q), delta);
+    if (this.autoSwing && h.side === 'player' && this.phase === 'rally' && this.ref.expecting === 'player' && ic) {
+      // Human-like test bot: aims for the sweet spot with gaussian-ish timing error (± autoSwing s),
+      // and can't react sooner than ~0.32 s after the opponent's hit.
+      if (h.autoAt === null) {
+        const jitter = (Math.random() + Math.random() + Math.random() - 1.5) * this.autoSwing;
+        h.autoAt = Math.max(ic.at + ic.t - HIT.sweet - jitter, this.lastHitAt + 0.32);
+      }
+      if (!h.autoDone && this.clock >= h.autoAt) {
+        h.autoDone = true;
+        this.fakeSwing(0.3 + Math.random() * 0.5);
+      }
+    }
+    if (this.phase !== 'rally' || this.ref.expecting !== h.side) {
+      h.pending.length = 0;
       return;
     }
-    if (age > tol.early + 0.05 && timeToIc < -tol.late) h.pending = null; // whiffed
-    if (age > tol.early + 0.25) h.pending = null;
+    if (!ic) {
+      h.pending = h.pending.filter((p) => this.clock - p.at < 1.2);
+      return;
+    }
+    const w = this.timing();
+    const icAbs = ic.at + ic.t;
+    const eta = icAbs - this.clock;
+    // Swings far too early (ball still on the other side) are dropped with a friendly hint.
+    const before = h.pending.length;
+    h.pending = h.pending.filter((p) => icAbs - p.at <= w.openAt + HIT.buffer && icAbs - p.at >= w.lateLimit);
+    if (h.pending.length < before && eta > 0 && !h.tooEarlyShown) {
+      h.tooEarlyShown = true;
+      this.gradeFx(h, 'TOO EARLY', 'neutral', 'Wait for the ring to close');
+    }
+    if (!h.pending.length) {
+      if (eta < w.lateLimit && !h.missShown) {
+        h.missShown = true;
+        this.gradeFx(h, 'SWING!', 'bad', 'Swing or tap when the ring turns green');
+      }
+      return;
+    }
+    if (eta > 0.012) return; // an early swing is held until the ball reaches the paddle
+    if (!this.humanCanStrike(h)) {
+      if (eta < w.lateLimit - 0.15) h.pending.length = 0;
+      return;
+    }
+    // The best-timed swing sets the grade; the strongest sets power and direction.
+    let best: { g: ReturnType<typeof gradeSwing> } | null = null;
+    let strongest = h.pending[0];
+    for (const p of h.pending) {
+      const g = gradeSwing(icAbs - p.at, w);
+      if (!best || g.quality > best.g.quality) best = { g };
+      if (p.e.power > strongest.e.power) strongest = p;
+    }
+    h.pending.length = 0;
+    this.humanHit(h, strongest.e, best!.g);
   }
 
   /** Builds the shot in the hitter's local frame (see `mir`), then maps it to the world. */
-  private humanHit(h: HumanSide, e: SwingEvent, quality: number, delta: number) {
+  private humanHit(h: HumanSide, e: SwingEvent, g: { grade: Grade; quality: number }) {
     const s = this.d.settings();
     const from = this.ball.state.pos.clone();
-    const incoming = this.ball.state;
+    // Forgiving late hits: a ball that has already dropped is scooped back up to a playable height.
+    from.y = Math.max(from.y, TOP + 0.05);
     const ps = e.paddle;
-    const p = clamp(e.power * (0.7 + 0.3 * s.sensitivity), 0.05, 1);
-    const up = e.dir.y;
-    const overNet = from.y - (TOP + TABLE.netHeight);
-    const overTable = Math.abs(from.z) < HALF_L;
-    let kind: StrokeKind;
-    if (overNet > 0.18 && p > 0.6) kind = 'smash';
-    else if (ps.face > 0.35 || up < -0.4) kind = p > 0.55 ? 'chop' : 'push';
-    else if (overTable && p > 0.3 && up > 0.1) kind = 'flick';
-    else if ((up > 0.3 || ps.face < -0.3) && p > 0.35) kind = 'loop';
-    else if (p < 0.22) kind = 'block';
-    else kind = 'drive';
-
-    const speedBy: Record<StrokeKind, [number, number]> = {
-      smash: [16, 25],
-      loop: [9.5, 19],
-      drive: [8, 17],
-      block: [6, 9.5],
-      push: [4.5, 7.5],
-      chop: [6.5, 10],
-      flick: [8, 13],
-      lob: [5, 7],
-      serve: [5, 12],
-    };
-    const [s0, s1] = speedBy[kind];
-    const speed = MathUtils.lerp(s0, s1, p);
+    const p = clamp(e.power * (0.75 + 0.25 * s.sensitivity), 0.05, 1);
+    const zone = h.aimOverride ?? aimZone(ps.aimX, e.dir.x);
+    const plan = planShot({ power: p, grade: g.grade, quality: g.quality, zone, lift: e.dir.y, face: ps.face, aboveNet: from.y - (TOP + TABLE.netHeight), halfWidth: HALF_W });
+    const target = mir(new Vector3(plan.x, TOP, -(0.2 + plan.depth * (HALF_L - 0.25))), h.s);
     // Local frame: the ball travels −Z, so topspin is −X.
-    const topBy: Partial<Record<StrokeKind, number>> = { loop: 450 + 450 * p, drive: 150 + 200 * p, smash: 120, block: 60, flick: 320, push: -(220 + 150 * p), chop: -(420 + 300 * p) };
-    const topspin = (topBy[kind] ?? 0) * (0.85 + 0.3 * quality);
-    const sideSpin = clamp(e.dir.x, -1, 1) * 220 * p;
-    const spin = mir(new Vector3(-topspin, sideSpin, 0), h.s);
-
-    // Aim: point the paddle; timing pulls (early) or pushes (late) the ball across.
-    const hand = this.handOf(h.side) === 'left' ? -1 : 1;
-    const fh = ps.backhand ? -1 : 1;
-    const timing = clamp(delta / 0.15, -1, 1);
-    let tx = ps.aimX * HALF_W * 0.85 + timing * 0.32 * hand * fh;
-    let depth = clamp(0.55 + ps.aimY * 0.25 + (p - 0.5) * 0.35, 0.1, 0.97);
-    if (kind === 'push') depth = clamp(depth - 0.25, 0.08, 0.7);
-    tx = clamp(tx, -HALF_W * 0.95, HALF_W * 0.95);
-    const target = mir(new Vector3(tx, TOP, -(0.22 + depth * (HALF_L - 0.3))), h.s);
-    const assist = s.assist;
-    // Timing errors, plus a baseline that grows with power: big swings are riskier.
-    const risk = 0.1 + 0.3 * p * p * (kind === 'smash' && overNet > 0.25 ? 0.4 : 1);
-    const error = clamp((1 - quality) * 0.75 * (1 - assist * 0.45) + risk * (1 - assist * 0.3), 0, 1);
+    const spin = mir(new Vector3(-plan.topspin, clamp(e.dir.x, -1, 1) * 100 * p, 0), h.s);
+    let { speed, error } = plan;
+    if (this.mode === 'match') {
+      const t = HIT.vsCpu[this.cfg.difficulty];
+      if (plan.kind !== 'smash') speed = Math.min(speed, t.maxSpeed);
+      if (g.grade === 'early' || g.grade === 'late') {
+        // Mistimed shots against strong CPUs are riskier and float up slower (smash bait).
+        error *= t.errorScale;
+        speed *= 1 - 0.1 * (t.errorScale - 1);
+      }
+    }
     const { vel, spin: outSpin } = solveShot(from, { target, speed, spin, error }, Math.random);
-
-    // Reading spin: hitting flat into heavy backspin dumps it into the net; pushing heavy topspin pops it long.
-    const inTop = h.s * incoming.spin.x; // ball travelling toward this side: topspin is +X locally
-    const misread = (1 - quality * 0.6) * (1 - assist * 0.6);
-    if (inTop < -250 && (kind === 'drive' || kind === 'block' || kind === 'smash')) vel.y -= (-inTop / 600) * 1.1 * misread;
-    if (inTop > 250 && (kind === 'push' || kind === 'chop')) vel.y += (inTop / 600) * 0.9 * misread;
-
-    this.applyHit(h.side, from, vel, outSpin, kind, p, quality);
-    h.lastKind = kind;
+    this.applyHit(h.side, from, vel, outSpin, plan.kind, p, g.quality);
+    h.lastKind = plan.kind;
+    h.lastZone = zone;
+    h.lastGrade = g.grade;
+    h.aimOverride = null;
     h.swingT = 0;
     h.swingPower = p;
-    if (s.haptics) this.inputFor(h.side)?.vibrate(Math.round(18 + p * 40));
-    if (this.mode !== 'demo' && quality > 0.92 && p > 0.7) this.d.ui.hud.callout('PERFECT', 'gold', this.versus ? this.nameOf(h.side) : undefined);
+    const input = this.inputFor(h.side);
+    if (s.haptics) input?.vibrate(g.grade === 'perfect' ? [40, 30, 40] : Math.round(22 + p * 35));
+    this.d.phone({ sound: 'bat', q: g.grade === 'perfect' ? 1 : g.grade === 'good' ? 0.8 : 0.5 }, h.side);
+    const label: Record<Grade, [string, 'gold' | 'good' | 'neutral', string | undefined]> = {
+      perfect: ['PERFECT', 'gold', plan.kind === 'smash' ? 'Smash!' : plan.kind === 'loop' ? 'Topspin loop' : undefined],
+      good: ['GOOD', 'good', undefined],
+      early: ['EARLY', 'neutral', 'Wait a beat longer'],
+      late: ['LATE', 'neutral', 'Swing a little sooner'],
+    };
+    const [t, tone, sub] = label[g.grade];
+    this.gradeFx(h, t, tone, sub);
+    this.onLessonHit(h, zone, p, g.grade);
   }
 
   private applyHit(by: Side, from: Vector3, vel: Vector3, spin: Vector3, kind: StrokeKind, power: number, quality: number) {
     const res = this.ref.onHit(by);
+    this.lastHitAt = this.clock;
     this.ball.set(from, vel, spin);
     this.phaseT = 0; // stuck-ball timeout counts from the latest strike
     const sp = vel.length();
@@ -1046,6 +1113,49 @@ export class Match {
     this.applyHit(side, pos.clone(), vel, spin, plan.kind, clamp(plan.request.speed / 20, 0.1, 1), 1 - plan.request.error);
   }
 
+  // ───────────────────────────── lessons ─────────────────────────────
+  private setLesson(i: number) {
+    const { ui } = this.d;
+    if (i >= LESSONS.length) {
+      this.lesson = null;
+      this.feed = { speed: [5.5, 8], spin: 'mixed' };
+      ui.hud.setPrompt(null);
+      ui.hud.callout("YOU'RE READY!", 'gold', 'Free practice now — or Pause → Quit to play a match');
+      this.d.stage.fx.confetti();
+      this.d.sfx.win();
+      ui.hud.setChallenge({ name: 'Practice', score: this.practiceStreak, best: this.practiceBest, detail: 'Return the machine balls' });
+      return;
+    }
+    const l = LESSONS[i];
+    this.lesson = { ...l, step: i, count: 0 };
+    this.feed = { ...l.feed };
+    ui.hud.setPrompt(l.title);
+    this.refreshLessonHud();
+  }
+
+  private refreshLessonHud() {
+    const l = this.lesson;
+    if (!l) return;
+    this.d.ui.hud.setChallenge({ name: `Lesson ${l.step + 1} / ${LESSONS.length}`, score: l.count, best: l.need, detail: l.detail });
+  }
+
+  private onLessonHit(h: HumanSide, zone: Zone, power: number, grade: Grade) {
+    const l = this.lesson;
+    if (!l || h.side !== 'player') return;
+    if (!l.check({ zone, power, grade })) {
+      if (l.step >= 2 && l.step <= 3) this.d.ui.hud.callout(zone === 0 ? 'MIDDLE' : zone < 0 ? 'LEFT' : 'RIGHT', 'neutral', l.detail);
+      if (l.step === 4) this.d.ui.hud.callout('HARDER!', 'neutral', 'Really whip it');
+      return;
+    }
+    l.count++;
+    this.refreshLessonHud();
+    if (l.count >= l.need) {
+      const next = l.step + 1;
+      if (next < LESSONS.length) this.d.ui.hud.callout('GREAT!', 'good', `Lesson ${next + 1} of ${LESSONS.length}`);
+      setTimeout(() => this.active && this.mode === 'practice' && this.lesson?.step === l.step && this.setLesson(next), 900);
+    }
+  }
+
   // ───────────────────────────── per-frame ─────────────────────────────
   update(rawDt: number) {
     if (!this.active || this.paused) return;
@@ -1057,6 +1167,18 @@ export class Match {
       else this.d.ui.hud.setSlowMo({ charges: this.powerCharges, max: SLOWMO.perGame, active: true, remaining: this.powerT / SLOWMO.duration });
     }
     this.timeScale = this.slowmoT > 0 ? 0.35 : this.powerT > 0 ? SLOWMO.timeScale : 1;
+    // Approach slow-mo: time eases down while a human's hit window is open (more with assist / in lessons).
+    let approach = this.lesson?.slow ?? 1;
+    if (this.phase === 'rally' && this.mode !== 'demo') {
+      const w = this.timing();
+      for (const h of [this.humans.player, this.humans.opponent]) {
+        if (!h?.intercept || this.ref.expecting !== h.side) continue;
+        const eta = h.intercept.at + h.intercept.t - this.clock;
+        if (eta < w.openAt && eta > w.lateLimit) approach *= w.approachScale;
+      }
+    }
+    this.approachK += (approach - this.approachK) * (1 - Math.exp(-rawDt * 10));
+    this.timeScale *= this.approachK;
     const dt = rawDt * this.timeScale;
     this.clock += dt;
     this.phaseT += dt;
@@ -1116,7 +1238,7 @@ export class Match {
 
   private updateServe() {
     const p1 = this.humans.player;
-    if (this.autoSwing && p1 && this.server === 'player' && !this.machine && this.phaseT > 1.2 && !p1.pending) this.fakeSwing(0.5);
+    if (this.autoSwing && p1 && this.server === 'player' && !this.machine && this.phaseT > 1.2 && !p1.pending.length) this.fakeSwing(0.5);
     if (this.machine) {
       if (this.phaseT > (this.chal?.id === 'speed' ? 1.4 : 1.1)) this.launchFeed();
       return;
@@ -1133,16 +1255,17 @@ export class Match {
       const from = st.pos.clone();
       const h = this.humans[this.server];
       if (h) {
-        const e = h.pending?.e;
-        h.pending = null;
+        const e = h.pending[0]?.e;
+        h.pending = [];
         const p = clamp(e?.power ?? 0.4, 0.1, 1);
         const ps = e?.paddle;
-        const short = (ps?.aimY ?? 0) < -0.35;
-        // Local frame, then mirrored to the server's end.
-        const target = mir(new Vector3(clamp((ps?.aimX ?? 0) * HALF_W * 0.8, -HALF_W * 0.85, HALF_W * 0.85), TOP, -(short ? 0.45 : 0.75 + p * 0.5)), h.s);
-        const backspin = (ps?.face ?? 0) > 0.25 || (e?.dir.y ?? 0) < -0.3;
-        const spin = mir(new Vector3(backspin ? 300 + 200 * p : -(200 + 250 * p), (e?.dir.x ?? 0) * 250, 0), h.s);
-        const req: ShotRequest = { target, speed: 5 + p * 6, spin, error: 0.08 };
+        // Serves always go in-ish: left / middle / right from where you point, deeper when you swing harder.
+        const zone = h.aimOverride ?? aimZone(ps?.aimX ?? 0, e?.dir.x ?? 0);
+        h.aimOverride = null;
+        const target = mir(new Vector3(zone * HALF_W * 0.5, TOP, -(0.65 + p * 0.45)), h.s);
+        const backspin = (ps?.face ?? 0) > 0.5 || (e?.dir.y ?? 0) < -0.45;
+        const spin = mir(new Vector3(backspin ? 250 + 150 * p : -(150 + 200 * p), 0, 0), h.s);
+        const req: ShotRequest = { target, speed: 4.8 + p * 4.5, spin, error: 0.05 };
         const { vel, spin: sp } = solveServe(from, this.server, req, Math.random);
         this.ref.onHit(this.server);
         this.ball.set(from, vel, sp);
@@ -1157,6 +1280,7 @@ export class Match {
   }
 
   private afterServe(by: Side, speed: number, power: number) {
+    this.lastHitAt = this.clock;
     this.phase = 'rally';
     this.phaseT = 0;
     this.lastHitSpeed = speed;
@@ -1208,11 +1332,19 @@ export class Match {
       if (!h) continue;
       if (rules && this.phase === 'rally' && this.ref.expecting === h.side) {
         h.trajTimer -= dt;
-        if (h.interceptDirty || h.trajTimer <= 0) {
+        // Freeze the contact point once the ball is nearly there, so a late swing is judged against it
+        // (re-solving would just find a later point further down the path).
+        const close = h.intercept && h.intercept.at + h.intercept.t - this.clock < 0.15;
+        if (h.interceptDirty || (h.trajTimer <= 0 && !close)) {
           h.interceptDirty = false;
           h.trajTimer = 0.12;
           const ic = findIntercept(this.ball.state, h.side, this.ref.readyToStrike);
           h.intercept = ic ? { ...ic, at: this.clock } : null;
+          if (!this.ref.readyToStrike) {
+            const path = predictPath(this.ball.state, Math.min(1.8, (ic?.t ?? 1.4) + 0.1), 1 / 90);
+            const bp = path.find((pp) => pp.bounces > 0 && h.s * pp.pos.z > 0);
+            h.landing = bp ? bp.pos.clone() : null;
+          } else h.landing = null;
           if (this.d.settings().showTrajectory && this.mode !== 'demo' && !this.versus) {
             const path = predictPath(this.ball.state, Math.min(1.6, (ic?.t ?? 1.2) + 0.15), 1 / 60);
             this.d.stage.setTrajectory(path.map((pp) => pp.pos));
@@ -1220,6 +1352,10 @@ export class Match {
         }
       } else if (h.intercept) {
         h.intercept = null;
+        h.landing = null;
+        h.tooEarlyShown = h.missShown = false;
+        h.autoAt = null;
+        h.autoDone = false;
         if (h.side === 'player') this.d.stage.setTrajectory(null);
       }
     }
@@ -1247,44 +1383,35 @@ export class Match {
     }
   }
 
-  /** Human body auto-positioning + paddle from the controller (with assist magnet), in the side's local frame. */
+  /**
+   * Human body + paddle, in the side's local frame. Fully automatic: the player walks to the ball and
+   * the paddle is pulled onto it as it arrives, so the human only has to time the swing.
+   */
   private updateHumanPose(h: HumanSide, dt: number) {
     const input = this.inputFor(h.side);
     if (!input) return;
     const st = input.state;
-    const s = this.d.settings();
     const hand = this.handOf(h.side) === 'left' ? -1 : 1;
     const ic = h.intercept;
     const incoming = this.phase === 'rally' && this.ref.expecting === h.side && ic;
     const icL = incoming ? mir(ic.pos, h.s) : null;
-    const bodyL = mir(h.body, h.s);
 
-    // Forehand/backhand: phone roll decides; with no phone signal, pick by ball side.
-    let backhand = st.backhand;
-    if (icL && (input.kind === 'mouse' || s.assist > 0.85)) backhand = (icL.x - bodyL.x) * hand < -0.05;
+    // Forehand unless the ball comes well over to the off-hand side.
+    const backhand = icL ? icL.x * hand < -0.3 : false;
     h.backhand = backhand;
     const offX = (backhand ? -0.12 : 0.42) * hand;
-
-    // Lane from the aim (phone tilt, or the camera's wrist position with camera assist).
-    // With assist the bat snaps to the lane centre; at zero assist it moves freely and the lane is wherever it is.
-    const freeX = clamp(st.aimX, -1, 1) * 2 * LANE_W;
-    h.lane = laneOf(freeX);
-    const batX = s.assist > 0 ? h.lane * LANE_W * clamp(s.assist * 2, 0, 1) + freeX * (1 - clamp(s.assist * 2, 0, 1)) : freeX;
-    // Depth still follows the ball (you don't have to walk forward/back), left/right is the player's job.
-    if (icL) h.setTarget(batX - offX, icL.z + 0.38);
+    if (icL) h.setTarget(icL.x - offX, icL.z + 0.38);
     else if (this.phase === 'serve' || this.phase === 'toss') h.setTarget(this.server === h.side ? -0.25 * hand : 0.1 * hand, HALF_L + 0.55);
-    else h.setTarget(batX - offX, HALF_L + 0.75);
+    else h.setTarget(-offX * 0.4, HALF_L + 0.75);
     h.update(dt);
 
-    // Paddle position from aim around the body.
     const b = mir(h.body, h.s);
-    const aimL = new Vector3(b.x + offX, TOP + 0.16 + st.aimY * 0.28, b.z - (backhand ? 0.42 : 0.3));
+    const aimL = new Vector3(b.x + offX, TOP + 0.16 + st.aimY * 0.1, b.z - (backhand ? 0.42 : 0.3));
     if (icL) {
-      // Assist magnet only fixes height and depth, never left/right: the lane is the player's choice.
+      // Paddle magnet: glides onto the contact point during the last ~0.6 s.
       const tt = ic!.at + ic!.t - this.clock;
-      const magnet = clamp(s.assist * (1 - clamp((tt - 0.1) / 0.55, 0, 1)), 0, 0.92);
-      aimL.y += (icL.y - aimL.y) * magnet;
-      aimL.z += (icL.z - aimL.z) * magnet;
+      const magnet = clamp(1 - (tt - 0.05) / 0.6, 0, 1) * 0.97;
+      aimL.lerp(icL, magnet);
     }
     // Follow-through: forward and up along the swing.
     if (h.swingT >= 0) {
@@ -1297,6 +1424,26 @@ export class Match {
     // The controller's rotation is a delta in the near player's frame; for the far end, turn it around.
     h.paddleRot.copy(st.orientation);
     if (h.s < 0) h.paddleRot.premultiply(FLIP);
+  }
+
+  /** Timing ring, landing marker and aim pads for a human side. */
+  private cueFor(h: HumanSide): HitCue | null {
+    if (this.mode === 'demo' || this.phase !== 'rally' || this.ref.expecting !== h.side || !h.intercept) return null;
+    const w = this.timing();
+    const eta = h.intercept.at + h.intercept.t - this.clock;
+    if (eta > w.openAt + 0.6 || eta < w.lateLimit - 0.1) return null;
+    const input = this.inputFor(h.side);
+    const zone = h.aimOverride ?? aimZone(input?.state.aimX ?? 0, 0);
+    const depth = -(0.2 + 0.62 * (HALF_L - 0.25));
+    const pad = (z: number) => mir(new Vector3(z * HALF_W * HIT.padX, TOP, depth), h.s);
+    return {
+      ball: this.ball.state.pos,
+      fill: ringFill(eta, w),
+      state: h.pending.length ? 'armed' : cueState(eta, w),
+      landing: h.landing,
+      pads: [pad(-1), pad(0), pad(1)],
+      zone,
+    };
   }
 
   private present() {
@@ -1312,6 +1459,8 @@ export class Match {
       const op = this.opp.paddle;
       stage.setAvatar('opponent', { body: op.body, paddlePos: op.paddlePos, paddleRot: op.paddleRot.clone().multiply(FLIP) }, { handedness: 'right', backhand: this.opp.backhand, swing: this.opp.swing });
     }
+    stage.setHitCue('player', p1 ? this.cueFor(p1) : null);
+    stage.setHitCue('opponent', p2 ? this.cueFor(p2) : null);
     if (this.mode !== 'demo') {
       ui.hud.setSwingMeter(this.d.input().state.swing, 'player');
       const in2 = this.d.input2();

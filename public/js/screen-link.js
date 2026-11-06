@@ -11,14 +11,23 @@
  *    clock (`pt`), and the lowest-RTT sample of the last 16 gives `phoneClockOffsetMs`
  *    (phone − screen), so a SEN2 packet's `t` maps to screen time with `phoneTimeToLocal`.
  *
+ *  - Staying connected: heartbeat on the signalling socket (net-watch Liveness) so a socket that
+ *    dies without a FIN is reopened in ~12 s, jittered backoff, fast reconnect on close code 1012
+ *    (server restart: the room is re-created with the same PIN), and a check on tab visible /
+ *    online / bfcache restore. A phone that gives up on a silent direct link sends
+ *    {t:'transport', via:'relay'}; the screen then drops its WebRTC side too.
+ *
  * Events: 'status' (status, detail) · 'packet' (decoded SEN2) · 'message' (phone JSON) · 'room' (pin)
  * status: idle | connecting | waiting | pairing | connected | disconnected | error
  */
 import { Emitter, STUN, decodePacket, defaultSignalUrl } from './protocol.js';
+import { Liveness, backoffDelay, watchPage } from './net-watch.js';
 
 const PING_MS = 1000;
-const WS_KEEPALIVE_MS = 15000;
 const STALL_MS = 3500;
+/** Signalling heartbeat: ping every wsPingMs, socket declared dead wsDeadMs after an unanswered ping. */
+const WS_PING_MS = 5000;
+const WS_DEAD_MS = 12000;
 
 export class ScreenLink extends Emitter {
   pin = '';
@@ -48,18 +57,27 @@ export class ScreenLink extends Emitter {
   #retry = 0;
   #reconnectTimer = null;
   #tickTimer = null;
-  #keepaliveTimer = null;
+  #live;
+  #unwatch = null;
   #lastPing = 0;
   #pingBurst = 0;
   #clockSamples = [];
   #rateCount = 0;
   #rateT0 = 0;
 
-  constructor({ signalUrl, storageKey = 'exemoo.room', iceServers = STUN } = {}) {
+  constructor({ signalUrl, storageKey = 'exemoo.room', iceServers = STUN, wsPingMs = WS_PING_MS, wsDeadMs = WS_DEAD_MS, retryBaseMs = 500, retryMaxMs = 8000 } = {}) {
     super();
     this.#signalUrl = signalUrl ?? defaultSignalUrl();
     this.#storageKey = storageKey;
     this.iceServers = iceServers;
+    this.retryBaseMs = retryBaseMs;
+    this.retryMaxMs = retryMaxMs;
+    this.#live = new Liveness({
+      pingMs: wsPingMs,
+      deadMs: wsDeadMs,
+      ping: () => this.#signal({ type: 'ping' }),
+      onDead: () => this.#wsDown(this.#ws, 'Connection stalled. Reconnecting...'),
+    });
     try {
       const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
       if (saved && typeof saved.pin === 'string' && typeof saved.resume === 'string') {
@@ -81,14 +99,21 @@ export class ScreenLink extends Emitter {
     this.#retry = 0;
     this.#connect();
     this.#tickTimer = setInterval(() => this.#tick(), 250);
+    this.#unwatch = watchPage({
+      onVisible: () => this.#wake(3000),
+      onOnline: () => this.#wake(2500),
+      onRestore: () => this.#reconnectNow(),
+    });
   }
 
   stop() {
     this.#stopped = true;
     clearTimeout(this.#reconnectTimer);
     clearInterval(this.#tickTimer);
-    clearInterval(this.#keepaliveTimer);
-    this.#reconnectTimer = this.#tickTimer = this.#keepaliveTimer = null;
+    this.#reconnectTimer = this.#tickTimer = null;
+    this.#live.stop();
+    this.#unwatch?.();
+    this.#unwatch = null;
     this.#closePeer();
     const ws = this.#ws;
     this.#ws = null;
@@ -156,12 +181,11 @@ export class ScreenLink extends Emitter {
     ws.binaryType = 'arraybuffer';
     this.#ws = ws;
     ws.onopen = () => {
-      this.#retry = 0;
       ws.send(JSON.stringify({ type: 'create_room', pin: this.pin || undefined, resume: this.#resume || undefined }));
-      clearInterval(this.#keepaliveTimer);
-      this.#keepaliveTimer = setInterval(() => this.#signal({ type: 'ping' }), WS_KEEPALIVE_MS);
+      this.#live.start();
     };
     ws.onmessage = (ev) => {
+      this.#live.seen();
       if (typeof ev.data === 'string') {
         let m;
         try {
@@ -175,36 +199,63 @@ export class ScreenLink extends Emitter {
         this.#onBinary(ev.data);
       }
     };
-    ws.onclose = () => {
-      if (this.#ws !== ws) return;
-      this.#ws = null;
-      this.#token = '';
-      clearInterval(this.#keepaliveTimer);
-      this.#keepaliveTimer = null;
-      if (this.#stopped) return;
-      // A live WebRTC session can survive a signalling hiccup; only drop the relay path.
-      if (this.#control?.readyState !== 'open') {
-        this.#closePeer();
-        this.#peerPresent = false;
-        this.#setStatus('disconnected', 'Lost connection to the server. Retrying...', 'none');
-      }
-      this.#scheduleReconnect();
-    };
+    // 1012 = the server is restarting (deploy): come back quickly.
+    ws.onclose = (ev) => this.#wsDown(ws, 'Lost connection to the server. Retrying...', ev?.code === 1012);
   }
 
-  #scheduleReconnect() {
+  /** The signalling socket closed, or the heartbeat declared it dead (no FIN: Wi-Fi switch, sleep). */
+  #wsDown(ws, text, fast = false) {
+    if (!ws || this.#ws !== ws) return;
+    this.#ws = null;
+    this.#token = '';
+    this.#live.stop();
+    ws.onclose = ws.onmessage = ws.onerror = ws.onopen = null;
+    try {
+      ws.close();
+    } catch {
+      /* ignore */
+    }
+    if (this.#stopped) return;
+    // A live WebRTC session can survive a signalling hiccup; only drop the relay path.
+    if (this.#control?.readyState !== 'open') {
+      this.#closePeer();
+      this.#peerPresent = false;
+      this.#setStatus('disconnected', text, 'none');
+    }
+    if (fast) this.#retry = 0;
+    this.#scheduleReconnect(fast ? 150 + Math.random() * 600 : undefined);
+  }
+
+  #scheduleReconnect(delay) {
     if (this.#stopped || this.#reconnectTimer) return;
-    const delay = Math.min(5000, 500 * 2 ** this.#retry++);
+    const d = delay ?? backoffDelay(this.#retry++, this.retryBaseMs, this.retryMaxMs);
     this.#reconnectTimer = setTimeout(() => {
       this.#reconnectTimer = null;
       this.#connect();
-    }, delay);
+    }, d);
+  }
+
+  /** Tab visible again / network back: check the socket now instead of waiting for the heartbeat. */
+  #wake(ms) {
+    if (this.#stopped) return;
+    if (this.#reconnectTimer) return this.#reconnectNow();
+    if (this.#ws?.readyState === 1) this.#live.probe(ms);
+  }
+
+  #reconnectNow() {
+    if (this.#stopped) return;
+    clearTimeout(this.#reconnectTimer);
+    this.#reconnectTimer = null;
+    this.#retry = 0;
+    if (this.#ws) this.#wsDown(this.#ws, 'Reconnecting...', true);
+    else this.#connect();
   }
 
   #onSignal(m) {
     switch (m.type) {
       case 'joined': {
         this.#token = String(m.token || '');
+        this.#retry = 0;
         const changed = this.pin !== m.room;
         this.pin = String(m.room || '');
         if (typeof m.resume === 'string') this.#resume = m.resume;
@@ -392,6 +443,16 @@ export class ScreenLink extends Emitter {
     }
     if (m.t === 'ping' && typeof m.ts === 'number') {
       this.send({ t: 'pong', ts: m.ts });
+      return;
+    }
+    if (m.t === 'transport') {
+      // The phone gave up on a silent direct link and moved to the relay: drop ours too, or our
+      // messages would keep going into the dead data channel.
+      if (m.via === 'relay' && this.#control) {
+        this.#closePeer();
+        this.#relaySeen = true;
+      }
+      this.#markConnected(this.#control?.readyState === 'open' ? 'webrtc' : 'relay');
       return;
     }
     if (this.status !== 'connected') this.#markConnected(this.#control?.readyState === 'open' ? 'webrtc' : 'relay');

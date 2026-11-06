@@ -5,7 +5,7 @@
  *   node scripts/gen-cricket-assets.mjs            generate any missing files
  *   node scripts/gen-cricket-assets.mjs --force    regenerate everything
  *
- * Reads GEMINI_API_KEY from ../.env (the games-claude folder) or the environment. Always uses gemini-3.8-flash
+ * Reads GEMINI_API_KEY from ../.env (the parent folder) or the environment. Always uses gemini-3.8-flash
  * (the project's chosen model for artwork; GEMINI_MODEL in .env is ignored here).
  * Writes games/cricket/assets/gen/<name>.svg and manifest.json. Every SVG is checked: it must be a single
  * <svg> document with no scripts, event handlers or external references; rejected output is retried.

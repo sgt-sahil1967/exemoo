@@ -10,6 +10,9 @@ iframe and hands it the phone the player already paired.
 | `fruit-slice`, `table-tennis`, `golf`, `tennis`, `pose-match` | `../games-src/<id>/`, `npm run build` | slice / swing / swing / swing / remote |
 | `farm-dash` | static (copy of `../subway runner` + `js/exemoo-remote.js`) | remote + tilt |
 | `cricket` | static, new | swing |
+| `rapids-row` | static, new (see `rapids-row/CONTRACT.md`) | swing (2 phones) |
+| `farm-kart` | `../games-src/farm-kart/` = mirror of `../../farm-kart` + `exemoo/` adapter; `node scripts/sync-farm-kart.mjs` | kart in races, remote in menus (1–4 phones) |
+| `shake-freeze`, `wobble-tower`, `flapjack-flip` | static, new party minigames (Canvas 2D, no build). Shared kit `party.js` / `art.js` / `sfx.js` / `party.css` is copied into each folder | swing (1–4 phones: P1 = shell phone, P2–P4 pair their own PIN) |
 
 ## Adding a game (Phase 3)
 
@@ -46,6 +49,7 @@ exemoo.nav(b);                                    // d-pad / Action over the pag
 | `swing` | Big hold-to-swing button (`action` held), Pause, Recenter, d-pad | on | golf, table tennis, tennis, cricket |
 | `slice` | Whole screen is the blade (`action` held while touching), Pause, Recenter | on | fruit slice |
 | `remote` | GO, Pause, Back, d-pad | off | camera games: pose match, farm dash |
+| `kart` | Steering wheel (tilt, or ◀ ▶ buttons), DRIFT / BRAKE / ITEM / GAS, pos / lap / item HUD, Pause | off (sends `{t:'in', s, g, b, d, i}` ~30 Hz instead) | farm kart (`public/js/pad-kart.js`) |
 
 Every layout has a Home button (hold 0.6 s). The shell handles it: the game is closed and the
 phone goes back to the menu pointer. Keyboard and mouse still reach the game normally.

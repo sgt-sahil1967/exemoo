@@ -1,0 +1,31 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>sky dev</title>
+<style>html,body{margin:0;height:100%;overflow:hidden}#hud{position:fixed;left:8px;top:8px;font:12px monospace;background:#fffc;padding:4px 8px;border-radius:6px}button{margin-right:4px}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body><div id="hud"></div>
+<script type="module">
+import * as THREE from 'three';
+import { makeSky } from './js/sky.js';
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(devicePixelRatio); renderer.setSize(innerWidth, innerHeight); document.body.appendChild(renderer.domElement);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1400);
+const q = new URLSearchParams(location.search);
+const sky = makeSky(scene, q.get('p') || 'day', renderer);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000,4000), new THREE.MeshStandardMaterial({color:'#5fb04a', roughness:1}));
+ground.rotation.x=-Math.PI/2; ground.position.y=-0.2; scene.add(ground);
+const water = new THREE.Mesh(new THREE.PlaneGeometry(30,4000), new THREE.MeshStandardMaterial({color:'#2f9bd8', roughness:0.25, metalness:0.1}));
+water.rotation.x=-Math.PI/2; water.position.set(0,0,-1900); scene.add(water);
+for (let i=0;i<8;i++){ const m=new THREE.Mesh(new THREE.SphereGeometry(1.5,32,16), new THREE.MeshStandardMaterial({color:['#ff5a4a','#f4d03f','#ffffff','#3b82f6'][i%4], roughness:[0.2,0.5,0.8,0.35][i%4], metalness:i<4?0:0.8})); m.position.set(-9+i*2.6,1.5,-18-i*3); scene.add(m);}
+camera.position.set(0,3,0);
+const hud=document.getElementById('hud');
+let pitch = +(q.get('pitch')||0.04), yaw=+(q.get('yaw')||0);
+for (const n of sky.presets){ const b=document.createElement('button'); b.textContent=n; b.onclick=()=>{sky.setPreset(n); renderer.toneMappingExposure=sky.exposure;}; hud.appendChild(b);} 
+const bu=document.createElement('button'); bu.textContent='look up'; bu.onclick=()=>pitch=pitch>0.3?0.04:0.9; hud.appendChild(bu);
+renderer.toneMappingExposure=sky.exposure;
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+window.__sky=sky; window.__set=(p,y)=>{pitch=p;yaw=y};
+const clock=new THREE.Clock();
+renderer.setAnimationLoop(()=>{ const t=clock.getElapsedTime(); camera.rotation.set(pitch,yaw,0,'YXZ'); camera.position.z=-t*0; sky.update(t,camera); renderer.render(scene,camera); });
+</script></body></html>

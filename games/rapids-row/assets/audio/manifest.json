@@ -1,0 +1,133 @@
+{
+  "requestedModel": "gemini-3.1-pro-preview",
+  "generatedAt": "2026-10-29T05:25:17.254Z",
+  "sampleRate": 22050,
+  "files": {
+    "splash_3": {
+      "file": "splash_3.wav",
+      "duration": 0.42,
+      "loop": false,
+      "peak": 0.89,
+      "rms": 0.1783,
+      "retries": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "splash_2": {
+      "file": "splash_2.wav",
+      "duration": 0.36,
+      "loop": false,
+      "peak": 0.89,
+      "rms": 0.1275,
+      "retries": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "bank_scrape": {
+      "file": "bank_scrape.wav",
+      "duration": 0.68,
+      "loop": false,
+      "peak": 0.85,
+      "rms": 0.168,
+      "retries": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "rock_hit": {
+      "file": "rock_hit.wav",
+      "duration": 0.55,
+      "loop": false,
+      "peak": 0.95,
+      "rms": 0.1352,
+      "retries": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "log_hit": {
+      "file": "log_hit.wav",
+      "duration": 0.45,
+      "loop": false,
+      "peak": 0.92,
+      "rms": 0.1482,
+      "retries": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "coin": {
+      "file": "coin.wav",
+      "duration": 0.4,
+      "loop": false,
+      "peak": 0.89,
+      "rms": 0.1995,
+      "retries": 1,
+      "model": "gemini-3.8-flash"
+    },
+    "splash_1": {
+      "file": "splash_1.wav",
+      "duration": 0.38,
+      "loop": false,
+      "peak": 0.89,
+      "rms": 0.1585,
+      "retries": 0,
+      "model": "gemini-3.5-flash"
+    },
+    "beep": {
+      "file": "beep.wav",
+      "duration": 0.3,
+      "loop": false,
+      "peak": 0.89,
+      "rms": 0.5006,
+      "retries": 0,
+      "model": "gemini-3.5-flash"
+    },
+    "checkpoint": {
+      "file": "checkpoint.wav",
+      "duration": 0.9,
+      "loop": false,
+      "peak": 0.89,
+      "rms": 0.1643,
+      "retries": 0,
+      "model": "gemini-3.5-flash"
+    },
+    "moo": {
+      "file": "moo.wav",
+      "duration": 1.3,
+      "loop": false,
+      "peak": 0.9,
+      "rms": 0.2959,
+      "retries": 0,
+      "model": "gemini-3.5-flash"
+    },
+    "go": {
+      "file": "go.wav",
+      "duration": 0.7,
+      "loop": false,
+      "peak": 0.92,
+      "rms": 0.2965,
+      "retries": 1,
+      "model": "gemini-3.5-flash"
+    },
+    "cheer": {
+      "file": "cheer.wav",
+      "duration": 2.2,
+      "loop": false,
+      "peak": 0.85,
+      "rms": 0.1673,
+      "retries": 1,
+      "model": "gemini-3.5-flash"
+    },
+    "rapids_loop": {
+      "file": "rapids_loop.wav",
+      "duration": 6,
+      "loop": true,
+      "peak": 0.5,
+      "rms": 0.1282,
+      "retries": 0,
+      "model": "gemini-3.5-flash"
+    },
+    "click": {
+      "file": "click.wav",
+      "duration": 0.08,
+      "loop": false,
+      "peak": 0.85,
+      "rms": 0.1982,
+      "retries": 0,
+      "model": "gemini-3.5-flash"
+    }
+  }
+}

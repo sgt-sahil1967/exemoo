@@ -1,5 +1,5 @@
-/** Game setup: mode, hole set, players (name + look), wind. Emits start(setup). */
-import type { GameMode, GameSetup, GolferLook, HoleSet, PlayerSetup } from '../../core/contracts';
+/** Game setup: mode, hole set, players (name + look), wind, handedness. Emits start(setup). */
+import type { GameMode, GameSetup, GolferLook, Handedness, HoleSet, PlayerSetup } from '../../core/contracts';
 import { PLAYER_COLORS } from '../../core/contracts';
 import { h } from '../dom';
 import { avatarSvg, HAIR_COLORS, HATS, SHIRT_COLORS, SKIN_TONES } from '../avatar';
@@ -114,6 +114,15 @@ export function setupScreen(ctx: UICtx): ScreenDef {
     ],
     setup.wind,
     (v) => (setup = { ...setup, wind: v }),
+  );
+  const hand = seg<Handedness>(
+    'hand',
+    [
+      { value: 'right', label: 'Right-handed' },
+      { value: 'left', label: 'Left-handed' },
+    ],
+    ctx.state.settings.handedness,
+    (v) => ctx.setSettings({ ...ctx.state.settings, handedness: v }),
   );
   const syncMode = () => {
     const round = setup.mode === 'round';
@@ -248,6 +257,8 @@ export function setupScreen(ctx: UICtx): ScreenDef {
     trainNote,
     label('Wind', 'wind'),
     wind.el,
+    label('Golfer', 'person'),
+    hand.el,
   );
   const right = h(
     'div',
@@ -276,11 +287,13 @@ export function setupScreen(ctx: UICtx): ScreenDef {
         setup = { ...setup, mode: last.startsWith('training') ? last : 'training-putt' };
       } else if (t === false) setup = { ...setup, mode: 'round' };
       mode.set(setup.mode);
+      hand.set(ctx.state.settings.handedness);
       syncMode();
       chip.update(ctx.state);
     },
     refresh() {
       chip.update(ctx.state);
+      hand.set(ctx.state.settings.handedness);
       const key = JSON.stringify(ctx.state.courseSummary);
       if (key === summaryKey) return;
       summaryKey = key;

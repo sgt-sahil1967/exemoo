@@ -1,0 +1,97 @@
+{
+  "kind": "sfx",
+  "duration": 0.45,
+  "layers": [
+    {
+      "source": "triangle",
+      "start": 0,
+      "dur": 0.3,
+      "gain": 0.9,
+      "freq": {
+        "start": 195,
+        "end": 172,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.22,
+        "sustain": 0,
+        "release": 0.05
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 800,
+          "end": 500,
+          "curve": "exp"
+        },
+        "q": 1.2
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0,
+      "dur": 0.24,
+      "gain": 0.7,
+      "freq": {
+        "start": 345,
+        "end": 315,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0,
+        "release": 0.04
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 330,
+          "end": 315,
+          "curve": "exp"
+        },
+        "q": 2.5
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0,
+      "dur": 0.12,
+      "gain": 0.45,
+      "freq": {
+        "start": 560,
+        "end": 510,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.08,
+        "sustain": 0,
+        "release": 0.02
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0,
+      "dur": 0.05,
+      "gain": 0.85,
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 1200,
+          "end": 750,
+          "curve": "exp"
+        },
+        "q": 3.2
+      }
+    }
+  ]
+}

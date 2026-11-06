@@ -1,0 +1,116 @@
+{
+  "kind": "sfx",
+  "duration": 0.68,
+  "layers": [
+    {
+      "source": "noise",
+      "noiseColor": "white",
+      "start": 0,
+      "dur": 0.52,
+      "gain": 0.85,
+      "amp": {
+        "attack": 0.06,
+        "decay": 0.15,
+        "sustain": 0.6,
+        "release": 0.1
+      },
+      "ampEnd": 0.7,
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 1600,
+          "end": 550,
+          "curve": "exp"
+        },
+        "q": 2.2
+      },
+      "tremolo": {
+        "hz": 42,
+        "depth": 0.7
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "brown",
+      "start": 0,
+      "dur": 0.58,
+      "gain": 1,
+      "amp": {
+        "attack": 0.08,
+        "decay": 0.2,
+        "sustain": 0.7,
+        "release": 0.1
+      },
+      "ampEnd": 0.6,
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 600,
+          "end": 180,
+          "curve": "exp"
+        },
+        "q": 1.5
+      },
+      "tremolo": {
+        "hz": 32,
+        "depth": 0.55
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0.02,
+      "dur": 0.5,
+      "gain": 0.45,
+      "freq": {
+        "start": 120,
+        "end": 75,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.07,
+        "decay": 0.2,
+        "sustain": 0.4,
+        "release": 0.12
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 350,
+          "end": 150,
+          "curve": "exp"
+        },
+        "q": 1.2
+      },
+      "tremolo": {
+        "hz": 36,
+        "depth": 0.4
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "white",
+      "start": 0.04,
+      "dur": 0.44,
+      "gain": 0.35,
+      "amp": {
+        "attack": 0.04,
+        "decay": 0.12,
+        "sustain": 0.35,
+        "release": 0.1
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 3800,
+          "end": 1400,
+          "curve": "exp"
+        },
+        "q": 1.8
+      },
+      "tremolo": {
+        "hz": 48,
+        "depth": 0.85
+      }
+    }
+  ]
+}

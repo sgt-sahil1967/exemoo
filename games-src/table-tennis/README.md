@@ -30,23 +30,37 @@ Environment overrides: `PORT` (8080), `HTTPS_PORT` (8443), `HOST`, `ROOM_TTL_MS`
 
 ## How to play
 
-Hold the phone **upright like a paddle, screen facing you**; the back of the phone is your rubber.
-Keep still for a second to calibrate (or tap **Recenter**).
+You only have to **time a swing**. Your player runs to the ball and the paddle glides onto it automatically.
+
+1. A **ring closes around the ball** as it comes to you, and a marker on the table shows where it will bounce.
+2. **Swing when the ring turns green.** Any reasonable flick counts. No motion? **Tap the big phone button** (or click / Space).
+3. **PERFECT** hits hardest and straightest. **GOOD** is nearly as good. **EARLY** and **LATE** swings still go back over, just softer.
+4. **Aim:** point the phone left or right (or press ◀ ▶). The lit pad on the far half is where your shot lands.
+5. **Optional spin:** brush upward for a topspin loop, chop down for a backspin push. A high ball plus a big swing is a smash.
+6. **Serve:** swing or tap. The toss is automatic.
+
+New players: main menu → **Learn to Play** runs a 5-step guided first rally (slow balls first), then free practice.
 
 | Action | Phone | Mouse / keyboard |
 |---|---|---|
-| Hit / serve | Swing | Flick the mouse up, click, or Space |
-| Aim left/right | Point the paddle | Mouse X |
-| Depth | Tilt the face up/down | Mouse Y |
-| Topspin | Closed face + upward swing | Ctrl/Alt while hitting |
-| Backspin | Open face / chopping swing | Shift or right button |
+| Hit / serve | Swing, or tap the big button | Click or Space |
+| Aim left / middle / right | Point the phone, or ◀ ▶ | Mouse X, or arrow keys |
+| Topspin / backspin (optional) | Upward / chopping swing | — |
 | Slow-mo power-up | SLOW-MO button | E |
-| Pause | Pause button | Esc / P |
-| Recenter | Recenter button | R |
-| Menus | Air pointer + Action, or the d-pad | Arrows + Enter, mouse |
+| Pause / Recenter | Pause / Recenter buttons | Esc / R |
 
-Timing matters: hitting early pulls the ball cross-court, hitting late pushes it wide. The **Assist**
-setting controls auto-positioning, timing window and paddle magnetism.
+### Tuning the hitting mechanic
+
+All of it lives in `src/game/hitTiming.ts` (`HIT`). Ranges marked "assist 0 → 1" follow the **Assist** setting (default 0.6):
+- `openAt`, `lateLimit`, `buffer`: how long the swing window is. Early swings are held and played at the ideal moment.
+- `sweet`, `perfect`, `good`, `ringLead`: where the sweet spot sits. The ring closes slightly before contact to absorb sensor and network latency.
+- `approachScale`: slow motion while the window is open.
+- `speed`, `error`, `padX`, `depth`: shot pace and safety. `error` is small, so mistimed shots are weaker, not wild.
+- `vsCpu`: per CPU level, a cap on your shot speed and a multiplier on mistimed-shot risk.
+
+Other knobs: CPU levels in `src/game/ai.ts` (`DIFFICULTY`; `maxSpeed` caps CPU pace), lessons in `src/game/lessons.ts`,
+phone swing trigger in `src/input/phoneInput.ts` (`SwingDetector({ on, off })`), and visuals in `src/scene/hitCue.ts`.
+Debug: `?debug&play=match&auto=0.25` runs a human-like autoplayer (±0.25 s timing error, 0.32 s reaction).
 
 ## 2 players (split screen)
 

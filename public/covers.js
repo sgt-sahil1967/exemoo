@@ -1,5 +1,7 @@
 // Cover art for each game card (inline SVG, 400×220). Moo Moo Farm style: chunky ink outlines,
 // bright shaded colours, soft drop shadows and highlights.
+import { rapidsRowCover } from '/play/rapids-row/js/cover.js';
+
 const INK = '#1b1b3a';
 const S = `stroke="${INK}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"`;
 const S3 = `stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"`;
@@ -224,4 +226,128 @@ export const covers = {
     <path d="M196 84 h-32 M200 100 h-42" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
     <g font-family="Lilita One, sans-serif" font-size="30" fill="#ffd21f" stroke="${INK}" stroke-width="6" paint-order="stroke"><text x="300" y="54" transform="rotate(-8 300 54)">SIX!</text></g>
     ${sparkle(262, 34, '#ffd21f')}${sparkle(40, 60, '#fff', 0.6)}`),
+  // ───────────── Farm Kart ─────────────
+  kart: svg(`${defs('fk', '#ff9a3c', '#ffe08a', `
+    <linearGradient id="fkt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a4a"/><stop offset="1" stop-color="#e8b070"/></linearGradient>
+    <linearGradient id="fkb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5a"/><stop offset="1" stop-color="#c41e12"/></linearGradient>
+    <radialGradient id="fkq" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#9fd0ff"/><stop offset="1" stop-color="#2f7cff"/></radialGradient>`)}
+    ${sky('fk')}${cloud(80, 34, 0.8)}${cloud(230, 24, 0.6)}
+    <path d="M0 112 Q100 82 200 102 T400 94 V220 H0Z" fill="#8fe86a"/>
+    <g filter="url(#fkd)">
+      <path d="M338 104 h52 v-32 l-26 -20 l-26 20z" fill="url(#fkb)" ${S3}/><path d="M354 104 v-16 h20 v16" fill="#fff" ${S3}/><path d="M346 74 l36 0" stroke="#fff" stroke-width="3" opacity=".6"/>
+    </g>
+    <path d="M0 150 Q120 118 240 128 T400 118 V220 H0Z" fill="url(#fkc)" ${S}/>
+    <path d="M-10 214 Q90 150 210 156 T420 128 L420 160 Q300 168 230 188 T40 236Z" fill="url(#fkt)" ${S}/>
+    <path d="M30 222 Q120 170 214 172 T410 144" stroke="#fff" stroke-width="5" stroke-dasharray="14 12" fill="none" opacity=".8"/>
+    <g ${S3}>${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<rect x="${236 + i * 20}" y="${150 - i * 3.2}" width="20" height="8" fill="${i % 2 ? '#fff' : '#ff3b30'}"/>`).join('')}</g>
+    <g filter="url(#fkd)">
+      <path d="M288 140 V52" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>
+      <g transform="translate(290 54)"><path d="M0 0 Q20 -6 44 2 V34 Q20 26 0 32Z" fill="#fff" ${S3}/>${[0, 1, 2, 3].map((r) => [0, 1, 2].map((c) => ((r + c) % 2 ? '' : `<rect x="${3 + c * 13}" y="${2 + r * 7.5}" width="12" height="7" fill="${INK}"/>`)).join('')).join('')}</g>
+    </g>
+    <g filter="url(#fkd)" transform="translate(238 74) rotate(-8)">
+      <rect x="-18" y="-18" width="36" height="36" rx="8" fill="url(#fkq)" ${S}/><rect x="-14" y="-14" width="28" height="10" rx="4" fill="#fff" opacity=".35"/>
+      <text x="0" y="11" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="30" fill="#ffd21f" stroke="${INK}" stroke-width="5" paint-order="stroke">?</text>
+    </g>
+    <g fill="#fff" ${S3} opacity=".95">${[[58, 176, 13], [36, 168, 9], [76, 160, 8]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>
+    ${shadow(158, 192, 66, 8)}
+    <g filter="url(#fkd)">
+      <circle cx="108" cy="178" r="17" fill="#2f2f45" ${S}/><circle cx="108" cy="178" r="6" fill="#ffd21f" ${S3}/>
+      <path d="M86 170 Q88 140 118 136 L196 134 Q222 136 224 160 L222 176 L94 180Z" fill="url(#fkb)" ${S}/>
+      <path d="M100 150 Q106 142 122 142 L190 141" stroke="#fff" stroke-width="5" opacity=".45" fill="none"/>
+      <rect x="194" y="150" width="34" height="14" rx="5" fill="#ffd21f" ${S3}/>
+      <circle cx="206" cy="180" r="17" fill="#2f2f45" ${S}/><circle cx="206" cy="180" r="6" fill="#ffd21f" ${S3}/>
+      <rect x="84" y="126" width="14" height="22" rx="4" fill="#ff3b30" ${S3}/>
+      <g transform="translate(150 106)">
+        <path d="M-22 26 Q-22 4 0 2 Q22 4 22 26Z" fill="#2fc65a" ${S3}/>
+        <ellipse cx="0" cy="-16" rx="22" ry="19" fill="#fff" ${S}/>
+        <path d="M-14 -30 q8 2 8 12 q-10 2 -14 -6z" fill="${INK}"/><path d="M8 -10 q8 -4 12 4 q-6 8 -14 4z" fill="${INK}"/>
+        <path d="M-20 -30 l-12 -8 M20 -30 l12 -8" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M-20 -30 l-12 -8 M20 -30 l12 -8" stroke="#f3e3b5" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="0" cy="-4" rx="16" ry="10" fill="#ffb3c0" ${S3}/><circle cx="-6" cy="-4" r="2.4" fill="${INK}"/><circle cx="6" cy="-4" r="2.4" fill="${INK}"/>
+        <circle cx="-9" cy="-20" r="3" fill="${INK}"/><circle cx="9" cy="-20" r="3" fill="${INK}"/>
+        <path d="M-20 -26 Q0 -44 20 -26" stroke="${INK}" stroke-width="7" fill="none"/><path d="M-20 -26 Q0 -44 20 -26" stroke="#2f7cff" stroke-width="3" fill="none"/>
+      </g>
+      <path d="M170 136 l14 -10" stroke="${INK}" stroke-width="7" stroke-linecap="round"/><circle cx="186" cy="124" r="7" fill="none" stroke="${INK}" stroke-width="5"/>
+    </g>
+    <path d="M70 140 h-30 M78 124 h-44 M64 108 h-22" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+    <g filter="url(#fkd)" transform="translate(60 62) rotate(30)"><path d="M0 -20 Q7 0 0 22 Q-7 0 0 -20Z" fill="#ff8a00" ${S3}/><path d="M0 -20 l-6 -10 M0 -20 l6 -10 M0 -20 v-12" stroke="#2fc65a" stroke-width="4" stroke-linecap="round"/></g>
+    ${sparkle(204, 40, '#ffd21f')}${sparkle(390, 30, '#fff', 0.6)}${sparkle(112, 92, '#fff', 0.7)}`),
+  // ───────────── Rapids Row (art lives with the game) ─────────────
+  rapids: rapidsRowCover(),
+  // ───────────── Shake & Freeze (party) ─────────────
+  shake: svg(`${defs('sf', '#ff8fb1', '#ffe0ec', `
+    <linearGradient id="sfm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb3cb"/><stop offset="1" stop-color="#ff6f9c"/></linearGradient>`)}
+    ${sky('sf')}${cloud(80, 34, 0.8)}${hills('sf', 6)}
+    <g filter="url(#sfd)">
+      <path d="M118 30 h164 v26 h-164z" fill="#fff" ${S3}/>
+      ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<path d="M${118 + i * 20.5} 56 h20.5 v8 a10.25 10.25 0 0 1 -20.5 0z" fill="${i % 2 ? '#fff' : '#ff5c8a'}" ${S3}/>`).join('')}
+      <rect x="34" y="64" width="12" height="104" rx="4" fill="#8a8fb0" ${S3}/>
+      <rect x="20" y="40" width="40" height="66" rx="12" fill="#3a3d5c" ${S}/>
+      <circle cx="40" cy="58" r="11" fill="#ff3b30" ${S3}/><circle cx="36" cy="54" r="3.5" fill="#fff" opacity=".7"/>
+      <circle cx="40" cy="88" r="11" fill="#1d6b35" ${S3}/>
+      <path d="M170 92 h62 l-10 104 h-42z" fill="#d9f1ff" ${S}/>
+      <path d="M174 124 h54 l-7 72 h-40z" fill="url(#sfm)"/>
+      <path d="M170 92 h62 l-10 104 h-42z" fill="none" ${S}/>
+      <circle cx="184" cy="88" r="14" fill="#fff" ${S3}/><circle cx="218" cy="88" r="14" fill="#fff" ${S3}/><circle cx="201" cy="76" r="16" fill="#fff" ${S3}/>
+      <circle cx="202" cy="56" r="9" fill="#ff3b30" ${S3}/><path d="M202 48 q4 -12 14 -14" fill="none" ${S3}/>
+      <path d="M216 120 L244 48" stroke="${INK}" stroke-width="10" stroke-linecap="round"/><path d="M216 120 L244 48" stroke="#ff3b30" stroke-width="5" stroke-linecap="round"/>
+      <rect x="180" y="120" width="8" height="60" rx="4" fill="#fff" opacity=".5"/>
+      <g transform="translate(316 118) rotate(14)">
+        <path d="M-22 -40 h44 l-8 80 h-28z" fill="#d9f1ff" ${S}/>
+        <rect x="-26" y="-54" width="52" height="16" rx="6" fill="#2f7cff" ${S3}/>
+        <rect x="-14" y="-30" width="6" height="50" rx="3" fill="#fff" opacity=".6"/>
+      </g>
+      <g ${S3} fill="none"><path d="M266 92 l-14 -6 M264 120 l-16 0 M268 148 l-14 6 M370 86 l14 -6 M372 116 l16 0 M368 146 l14 8"/></g>
+      <g fill="#ff8fb1" ${S3}><circle cx="290" cy="58" r="6"/><circle cx="350" cy="50" r="5"/><circle cx="330" cy="36" r="4"/></g>
+    </g>
+    ${sparkle(150, 70, '#fff')}${sparkle(258, 30, '#ffd21f', 0.8)}`),
+  // ───────────── Wobble Tower (party) ─────────────
+  wobble: svg(`${defs('wt', '#5ec2ff', '#c9f0ff')}
+    ${sky('wt')}${cloud(300, 40, 0.9)}${cloud(70, 60, 0.6)}${hills('wt', 4)}
+    <g stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"><path d="M20 60 h60 M10 96 h44 M330 120 h56 M340 84 h40"/></g>
+    ${shadow(200, 202, 80, 8)}
+    <g filter="url(#wtd)">
+      <path d="M150 172 Q160 150 172 162 L190 196 h-34z" fill="#ffb3c4" ${S}/>
+      <path d="M250 172 Q240 150 228 162 L210 196 h34z" fill="#ffb3c4" ${S}/>
+      <g transform="rotate(-6 200 168)">
+        <rect x="128" y="160" width="144" height="12" rx="6" fill="#c9d3e8" ${S3}/>
+        ${[0, 1, 2, 3, 4].map((i) => {
+          const x = 200 + i * i * 1.6 + i * 2, y = 140 - i * 24;
+          return `<path d="M${x} ${y - 16} C${x + 15} ${y - 16} ${x + 14} ${y + 12} ${x} ${y + 12} C${x - 14} ${y + 12} ${x - 15} ${y - 16} ${x} ${y - 16}Z" fill="${i % 2 ? '#ffe9c4' : '#fff6e0'}" ${S3}/><ellipse cx="${x - 4}" cy="${y - 6}" rx="3" ry="4" fill="#fff"/>`;
+        }).join('')}
+      </g>
+      <g transform="translate(228 14)">
+        <ellipse cx="0" cy="12" rx="20" ry="14" fill="#fff" ${S3}/><circle cx="14" cy="-2" r="9" fill="#fff" ${S3}/>
+        <circle cx="12" cy="-12" r="3.5" fill="#ff3b30"/><circle cx="17" cy="-12" r="3.5" fill="#ff3b30"/>
+        <path d="M22 -4 l8 3 l-8 3z" fill="#ff9a1f" ${S3}/><circle cx="16" cy="-3" r="1.8" fill="${INK}"/>
+      </g>
+      <g transform="translate(330 172)"><path d="M-30 -24 h60 l-8 32 h-44z" fill="#d48a3a" ${S}/><ellipse cx="-10" cy="-30" rx="9" ry="11" fill="#fff6e0" ${S3}/><ellipse cx="8" cy="-32" rx="9" ry="11" fill="#fff6e0" ${S3}/></g>
+    </g>
+    <g fill="#ff3b30" stroke="${INK}" stroke-width="3" stroke-linejoin="round"><path d="M96 70 l-16 10 l16 10z"/><path d="M300 30 l16 10 l-16 10z"/></g>
+    ${sparkle(118, 120, '#ffd21f')}${sparkle(290, 96, '#fff', 0.7)}`),
+  // ───────────── Flapjack Flip (party) ─────────────
+  flapjack: svg(`<defs><filter id="fjd" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="3" flood-color="#000" flood-opacity=".28"/></filter>
+    <pattern id="fjt" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#e6f6ff"/><rect width="20" height="20" fill="#bfe8ff"/><rect x="20" y="20" width="20" height="20" fill="#bfe8ff"/></pattern></defs>
+    <rect width="400" height="220" fill="url(#fjt)"/>
+    <rect x="-5" y="168" width="410" height="16" rx="6" fill="#fff" ${S}/><rect x="0" y="184" width="400" height="40" fill="#2f7cff"/>
+    <path d="M0 184 H400" ${S}/>
+    <g filter="url(#fjd)">
+      <path d="M60 52 a90 90 0 0 1 150 -10" fill="none" stroke="${INK}" stroke-width="4" stroke-dasharray="10 9" stroke-linecap="round"/>
+      <g transform="translate(150 54) rotate(-28)"><ellipse rx="40" ry="16" fill="#d98a2b" ${S3}/><ellipse cy="-4" rx="40" ry="12" fill="#ffc95c" ${S3}/></g>
+      <g transform="translate(232 98) rotate(40)"><ellipse rx="34" ry="8" fill="#f2a640" ${S3}/></g>
+      <path d="M212 46 l12 -4 l-4 12" fill="none" ${S3}/>
+      <g transform="translate(110 158) rotate(-14)">
+        <path d="M30 0 L104 6" stroke="${INK}" stroke-width="16" stroke-linecap="round"/><path d="M30 0 L104 6" stroke="#3a3350" stroke-width="9" stroke-linecap="round"/>
+        <ellipse cx="0" cy="0" rx="52" ry="15" fill="#3a3d5c" ${S}/><ellipse cx="0" cy="-3" rx="42" ry="9" fill="#55597a"/>
+      </g>
+      <g transform="translate(320 160)">
+        <ellipse cx="0" cy="10" rx="48" ry="11" fill="#fff" ${S3}/>
+        ${[0, 1, 2, 3, 4].map((i) => `<ellipse cx="0" cy="${2 - i * 10}" rx="38" ry="9" fill="${i % 2 ? '#f2a640' : '#ffc95c'}" ${S3}/>`).join('')}
+        <rect x="-12" y="-50" width="24" height="9" rx="3" fill="#fff3a0" ${S3}/>
+        <path d="M-30 -40 q-6 18 0 28 q4 -12 8 -20z" fill="#a8541c" ${S3}/>
+      </g>
+      <g transform="translate(330 50)"><rect x="-58" y="-26" width="116" height="52" rx="8" fill="#fffbe8" ${S}/>
+        <rect x="-44" y="-12" width="22" height="22" rx="5" fill="#ffd21f" ${S3}/><rect x="-12" y="-12" width="22" height="22" rx="5" fill="#ffd21f" ${S3}/><rect x="20" y="-12" width="22" height="22" rx="5" fill="#fff" ${S3}/></g>
+    </g>
+    <g stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".9"><path d="M96 132 q6 -10 0 -20 M112 128 q6 -10 0 -20"/></g>
+    ${sparkle(70, 100, '#ffd21f')}${sparkle(258, 136, '#fff', 0.7)}`),
 };

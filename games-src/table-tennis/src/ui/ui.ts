@@ -674,7 +674,7 @@ export class UI {
             'div',
             { class: 'tiles' },
             tile('2 Players', 'versus', 'Split screen · 2 phones', 'var(--accent)', () => this.openVersusPair()),
-            tile('Practice', 'target', 'Free rally, no score', 'var(--accent2)', () =>
+            tile('Learn to Play', 'target', '1-minute guided rally, then practice', 'var(--accent2)', () =>
               this.start({ mode: 'practice', difficulty: this.settings.difficulty, gamesToWin: this.settings.gamesToWin }),
             ),
             tile('Challenges', 'trophy', 'Targets & drills', 'var(--gold)', () => this.show('challenges')),
@@ -1327,11 +1327,11 @@ export class UI {
   private buildHowto(): HTMLElement {
     const cards: { art: keyof typeof HOWTO_ART; title: string; text: string }[] = [
       { art: 'hold', title: 'Hold it like a paddle', text: 'Grip the bottom of the phone like a handle: upright, screen facing you, back of the phone is your rubber.' },
-      { art: 'swing', title: 'Swing to hit', text: 'Swing through the ball like a real stroke. Faster swings hit harder.' },
-      { art: 'timing', title: 'Timing is everything', text: 'Strike after the bounce, near the top of its arc. Perfect timing = more speed and accuracy.' },
-      { art: 'spin', title: 'Tilt for spin', text: 'Close the face (tilt down) for topspin. Open it (tilt up) to chop with backspin.' },
-      { art: 'aim', title: 'Point to aim', text: 'Where the phone points is where the ball goes. Aim for the corners!' },
-      { art: 'serve', title: 'Serving', text: 'Swing to serve. Serves alternate every 2 points — every point from 10–10. First to 11, win by 2.' },
+      { art: 'timing', title: 'Swing when the ring turns green', text: 'You run to the ball automatically. A ring closes around the ball — swing (any swing!) when it turns green. No phone motion? Tap the big button instead.' },
+      { art: 'swing', title: 'Early or late still counts', text: 'PERFECT timing hits hardest and straightest. EARLY or LATE swings still send the ball back, just softer.' },
+      { art: 'aim', title: 'Point to aim', text: 'Point the phone left or right (or press ◀ ▶) — the lit pad on the far side shows where your shot will land.' },
+      { art: 'spin', title: 'Spin (optional)', text: 'Brush upward for a fast topspin loop; chop downward for a slow backspin push. A high ball + big swing = smash.' },
+      { art: 'serve', title: 'Serving', text: 'Swing or tap to serve. Serves alternate every 2 points — every point from 10–10. First to 11, win by 2.' },
     ];
     return h(
       'section',
@@ -1356,7 +1356,7 @@ export class UI {
           'p',
           { class: 'muted center' },
           icon('mouse'),
-          ' No phone? Move the mouse to aim, flick or click to swing. Hold Shift for backspin, Ctrl for topspin.',
+          ' No phone? Click or press Space when the ring turns green; move the mouse left/right to aim.',
         ),
       ),
       this.hints(),

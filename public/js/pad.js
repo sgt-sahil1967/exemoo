@@ -6,11 +6,13 @@
  *   swing   big hold-to-swing button; SEN2 motion streamed ~60 Hz
  *   slice   the whole screen is the blade; SEN2 motion streamed
  *   remote  GO / Pause / Back for camera games; no motion stream
+ *   kart    steering wheel (tilt or buttons) + drift / brake / item / gas pads (pad-kart.js)
  * Every non-menu layout has a Home button (hold) that returns to the Exemoo menu.
  */
 import { PadLink } from './pad-link.js';
 import { playSound, unlockSound } from './pad-sound.js';
 import { LAYOUTS, buttonBit, encodeSen2, normalizeButton, quatFromEuler, SEN2_SIZE } from './protocol.js';
+import { initKart } from './pad-kart.js';
 
 const $ = (id) => document.getElementById(id);
 // Diagnostics: any script error or connection problem is shown on the pad itself.
@@ -22,6 +24,7 @@ function showDiag(text) {
 addEventListener('error', (e) => showDiag(`Error: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`));
 addEventListener('unhandledrejection', (e) => showDiag(`Error: ${e.reason?.message || e.reason}`));
 const link = new PadLink();
+initKart({ link, haptic: (p) => haptic(p) }); // 'kart' layout (Farm Kart), see pad-kart.js
 let pin = new URLSearchParams(location.search).get('pin') || '';
 
 // ───────────────────────────── status ─────────────────────────────
@@ -35,11 +38,11 @@ const STATUS = {
 };
 link.on('status', (s, detail) => {
   const [label, kind] = STATUS[s] || [s, ''];
-  $('stxt').innerHTML = label + (s === 'connected' ? ` <small>${link.transport === 'webrtc' ? 'direct' : 'relay'}</small>` : '');
+  $('stxt').innerHTML = label + (s === 'connected' ? ` <small>${link.transport === 'webrtc' ? 'direct' : 'relay'}</small>` : s === 'lost' && link.attempts > 1 ? ` <small>try ${link.attempts}</small>` : '');
   $('state').className = 'state' + (kind ? ' ' + kind : '');
   if (s === 'connected') link.send({ t: 'hello', ua: navigator.userAgent, motion: motionOn });
   if (s === 'gone') showPinGate(detail);
-  if (s === 'gone' || s === 'lost') showDiag(`Connection: ${detail || s}`);
+  if (s === 'gone' || s === 'lost') showDiag(`Connection: ${detail || s}${s === 'lost' ? '\nKeep this page open: it reconnects by itself.' : ''}`);
   else if (s === 'connected') document.getElementById('diag')?.remove();
 });
 link.on('message', (m) => {
@@ -378,6 +381,9 @@ function fetchJson(url, ms) {
   return fetch(url, { signal: ctl?.signal, cache: 'no-store' }).then((r) => r.json()).catch(() => null).finally(() => clearTimeout(timer));
 }
 $('startBtn').onclick = start;
+// A reloaded pad that was paired a moment ago rejoins its screen at once (no PIN, no tap needed to
+// reconnect; the start tap is still needed for motion sensors). start() → connect() is idempotent.
+if (/^\d{6}$/.test(pin) && link.canResume(pin)) link.connect(pin);
 // A game that pairs a second phone directly (e.g. 2-player table tennis) links to /pad?pin=…&layout=swing&title=…
 {
   const q = new URLSearchParams(location.search);

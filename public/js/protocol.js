@@ -43,8 +43,9 @@ export const normalizeButton = (b) => ALIASES[b] || b;
  *   swing   big hold-to-swing button, motion streamed   (golf, table tennis, tennis, cricket)
  *   slice   whole screen is the blade, motion streamed  (fruit slice)
  *   remote  d-pad + Action + Pause, no motion           (camera games: pose match, farm dash)
+ *   kart    tilt / button steering wheel + DRIFT BRAKE ITEM GAS, sends {t:'in'} (farm kart; js/pad-kart.js)
  */
-export const LAYOUTS = ['menu', 'swing', 'slice', 'remote'];
+export const LAYOUTS = ['menu', 'swing', 'slice', 'remote', 'kart'];
 
 export function buttonBit(b) {
   const i = BUTTON_ORDER.indexOf(normalizeButton(b));

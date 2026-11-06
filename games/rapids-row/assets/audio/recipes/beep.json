@@ -1,0 +1,49 @@
+{
+  "kind": "sfx",
+  "duration": 0.3,
+  "layers": [
+    {
+      "source": "sine",
+      "start": 0,
+      "dur": 0.22,
+      "gain": 1,
+      "freq": {
+        "start": 440,
+        "end": 440,
+        "curve": "lin"
+      },
+      "amp": {
+        "attack": 0.003,
+        "decay": 0.02,
+        "sustain": 0.9,
+        "release": 0.03
+      }
+    },
+    {
+      "source": "square",
+      "start": 0,
+      "dur": 0.22,
+      "gain": 0.2,
+      "freq": {
+        "start": 440,
+        "end": 440,
+        "curve": "lin"
+      },
+      "amp": {
+        "attack": 0.003,
+        "decay": 0.02,
+        "sustain": 0.9,
+        "release": 0.03
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 1200,
+          "end": 1200,
+          "curve": "lin"
+        },
+        "q": 0.7
+      }
+    }
+  ]
+}

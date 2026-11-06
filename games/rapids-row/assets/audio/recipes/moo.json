@@ -1,0 +1,140 @@
+{
+  "kind": "sfx",
+  "duration": 1.3,
+  "layers": [
+    {
+      "source": "saw",
+      "start": 0,
+      "dur": 0.95,
+      "gain": 0.9,
+      "freq": {
+        "start": 175,
+        "end": 110,
+        "curve": "exp",
+        "vibratoHz": 5.5,
+        "vibratoDepth": 0.75
+      },
+      "amp": {
+        "attack": 0.15,
+        "decay": 0.2,
+        "sustain": 0.75,
+        "release": 0.35
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 520,
+          "end": 420,
+          "curve": "exp"
+        },
+        "q": 4.5
+      }
+    },
+    {
+      "source": "saw",
+      "start": 0,
+      "dur": 0.95,
+      "gain": 0.7,
+      "freq": {
+        "start": 175,
+        "end": 110,
+        "curve": "exp",
+        "vibratoHz": 5.5,
+        "vibratoDepth": 0.75
+      },
+      "amp": {
+        "attack": 0.15,
+        "decay": 0.2,
+        "sustain": 0.75,
+        "release": 0.35
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 920,
+          "end": 780,
+          "curve": "exp"
+        },
+        "q": 5
+      }
+    },
+    {
+      "source": "saw",
+      "start": 0,
+      "dur": 0.95,
+      "gain": 0.35,
+      "freq": {
+        "start": 175,
+        "end": 110,
+        "curve": "exp",
+        "vibratoHz": 5.5,
+        "vibratoDepth": 0.75
+      },
+      "amp": {
+        "attack": 0.15,
+        "decay": 0.2,
+        "sustain": 0.6,
+        "release": 0.35
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 2300,
+          "end": 1900,
+          "curve": "exp"
+        },
+        "q": 3.8
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0,
+      "dur": 0.95,
+      "gain": 0.6,
+      "freq": {
+        "start": 175,
+        "end": 110,
+        "curve": "exp",
+        "vibratoHz": 5.5,
+        "vibratoDepth": 0.5
+      },
+      "amp": {
+        "attack": 0.12,
+        "decay": 0.2,
+        "sustain": 0.8,
+        "release": 0.35
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 350,
+          "end": 250,
+          "curve": "exp"
+        },
+        "q": 1
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0.02,
+      "dur": 0.85,
+      "gain": 0.12,
+      "amp": {
+        "attack": 0.2,
+        "decay": 0.25,
+        "sustain": 0.3,
+        "release": 0.3
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 750,
+          "end": 550,
+          "curve": "lin"
+        },
+        "q": 1.8
+      }
+    }
+  ]
+}

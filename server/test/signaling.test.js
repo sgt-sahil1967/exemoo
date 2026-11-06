@@ -208,3 +208,40 @@ test('dead sockets are reaped by the heartbeat', async () => {
   phone.ws.terminate();
   await sleep(10);
 });
+
+test('a phone that comes back with its controller resume key is reported as resumed; another phone is not', async () => {
+  const { game, phone, pin } = await pair(t);
+  await phone.close();
+  await game.next('peer_disconnected');
+  // The key came in the phone's 'joined' (pair() consumed it): ask again by rejoining once.
+  const p1 = t.ws();
+  await p1.send({ type: 'join_room', room: pin });
+  const j1 = await p1.next('joined');
+  assert.match(j1.resume, /^[0-9a-f]{32}$/);
+  assert.equal(j1.resumed, false);
+  assert.equal((await game.next('peer_connected')).resumed, false);
+  await p1.close();
+  await game.next('peer_disconnected');
+
+  const p2 = t.ws();
+  await p2.send({ type: 'join_room', room: pin, resume: j1.resume });
+  const j2 = await p2.next('joined');
+  assert.equal(j2.resumed, true);
+  assert.equal(j2.resume, j1.resume);
+  assert.equal((await game.next('peer_connected')).resumed, true);
+
+  const other = t.ws();
+  await other.send({ type: 'join_room', room: pin, resume: 'f'.repeat(32) });
+  const j3 = await other.next('joined');
+  assert.equal(j3.resumed, false);
+  assert.notEqual(j3.resume, j1.resume, 'a different phone gets a new key');
+  assert.equal((await p2.next('replaced')).role, 'controller');
+  await Promise.all([game.close(), other.close()]);
+});
+
+test('a socket flooding messages is closed with 1008', async () => {
+  const c = t.ws();
+  await c.open;
+  for (let i = 0; i < 2000; i++) c.ws.send('{"type":"ping"}');
+  assert.equal(await c.closed, 1008);
+});

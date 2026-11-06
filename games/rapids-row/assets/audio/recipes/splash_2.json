@@ -1,0 +1,140 @@
+{
+  "kind": "sfx",
+  "duration": 0.36,
+  "layers": [
+    {
+      "source": "noise",
+      "noiseColor": "white",
+      "start": 0,
+      "dur": 0.08,
+      "gain": 0.9,
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.05,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 2800,
+          "end": 1200,
+          "curve": "exp"
+        },
+        "q": 2
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.015,
+      "dur": 0.09,
+      "gain": 0.85,
+      "freq": {
+        "start": 300,
+        "end": 750,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.003,
+        "decay": 0.06,
+        "sustain": 0,
+        "release": 0.025
+      }
+    },
+    {
+      "source": "triangle",
+      "start": 0.005,
+      "dur": 0.12,
+      "gain": 0.7,
+      "freq": {
+        "start": 180,
+        "end": 65,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.005,
+        "decay": 0.08,
+        "sustain": 0,
+        "release": 0.03
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 400,
+          "end": 120,
+          "curve": "exp"
+        },
+        "q": 1.2
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "white",
+      "start": 0.02,
+      "dur": 0.26,
+      "gain": 0.75,
+      "amp": {
+        "attack": 0.01,
+        "decay": 0.16,
+        "sustain": 0.05,
+        "release": 0.06
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 4500,
+          "end": 2200,
+          "curve": "exp"
+        },
+        "q": 3
+      },
+      "tremolo": {
+        "hz": 28,
+        "depth": 0.45
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0.05,
+      "dur": 0.22,
+      "gain": 0.55,
+      "amp": {
+        "attack": 0.015,
+        "decay": 0.12,
+        "sustain": 0.02,
+        "release": 0.06
+      },
+      "filter": {
+        "type": "highpass",
+        "cutoff": {
+          "start": 3500,
+          "end": 1800,
+          "curve": "exp"
+        },
+        "q": 1.5
+      },
+      "tremolo": {
+        "hz": 38,
+        "depth": 0.6
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.06,
+      "dur": 0.05,
+      "gain": 0.4,
+      "freq": {
+        "start": 620,
+        "end": 940,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.002,
+        "decay": 0.03,
+        "sustain": 0,
+        "release": 0.015
+      }
+    }
+  ]
+}

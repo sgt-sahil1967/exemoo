@@ -1,0 +1,135 @@
+{
+  "kind": "sfx",
+  "duration": 2.2,
+  "layers": [
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0,
+      "dur": 1.7,
+      "gain": 0.8,
+      "amp": {
+        "attack": 0.4,
+        "decay": 0.2,
+        "sustain": 0.8,
+        "release": 0.4
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 600,
+          "end": 850,
+          "curve": "lin"
+        },
+        "q": 2
+      },
+      "tremolo": {
+        "hz": 7.2,
+        "depth": 0.35
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "pink",
+      "start": 0.1,
+      "dur": 1.6,
+      "gain": 0.6,
+      "amp": {
+        "attack": 0.5,
+        "decay": 0.3,
+        "sustain": 0.7,
+        "release": 0.4
+      },
+      "filter": {
+        "type": "bandpass",
+        "cutoff": {
+          "start": 1800,
+          "end": 2300,
+          "curve": "lin"
+        },
+        "q": 1.5
+      },
+      "tremolo": {
+        "hz": 8.5,
+        "depth": 0.4
+      }
+    },
+    {
+      "source": "noise",
+      "noiseColor": "white",
+      "start": 0.05,
+      "dur": 1.75,
+      "gain": 0.45,
+      "amp": {
+        "attack": 0.35,
+        "decay": 0.3,
+        "sustain": 0.6,
+        "release": 0.5
+      },
+      "filter": {
+        "type": "lowpass",
+        "cutoff": {
+          "start": 3500,
+          "end": 1600,
+          "curve": "exp"
+        },
+        "q": 1
+      },
+      "tremolo": {
+        "hz": 6.5,
+        "depth": 0.3
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.2,
+      "dur": 0.4,
+      "gain": 0.3,
+      "freq": {
+        "start": 450,
+        "end": 1200,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.05,
+        "decay": 0.1,
+        "sustain": 0.5,
+        "release": 0.2
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.5,
+      "dur": 0.45,
+      "gain": 0.25,
+      "freq": {
+        "start": 600,
+        "end": 1500,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.08,
+        "decay": 0.1,
+        "sustain": 0.4,
+        "release": 0.2
+      }
+    },
+    {
+      "source": "sine",
+      "start": 0.85,
+      "dur": 0.4,
+      "gain": 0.28,
+      "freq": {
+        "start": 500,
+        "end": 1100,
+        "curve": "exp"
+      },
+      "amp": {
+        "attack": 0.06,
+        "decay": 0.1,
+        "sustain": 0.5,
+        "release": 0.2
+      }
+    }
+  ]
+}

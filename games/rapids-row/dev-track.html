@@ -1,0 +1,130 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>dev-track</title>
+<style>html,body{margin:0;height:100%;background:#111;color:#fff;font:12px monospace}#r{position:fixed;left:6px;top:6px;white-space:pre;background:#000a;padding:6px;max-width:60vw}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body><div id="r">loading</div>
+<script type="module">
+import * as THREE from 'three';
+import { createTrack, buildScenery } from './js/track.js';
+const q = new URLSearchParams(location.search);
+const mode = q.get('mode') || 'overview'; // overview | fly
+const mat = (c) => new THREE.MeshLambertMaterial({ color: c, flatShading: true });
+let models;
+try { models = await import('./js/models.js'); if (!models.makeRock) throw 0; console.log('using REAL models'); }
+catch (e) {
+  console.log('using STUB models');
+  const box = (w, h, d, c, y = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c)); m.position.y = y + h / 2; return m; };
+  models = {
+    makeRock: (seed, s) => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), mat('#8a8f9c')); m.position.y = s * .3; g.add(m); return g; },
+    makeLog: (len) => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, len, 8), mat('#b8763e')); m.rotation.x = Math.PI / 2; m.position.y = .2; g.add(m); return g; },
+    makeBuoy: (c) => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.ConeGeometry(.6, 1.4, 8), mat(c)); m.position.y = .7; g.add(m); return g; },
+    makeTree: (k, seed) => { const g = new THREE.Group(); g.add(box(.5, 2, .5, '#7a4a22')); const c = new THREE.Mesh(new THREE.ConeGeometry(1.8, 5, 6), mat(k === 'birch' ? '#9be06a' : '#1f8f3a')); c.position.y = 4.2; g.add(c); return g; },
+    makeBush: () => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.IcosahedronGeometry(.9, 0), mat('#2fa84a')); m.position.y = .6; g.add(m); return g; },
+    makeReeds: () => { const g = new THREE.Group(); g.add(box(.15, 1.4, .15, '#7ab648'), box(.15, 1.1, .15, '#6aa83c')); g.children[1].position.x = .3; return g; },
+    makeCow: () => { const g = new THREE.Group(); g.add(box(1, 1.2, 2, '#fff', .6)); g.userData.cheer = (t) => { g.position.y += 0; }; return g; },
+    makeCoin: () => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(.4, .4, .12, 12), mat('#ffd21f')); m.rotation.x = Math.PI / 2; g.add(m); return g; },
+    makeArch: (t, w) => { const g = new THREE.Group(); g.add(box(1.2, 6, 1.2, '#ff3b30').translateX(-w / 2), box(1.2, 6, 1.2, '#ff3b30').translateX(w / 2), box(w, 1.5, 1.2, t === 'START' ? '#2fc65a' : '#2f7cff', 5)); return g; },
+    makeGateFlags: (hw, label, c) => { const g = new THREE.Group(); g.add(box(.3, 5, .3, c).translateX(-hw), box(.3, 5, .3, c).translateX(hw)); return g; },
+  };
+}
+let water;
+try { const w = await import('./js/water.js'); water = w.createWater(null); console.log('REAL water'); }
+catch (e) { water = null; }
+const track = createTrack();
+if (!water) {
+  try { const w = await import('./js/water.js'); } catch (e) {}
+  const pos = [], idx = [];
+  for (let s = 0; s <= track.length; s += 2) { const p = track.sample(s); const h = p.halfWidth + 3; pos.push(p.x + -p.tz * -h, 0, p.z + p.tx * -h, p.x + -p.tz * h, 0, p.z + p.tx * h); }
+  for (let i = 0; i < pos.length / 6 - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  water = { mesh: new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x2bb5e8, side: THREE.DoubleSide })), update() {} };
+}
+
+// ---------- tests
+const rep = [];
+let maxErr = 0, maxLat = 0;
+for (let k = 0; k < 4000; k++) {
+  const s = Math.random() * track.length, lat = (Math.random() * 2 - 1) * 20;
+  const p = track.sample(s); const x = p.x + -p.tz * lat, z = p.z + p.tx * lat;
+  const l = track.locate(x, z, s + (Math.random() * 2 - 1) * 12);
+  const l2 = track.locate(x, z);
+  maxErr = Math.max(maxErr, Math.abs(l.s - s), Math.abs(l2.s - s)); maxLat = Math.max(maxLat, Math.abs(l.lateral - lat));
+}
+rep.push(`length ${track.length}  finishS ${track.finishS}  start s${track.start.s} h${track.start.heading.toFixed(3)}`);
+rep.push(`locate roundtrip max |ds| ${maxErr.toExponential(2)}  max |dlat| ${maxLat.toExponential(2)}`);
+// min radius / width / current range
+let hwMin = 99, hwMax = 0, cMin = 99, cMax = 0, maxStep = 0, prev = track.sample(0);
+for (let s = 1; s <= track.length; s += 1) { const p = track.sample(s); hwMin = Math.min(hwMin, p.halfWidth); hwMax = Math.max(hwMax, p.halfWidth); cMin = Math.min(cMin, p.current); cMax = Math.max(cMax, p.current); maxStep = Math.max(maxStep, Math.abs(p.current - prev.current), Math.abs(p.halfWidth - prev.halfWidth)); prev = p; }
+rep.push(`halfWidth ${hwMin.toFixed(1)}..${hwMax.toFixed(1)} current ${cMin.toFixed(2)}..${cMax.toFixed(2)} maxStep/m ${maxStep.toFixed(3)}`);
+// gap check using world positions
+let minGap = 99, minAt = 0;
+for (let s = 0; s <= track.length; s += 0.5) {
+  const p = track.sample(s); const u = p.halfWidth - 1.4; const iv = [];
+  for (const o of track.obstacles) { const l = track.locate(o.x, o.z, s); const ds = l.s - s; if (Math.abs(ds) < o.r && Math.abs(o.x - p.x) < 80) { const w = Math.sqrt(o.r * o.r - ds * ds); iv.push([l.lateral - w, l.lateral + w]); } }
+  iv.sort((a, b) => a[0] - b[0]); let cur = -u, best = 0; for (const [a, b] of iv) { if (a > cur) best = Math.max(best, a - cur); cur = Math.max(cur, b); } best = Math.max(best, u - cur);
+  if (best < minGap) { minGap = best; minAt = s; }
+}
+rep.push(`min passable gap ${minGap.toFixed(2)} m at s=${minAt.toFixed(1)}`);
+const firstObs = Math.min(...track.obstacles.map((o) => o.s));
+let gateClear = 99; for (const o of track.obstacles) for (const g of track.gates) gateClear = Math.min(gateClear, Math.abs(o.s - g.s));
+rep.push(`first obstacle s ${firstObs.toFixed(0)}  min obstacle-gate dist ${gateClear.toFixed(0)}`);
+const cnt = {}; track.obstacles.forEach((o) => cnt[o.type] = (cnt[o.type] || 0) + 1);
+rep.push(`obstacles ${track.obstacles.length} ${JSON.stringify(cnt)}  coins ${track.pickups.length}  gates ${track.gates.length}`);
+rep.push('zones ' + track.zones.map((z) => `${z.name}[${z.s0}-${Math.round(z.s1)}]`).join(' '));
+// self-overlap check: min distance between centerline points >150 m apart in s
+let minSep = 1e9; for (let a = 0; a < track.length; a += 4) { const pa = track.sample(a); for (let b = a + 150; b < track.length; b += 4) { const pb = track.sample(b); minSep = Math.min(minSep, Math.hypot(pa.x - pb.x, pa.z - pb.z)); } }
+rep.push(`min separation of distant reaches ${minSep.toFixed(0)} m`);
+
+// ---------- scene
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#9fd8ff');
+scene.add(new THREE.HemisphereLight('#ffffff', '#6a9a5a', 1.1)); const sun = new THREE.DirectionalLight('#fff3d0', 1.6); sun.position.set(60, 100, 40); scene.add(sun);
+const scenery = buildScenery(scene, track, models, water);
+let draw = 0; scene.traverse((o) => { if (o.isMesh) draw++; });
+rep.push(`scene meshes total ${draw}`);
+
+let cam, t = 0, S = 8;
+if (mode === 'overview') {
+  let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+  for (let s = 0; s <= track.length; s += 10) { const p = track.sample(s); minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
+  const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2, hh = (maxZ - minZ) / 2 + 40;
+  const asp = innerWidth / innerHeight;
+  cam = new THREE.OrthographicCamera(-hh * asp, hh * asp, hh, -hh, 1, 1000);
+  cam.position.set(cx, 400, cz); cam.up.set(0, 0, -1); cam.lookAt(cx, 0, cz);
+  // overlays: obstacles, coins, gates as flat markers
+  const dot = (x, z, c, r) => { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 12), new THREE.MeshBasicMaterial({ color: c })); m.rotation.x = -Math.PI / 2; m.position.set(x, 30, z); scene.add(m); };
+  track.obstacles.forEach((o) => dot(o.x, o.z, o.type === 'rock' ? '#ff00ff' : o.type === 'log' ? '#ff8800' : '#ff0000', o.r));
+  track.pickups.forEach((c) => dot(c.x, c.z, '#ffff00', 1.2));
+  track.gates.forEach((g) => dot(g.x, g.z, '#ffffff', 3));
+  scene.fog = null;
+} else {
+  cam = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.5, 900);
+  scene.fog = new THREE.Fog('#9fd8ff', 150, 480);
+  S = +q.get('s') || 8;
+}
+document.getElementById('r').textContent = rep.join('\n');
+window.__report = rep;
+let last = performance.now(); const speed = +q.get('speed') || 25;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+  if (mode === 'fly') {
+    if (!q.get('s') || q.get('run')) S = Math.min(track.length, S + dt * speed);
+    const p = track.sample(S), p2 = track.sample(S + 25);
+    cam.position.set(p.x - p.tx * 14, 8, p.z - p.tz * 14); cam.lookAt(p2.x, 1, p2.z);
+    if (q.get('cow') !== null) { // close-up of cow n: ?mode=fly&cow=3
+      const cw = scenery.cows[+q.get('cow') || 0].obj; cw.updateMatrixWorld(true);
+      const w = new THREE.Vector3(); cw.getWorldPosition(w);
+      const f = new THREE.Vector3(Math.sin(cw.rotation.y), 0, Math.cos(cw.rotation.y));
+      cam.position.set(w.x + f.z * 0 - f.x * 0 + 4.5 * Math.cos(cw.rotation.y), w.y + 1.4, w.z - 4.5 * Math.sin(cw.rotation.y));
+      cam.lookAt(w.x, w.y + 0.8, w.z); S = scenery.cows[+q.get('cow') || 0].s - 30;
+    }
+  }
+  scenery.update(dt, t, cam);
+  renderer.render(scene, cam);
+  window.__info = { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, S };
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__setS = (s) => { S = s; }; window.__scenery = scenery; window.__track = track;
+</script></body></html>

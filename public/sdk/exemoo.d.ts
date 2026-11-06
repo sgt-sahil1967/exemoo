@@ -31,7 +31,7 @@ export interface ExemooPhone {
   padUrl: string;
 }
 export type ExemooButton = 'action' | 'pause' | 'recenter' | 'up' | 'down' | 'left' | 'right' | 'back' | 'power';
-export type ExemooLayout = 'swing' | 'slice' | 'remote';
+export type ExemooLayout = 'swing' | 'slice' | 'remote' | 'kart';
 export interface Exemoo {
   inShell: boolean;
   phone: ExemooPhone;

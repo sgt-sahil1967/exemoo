@@ -210,7 +210,9 @@ export type GameToPhone =
   /** Which player this phone controls in 2-player mode (n = 1 near end, 2 far end); sent on connect. */
   | { t: 'player'; n: 1 | 2; color: string }
   /** Slow-mo power-up state. charges < 0 = not available in this mode (hide the button). */
-  | { t: 'power'; charges: number; max: number; active: boolean };
+  | { t: 'power'; charges: number; max: number; active: boolean }
+  /** Contact sound played on the phone itself (Exemoo pad: 'bat'; q = 0…1 contact quality). */
+  | { t: 'sound'; name: 'bat'; q: number };
 
 /** Messages the phone sends on the reliable control channel. */
 export type PhoneToGame = { t: 'button'; b: ControllerButton } | { t: 'hello'; ua: string; hand?: Handedness };

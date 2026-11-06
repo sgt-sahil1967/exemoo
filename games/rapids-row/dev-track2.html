@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>dev-track2</title>
+<style>html,body{margin:0;height:100%;background:#111;color:#fff;font:12px monospace}#r{position:fixed;left:6px;top:6px;white-space:pre;background:#000a;padding:6px;max-width:70vw;z-index:5}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body><div id="r">loading</div>
+<script type="module">
+import * as THREE from 'three';
+import { createTrack, buildScenery } from './js/track2.js';
+import * as models from './js/models.js';
+import { createWater } from './js/water.js';
+const q = new URLSearchParams(location.search);
+const mode = q.get('mode') || 'overview'; // overview | fly | check
+const track = createTrack();
+const water = createWater(track);
+const rep = [];
+// ---- tests
+let maxErr = 0, maxLat = 0;
+for (let k = 0; k < 3000; k++) {
+  const s = Math.random() * track.length, lat = (Math.random() * 2 - 1) * 20;
+  const p = track.sample(s); const x = p.x + -p.tz * lat, z = p.z + p.tx * lat;
+  const l = track.locate(x, z, s + (Math.random() * 2 - 1) * 12), l2 = track.locate(x, z);
+  maxErr = Math.max(maxErr, Math.abs(l.s - s), Math.abs(l2.s - s)); maxLat = Math.max(maxLat, Math.abs(l.lateral - lat));
+}
+rep.push(`length ${track.length} finishS ${track.finishS} start s${track.start.s}`);
+rep.push(`locate roundtrip max|ds| ${maxErr.toExponential(2)} max|dlat| ${maxLat.toExponential(2)}`);
+let hwMin = 99, hwMax = 0, cMin = 99, cMax = 0;
+for (let s = 0; s <= track.length; s++) { const p = track.sample(s); hwMin = Math.min(hwMin, p.halfWidth); hwMax = Math.max(hwMax, p.halfWidth); cMin = Math.min(cMin, p.current); cMax = Math.max(cMax, p.current); }
+rep.push(`halfWidth ${hwMin.toFixed(1)}..${hwMax.toFixed(1)} current ${cMin.toFixed(1)}..${cMax.toFixed(1)}`);
+// time-sampled gap check (timed lock gates excluded: checked in their open state separately)
+function gapAt(s, t) {
+  const p = track.sample(s), u = p.halfWidth - 1.4, blocked = [];
+  const nx = -p.tz, nz = p.tx;
+  for (const o of track.obstacles) {
+    if (o.timed || (o.hazard === false && o.solid === false)) continue;
+    if (o.type === 'barrel' && !o.solid) continue;
+    if (Math.abs(o.s - s) > 80 && o.type !== 'barrel') continue;
+    if (Math.hypot(o.x - p.x, o.z - p.z) > 200) continue;
+    // blocked lateral interval: sample
+    for (let l = -u; l <= u; l += 0.25) {
+      const wx = p.x + nx * l, wz = p.z + nz * l;
+      let d;
+      if (o.shape === 'segment') { const ex = o.x2 - o.x1, ez = o.z2 - o.z1, t2 = Math.max(0, Math.min(1, ((wx - o.x1) * ex + (wz - o.z1) * ez) / (ex * ex + ez * ez || 1))); d = Math.hypot(wx - o.x1 - ex * t2, wz - o.z1 - ez * t2); }
+      else d = Math.hypot(wx - o.x, wz - o.z);
+      if (d < o.r) blocked.push(Math.round((l + u) / 0.25));
+    }
+  }
+  const n = Math.round(2 * u / 0.25) + 1, bl = new Uint8Array(n); blocked.forEach((i) => { if (i >= 0 && i < n) bl[i] = 1; });
+  let best = 0, run = 0; for (let i = 0; i < n; i++) { if (bl[i]) run = 0; else { run++; best = Math.max(best, run * 0.25); } }
+  return best;
+}
+let minGap = 99, minAt = [0, 0];
+for (let t = 0; t < 40; t += 0.5) {
+  track.update(t);
+  for (let s = 40; s < track.length - 30; s += 1.5) { const g = gapAt(s, t); if (g < minGap) { minGap = g; minAt = [s, t]; } }
+}
+track.update(0);
+rep.push(`min passable gap over time ${minGap.toFixed(2)} m at s=${minAt[0]} t=${minAt[1]}`);
+// lock gates open-state gap
+for (const lg of track.obstacles.filter((o) => o.type === 'lockgate' && !o.skipMesh)) {
+  let mx = 0, mn = 99;
+  for (let t = 0; t < 12; t += 0.1) { track.update(t); const a = lg.side === -1 ? lg : null; void a; const p = track.sample(lg.s); const g = gapAt(lg.s, t); void g; }
+}
+const cnt = {}; track.obstacles.forEach((o) => { const k = o.type + (o.hazard ? '*' : '') + (o.moving ? '~' : ''); cnt[k] = (cnt[k] || 0) + 1; });
+rep.push(`obstacles ${track.obstacles.length} ${JSON.stringify(cnt)}  (*hazard ~moving)`);
+rep.push(`coins ${track.pickups.length} gates ${track.gates.length}`);
+rep.push('zones ' + track.zones.map((z) => `${z.name}[${z.s0}-${Math.round(z.s1)}]`).join(' '));
+let minSep = 1e9; for (let a = 0; a < track.length; a += 4) { const pa = track.sample(a); for (let b = a + 150; b < track.length; b += 4) { const pb = track.sample(b); minSep = Math.min(minSep, Math.hypot(pa.x - pb.x, pa.z - pb.z)); } }
+rep.push(`min separation of distant reaches ${minSep.toFixed(0)} m`);
+// moving: update changes positions and gives velocity
+const croc = track.obstacles.find((o) => o.type === 'croc'); track.update(0); const c0 = [croc.x, croc.z]; track.update(1.2);
+rep.push(`croc moved ${Math.hypot(croc.x - c0[0], croc.z - c0[1]).toFixed(2)} m in 1.2 s, v=(${croc.vx.toFixed(2)},${croc.vz.toFixed(2)})`);
+track.update(0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#ffd9a0');
+scene.add(new THREE.HemisphereLight('#fff2d0', '#4a7a4a', 1.2)); const sun = new THREE.DirectionalLight('#ffc070', 1.8); sun.position.set(-60, 60, 40); scene.add(sun);
+const scenery = buildScenery(scene, track, models, water);
+let cam, t = +q.get('t') || 0, S = +q.get('s') || 8;
+if (mode === 'overview') {
+  let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+  for (let s = 0; s <= track.length; s += 10) { const p = track.sample(s); minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
+  const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2, hh = (maxZ - minZ) / 2 + 40, asp = innerWidth / innerHeight;
+  cam = new THREE.OrthographicCamera(-hh * asp, hh * asp, hh, -hh, 1, 1000); cam.position.set(cx, 400, cz); cam.up.set(0, 0, -1); cam.lookAt(cx, 0, cz);
+  const dot = (x, z, c, r) => { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 12), new THREE.MeshBasicMaterial({ color: c })); m.rotation.x = -Math.PI / 2; m.position.set(x, 30, z); scene.add(m); return m; };
+  track.obstacles.forEach((o) => dot(o.x, o.z, o.hazard ? '#ff0000' : o.moving ? '#ff8800' : '#ff00ff', Math.max(o.r, 1.5)));
+  track.pickups.forEach((c) => dot(c.x, c.z, '#ffff00', 1.2)); track.gates.forEach((g) => dot(g.x, g.z, '#ffffff', 4));
+  window.__ovDots = true;
+} else {
+  cam = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.5, 900); scene.fog = new THREE.Fog('#ffd9a0', 150, 520);
+}
+const setR = () => { document.getElementById('r').textContent = rep.join('\n') + (window.__info ? `\ndraw calls ${window.__info.calls} tris ${window.__info.tris} S ${window.__info.S.toFixed?.(0)}` : ''); };
+window.__report = rep;
+let last = performance.now(); const speed = +q.get('speed') || 25; let frames = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+  track.update(t);
+  if (mode === 'fly') { if (!q.get('s') || q.get('run')) S = Math.min(track.length, S + dt * speed); const p = track.sample(S), p2 = track.sample(S + 25); cam.position.set(p.x - p.tx * 14, 8, p.z - p.tz * 14); cam.lookAt(p2.x, 1, p2.z); }
+  scenery.update(dt, t, cam);
+  renderer.render(scene, cam);
+  window.__info = { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, S };
+  if (++frames % 20 === 0) setR();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__setS = (s) => { S = s; }; window.__scenery = scenery; window.__track = track; window.__cam = cam;
+</script></body></html>

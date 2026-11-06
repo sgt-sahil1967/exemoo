@@ -1,18 +1,31 @@
 # Render blueprint: one web service runs the landing page, phone pad, games and pairing.
-# Render terminates TLS, so phones reach https://<service>.onrender.com/pad with motion sensors enabled.
+# It builds the repo's Dockerfile (games are built from games-src/ inside the image), so Render,
+# CI and local `docker build` produce the same thing. Render terminates TLS, so phones reach
+# https://<service>.onrender.com/pad with motion sensors enabled. See DEPLOY.md.
 services:
   - type: web
     name: exemoo
-    runtime: node
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: starter
-    buildCommand: npm ci --omit=dev
-    startCommand: npm start
+    # Rooms live in memory: exactly one instance (see DEPLOY.md, "Scaling").
+    numInstances: 1
     healthCheckPath: /healthz
+    autoDeploy: true
     envVars:
-      - key: NODE_VERSION
-        value: "22"
+      - key: NODE_ENV
+        value: production
       - key: TRUST_PROXY
         value: "1"
-      # Optional: set once you have a custom domain, e.g. https://play.exemoo.app
-      # - key: PUBLIC_URL
-      #   value: https://play.exemoo.app
+      # Set once you have a custom domain, e.g. https://play.exemoo.app (QR codes and pad links use it).
+      - key: PUBLIC_URL
+        sync: false
+      # TURN for phones on networks that block direct WebRTC (see DEPLOY.md). Either:
+      - key: ICE_SERVERS
+        sync: false
+      # …or short-lived credentials from a coturn shared secret:
+      - key: TURN_URLS
+        sync: false
+      - key: TURN_SECRET
+        sync: false

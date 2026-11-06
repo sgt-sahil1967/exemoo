@@ -21,6 +21,7 @@ export async function boot(hub = {}) {
   return {
     app,
     base,
+    dir,
     ws: (p = '/signal') => new Client(`ws://127.0.0.1:${app.port}${p}`),
     async close() {
       await app.close();

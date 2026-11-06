@@ -1,0 +1,78 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>models dev</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#dff3ff}#hud{position:fixed;left:8px;top:8px;font:12px monospace;background:#fff9;padding:4px 8px;border-radius:6px}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body><div id="hud"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as M from './js/models.js';
+import { createWater } from './js/water.js';
+
+const track = {
+  length: 400,
+  sample(s){ s=Math.max(0,Math.min(400,s)); const x=Math.sin(s*0.02)*14; const tx=Math.cos(s*0.02)*14*0.02*1; const l=Math.hypot(tx,-1);
+    return {x, z:-s, tx:tx/l, tz:-1/l, halfWidth: 12+3*Math.sin(s*0.03), current: 2 + 3*THREE.MathUtils.smoothstep(s,150,180)*(1-THREE.MathUtils.smoothstep(s,300,330))}; },
+};
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(devicePixelRatio); renderer.setSize(innerWidth, innerHeight); document.body.appendChild(renderer.domElement);
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 1500);
+const params = new URLSearchParams(location.search);
+const sky = M.makeSky(scene);
+const water = createWater(track); scene.add(water.mesh);
+const splashes = M.makeSplashes(scene);
+// banks
+const bankMat = new THREE.MeshStandardMaterial({color:'#5fd03a', roughness:0.9});
+for (let s=0;s<400;s+=10){ const q=track.sample(s); for(const sg of [-1,1]){ const b=new THREE.Mesh(new THREE.BoxGeometry(30,1,10.5),bankMat); b.receiveShadow=true; const rx=-q.tz, rz=q.tx; const off=q.halfWidth+15; b.position.set(q.x+rx*off*sg, 0.2, q.z+rz*off*sg); b.rotation.y=Math.atan2(-q.tx,-q.tz); scene.add(b);} }
+
+sky.sun.castShadow = true; Object.assign(sky.sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:250}); sky.sun.shadow.mapSize.set(1024,1024); sky.sun.shadow.bias=-0.0006; sky.sun.shadow.normalBias=0.04; sky.sun.shadow.camera.updateProjectionMatrix();
+const boat = M.makeBoat({colors:['#ff3b30','#2f7cff']}); scene.add(boat.group); boat.group.position.set(0,0,-6);
+scene.add(M.makeArch('START', 26).translateZ(10));
+scene.add(M.makeArch('FINISH', 26).translateZ(-398).translateX(track.sample(398).x));
+const g1 = M.makeGateFlags(11,'CP 1','#ffd21f'); g1.position.set(track.sample(60).x,0,-60); scene.add(g1);
+// props row on the left bank
+const row = new THREE.Group(); row.position.y = 0.7; scene.add(row);
+let x = -30, z = -2;
+const place = (o, dz=0) => { o.position.set(x, 0, z+dz); row.add(o); z -= 7; };
+x = 30; z = 0;
+for (let i=0;i<3;i++) place(M.makeRock(i, 1+i*0.7));
+place(M.makeLog(5)); place(M.makeBuoy('#ff3b30')); place(M.makeBuoy('#ffd21f'));
+x = -30; z = 0;
+['pine','round','birch','pine','round','birch'].forEach((k,i)=>place(M.makeTree(k,i)));
+x = -22; z=-2;
+for (let i=0;i<2;i++) place(M.makeBush(i)); place(M.makeReeds(1)); place(M.makeReeds(2));
+const cows=[]; x=-24; z=-30; for(let i=0;i<3;i++){ const c=M.makeCow(i); cows.push(c); place(c);} 
+const coins=[]; for(let i=0;i<4;i++){ const c=M.makeCoin(); c.position.set(-3+i*2, 1.2, -14); scene.add(c); coins.push(c);} 
+cows[0].userData.rest?.();
+
+const controls = new OrbitControls(camera, renderer.domElement);
+const focus = params.get('focus');
+const cams = { boat:[4,3.5,-1,0,0.8,-6], boatback:[0,3.2,2,0,0.8,-6], boatside:[6,1.8,-6,0,0.6,-6], props:[10,5,-25,30,1,-12], trees:[-8,5,-8,-30,2,-14], arch:[0,4,24,0,5,10], gate:[0,3,-40,0,3,-60], water:[0,25,-160,0,0,-190], rapids:[0,5,-200,0,0,-230], rowers:[2.8,2.2,-3.6,0,0.9,-6], rocks:[-6,3,-4,-30,0.6,-4], closeup:[27,1.6,-6,30,0.6,-9], cows:[-12,3,-22,-24,1,-38] };
+const c = cams[focus||'boat']; camera.position.set(c[0],c[1],c[2]); controls.target.set(c[3],c[4],c[5]); controls.update();
+if(params.get('at')){const a=params.get('at').split(',').map(Number);const d=+(params.get('d')||8);controls.target.set(a[0],a[1],a[2]);camera.position.set(a[0]+d*0.5,a[1]+d*0.3,a[2]+d*0.8);controls.update();}
+const hud = document.getElementById('hud');
+let t=0, last=performance.now(); const clock=new THREE.Clock();
+window.__dev={boat,camera,controls,scene,params, fixed: params.get('fixed')};
+function frame(){
+  const dt=Math.min(0.05,clock.getDelta()); t += dt;
+  const fixed = params.get('fixed');
+  let phase = fixed!==null ? parseFloat(fixed) : (t/1.5)%1;
+  const pw = params.get('power')!==null ? parseFloat(params.get('power')) : 0.5+0.5*Math.sin(t*0.5);
+  const rev = params.get('rev')==='1';
+  boat.setPaddle(0, phase, pw, rev); boat.setPaddle(1, (phase+0.3)%1, pw, rev);
+  boat.setLean(Math.sin(t*0.7)); boat.update(dt);
+  boat.group.position.y = Math.sin(t*1.5)*0.03;
+  if (Math.floor(t*4)!==Math.floor((t-dt)*4)) { const tip=boat.paddleTip(0); if(tip.y<0.3&&pw>0.3) splashes.emit(tip.x,0,tip.z,pw*0.6);} 
+  cows.forEach((c,i)=> c.userData.cheer(t+i));
+  coins.forEach(c=>c.rotation.y=t*3);
+  water.update(t, camera); sky.update(t, camera); { const bp=boat.group.position; sky.sun.target.position.set(bp.x,0,bp.z); sky.sun.position.set(bp.x-40,80,bp.z+30); } splashes.update(dt);
+  controls.update(); renderer.render(scene,camera);
+  hud.textContent = `phase ${phase.toFixed(2)} power ${pw.toFixed(2)} draws ${renderer.info.render.calls}`;
+  requestAnimationFrame(frame);
+}
+frame();
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+</script></body></html>

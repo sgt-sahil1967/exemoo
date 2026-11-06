@@ -28,6 +28,11 @@ npm start        # production (HTTP on $PORT; the host provides HTTPS)
 | Farm Dash | `farm-dash` | remote + tilt for lanes | camera or phone; from `../subway runner` |
 | Golf | `golf` | swing + Club -/+ and Map | from `../golf` |
 | Cricket | `cricket` | remote: menus, pause, vibration and bat sounds | bat with the laptop camera (hands set direction, power, timing); see `CRICKET_PLAN.md` |
+| Rapids Row | `rapids-row` | swing: circle the phone to paddle, hold the button to back-paddle | 2-player co-op canoe (2nd phone pairs its own PIN); audio from `scripts/gen-rapids-audio.mjs` (Gemini) |
+| Farm Kart | `farm-kart` | kart: tilt or ◀ ▶ wheel + Drift / Brake / Item / Gas; remote in menus | 3D kart racer, 1–4 phones (2nd–4th pair their own PIN on the setup screen). Mirrored from `../farm-kart` by `node scripts/sync-farm-kart.mjs` (re-sync + build); adapter in `games-src/farm-kart/exemoo/` |
+| Shake & Freeze | `shake-freeze` | swing: shake the phone, hold still on red | party minigame, 1–4 phones (2nd–4th pair their own PIN in the lobby), CPU rivals; static, see `games/shake-freeze/README.md` |
+| Wobble Tower | `wobble-tower` | swing: hold flat, tilt to balance, Action banks | party minigame, 1–4 phones, CPU rivals; static |
+| Flapjack Flip | `flapjack-flip` | swing: flick the phone like a pan | party minigame, 1–4 phones, CPU rivals; static |
 
-Deploy: `render.yaml` (Render blueprint) or the `Dockerfile`. Build the games first and deploy
-`games/` with the server. Set `ICE_SERVERS` to add a TURN server.
+Deploy: see `DEPLOY.md` (Render blueprint / Docker image that builds the games itself, custom
+domain, TURN, env vars in `.env.example`). CI: `.github/workflows/ci.yml`.

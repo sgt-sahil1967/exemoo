@@ -1,0 +1,17 @@
+{
+  "name": "farm-kart-exemoo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Farm Kart for Exemoo. src/ and index.html are mirrored from ../../../farm-kart by scripts/sync-farm-kart.mjs; the adapter is in exemoo/.",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "three": "0.186.1",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "vite": "8.3.4"
+  }
+}
