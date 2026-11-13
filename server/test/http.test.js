@@ -70,8 +70,3 @@ test('only GET and HEAD are allowed for files', async () => {
   assert.equal((await get('/', { method: 'POST' })).status, 405);
   assert.equal((await get('/', { method: 'HEAD' })).status, 200);
 });
-
-test('unknown websocket paths are refused', async () => {
-  const c = t.ws('/nope');
-  await assert.rejects(c.open);
-});

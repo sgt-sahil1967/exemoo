@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moo Bowl UI test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Lilita+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../ui.css">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: 'Baloo 2', system-ui, sans-serif; }
+  body { background: radial-gradient(ellipse at 50% 120%, #c9854a 0%, #6a4a3a 35%, #2b2a4a 75%, #17172e 100%); }
+  #lane { position: fixed; left: 50%; bottom: 0; width: 36vw; height: 78vh; transform: translateX(-50%); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); background: repeating-linear-gradient(90deg, #e6b878 0 2.5%, #d9a860 2.5% 5%); opacity: .9; }
+  #tools { position: fixed; left: 8px; top: 200px; z-index: 50; display: flex; flex-direction: column; gap: 4px; width: 128px; font-size: 12px; }
+  #tools button { font: 700 12px 'Baloo 2'; padding: 2px 6px; border: 2px solid #1b1b3a; border-radius: 8px; background: #fff; cursor: pointer; }
+  #tools button.on { background: #ffd21f; }
+  #log { position: fixed; right: 8px; bottom: 8px; z-index: 50; max-width: 300px; font: 11px/1.3 ui-monospace, monospace; color: #fff; background: #0008; padding: 4px 8px; border-radius: 8px; pointer-events: none; white-space: pre; }
+  #keys { position: fixed; right: 8px; top: 330px; z-index: 50; font: 11px/1.3 ui-monospace, monospace; color: #fff; background: #0006; padding: 4px 8px; border-radius: 8px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="lane"></div>
+<div id="tools"></div>
+<div id="keys">R roll &nbsp; A auto<br>1-6 callouts &nbsp; S stats<br>M meter &nbsp; H hint<br>T title &nbsp; Esc/P pause<br>arrows+Enter+Bksp: nav<br>G game 1-4: F1..F4<br>E results</div>
+<pre id="log"></pre>
+<script type="module">
+import { createUI } from '../js/ui.js';
+import { BowlingGame } from '../js/rules.js';
+import { PLAYERS } from '../js/constants.js';
+
+const ui = createUI({ root: document.body });
+window.ui = ui;
+const logEl = document.getElementById('log');
+const logLines = [];
+function log(s) { logLines.push(s); if (logLines.length > 6) logLines.shift(); logEl.textContent = logLines.join('\n'); }
+
+let game = null, nPlayers = 1, standing = [1,2,3,4,5,6,7,8,9,10];
+let paused = false;
+
+function newGame(n) {
+  nPlayers = n;
+  game = new BowlingGame(n);
+  standing = [1,2,3,4,5,6,7,8,9,10];
+  ui.hideTitle(); ui.hideResults(); ui.showPause(false); paused = false;
+  refresh();
+  ui.hint('Swing your arm to bowl');
+}
+function refresh() {
+  if (!game) return;
+  const cur = game.current;
+  if (cur) {
+    ui.setTurn({ player: cur.player, frame: cur.frame, ball: cur.ball, name: PLAYERS[cur.player].name, color: PLAYERS[cur.player].color });
+    ui.setSheets(game, cur.player);
+    ui.setPinDeck(cur.standingBefore);
+  } else ui.setSheets(game, 0);
+}
+function randomRoll() {
+  const cur = game && game.current;
+  if (!cur) return null;
+  const st = cur.standingBefore.slice();
+  const r = Math.random();
+  let k;
+  if (st.length === 10) k = r < 0.22 ? 10 : r < 0.3 ? 0 : Math.min(10, 4 + Math.floor(Math.random() * 6));
+  else k = r < 0.45 ? st.length : r < 0.55 ? 0 : Math.floor(Math.random() * st.length);
+  // sometimes force a split on the first ball
+  let after;
+  if (st.length === 10 && Math.random() < 0.12) after = [7, 10];
+  else { const s2 = st.slice().sort(() => Math.random() - 0.5); after = s2.slice(k); }
+  const res = game.roll(after);
+  standing = res.resetPins ? [1,2,3,4,5,6,7,8,9,10] : after.filter((x) => st.includes(x));
+  ui.setPinDeck(res.knocked.length ? standing.length ? standing : standing : standing);
+  ui.throwStats({ speedMph: 14 + Math.random() * 8, curve: Math.random() * 2 - 1, board: 10 + Math.floor(Math.random() * 20) });
+  const kind = res.streak >= 3 ? 'turkey' : res.mark === 'strike' ? 'strike' : res.mark === 'spare' ? 'spare' : res.mark === 'split' ? 'split' : res.count === 0 ? 'gutter' : null;
+  if (kind) ui.callout(kind === 'turkey' ? 'TURKEY!' : kind.toUpperCase() + (kind === 'gutter' ? '' : '!'), kind);
+  log(`${PLAYERS[res.player].name} f${res.frame + 1} b${res.ball + 1}: ${res.symbol} ${res.mark}${res.turnDone ? ' (turn done)' : ''}`);
+  refresh();
+  if (res.gameDone) setTimeout(() => ui.showResults(game, PLAYERS.slice(0, nPlayers)), 1200);
+  return res;
+}
+function playFull(n) {
+  newGame(n);
+  while (game.current) {
+    const cur = game.current, st = cur.standingBefore.slice();
+    const r = Math.random();
+    let k = st.length === 10 ? (r < 0.3 ? 10 : 3 + Math.floor(Math.random() * 7)) : (r < 0.5 ? st.length : Math.floor(Math.random() * st.length));
+    game.roll(st.slice().sort(() => Math.random() - 0.5).slice(k));
+  }
+  ui.showResults(game, PLAYERS.slice(0, n));
+}
+
+for (const ev of ['start', 'pause', 'resume', 'restart', 'exit', 'camera', 'mute', 'continue']) {
+  ui.on(ev, (p) => {
+    log('event ' + ev + (p ? ' ' + JSON.stringify(p) : ''));
+    if (ev === 'start') newGame(p.players);
+    if (ev === 'pause') { paused = true; ui.showPause(true); }
+    if (ev === 'resume') { paused = false; ui.showPause(false); }
+    if (ev === 'restart') { ui.showPause(false); newGame(nPlayers); }
+    if (ev === 'exit' || ev === 'continue') { ui.showPause(false); ui.hideResults(); ui.showTitle(); }
+    if (ev === 'camera') { cam = !cam; ui.setStatus({ camera: cam, source: cam ? (phone ? 'camera+phone' : 'camera') : (phone ? 'phone' : 'mouse') }); }
+  });
+}
+let cam = false, phone = false, muted = false;
+
+const tools = document.getElementById('tools');
+function btn(label, fn) { const b = document.createElement('button'); b.textContent = label; b.onclick = fn; tools.appendChild(b); return b; }
+btn('Title', () => ui.showTitle());
+[1,2,3,4].forEach((n) => btn('Game ' + n + 'P', () => newGame(n)));
+btn('Roll (R)', randomRoll);
+const autoB = btn('Auto (A)', () => toggleAuto());
+let autoT = 0;
+function toggleAuto() { if (autoT) { clearInterval(autoT); autoT = 0; autoB.classList.remove('on'); } else { autoB.classList.add('on'); autoT = setInterval(() => { if (!game || !game.current) return toggleAuto(); randomRoll(); }, 450); } }
+['strike','spare','turkey','split','gutter','info','foul'].forEach((k, i) => btn(k + ' (' + (i + 1) + ')', () => ui.callout(k === 'info' ? 'Nice shot' : k.toUpperCase() + (k === 'gutter' ? '' : '!'), k)));
+btn('Stats (S)', () => ui.throwStats({ speedMph: 17.3, curve: -0.55, board: 17 }));
+btn('Stats off', () => ui.throwStats(null));
+let mT = 0;
+btn('Meter (M)', () => { if (mT) { clearInterval(mT); mT = 0; ui.meter({ visible: false }); return; } let t = 0; mT = setInterval(() => { t += 0.03; ui.meter({ visible: true, power: (Math.sin(t) + 1) / 2, aim: Math.sin(t * 0.7) * 0.8, curve: Math.cos(t * 0.5) * 0.6 }); }, 30); });
+btn('Hint (H)', () => ui.hint(Math.random() < 0.5 ? 'Swing your arm to bowl' : 'Move your hand to aim, then swing'));
+btn('Pause', () => { paused = true; ui.showPause(true); });
+btn('Results 1P', () => playFull(1));
+btn('Results 4P', () => playFull(4));
+btn('Status: cam+phone', () => { cam = phone = true; ui.setStatus({ camera: true, phone: true, source: 'camera+phone' }); });
+btn('Status: none', () => { cam = phone = false; ui.setStatus({ camera: false, phone: false, source: 'mouse' }); });
+btn('Hide tools', () => { tools.style.display = 'none'; });
+
+window.addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const k = e.key;
+  const navMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'action', Backspace: 'back' };
+  if (navMap[k]) { if (ui.nav(navMap[k])) e.preventDefault(); return; }
+  if (k === 'r' || k === 'R') randomRoll();
+  else if (k === 'a' || k === 'A') toggleAuto();
+  else if (k >= '1' && k <= '7') tools.querySelectorAll('button')[8 + (+k) - 0 + 0 - 0] && 0;
+  else if (k === 's' || k === 'S') ui.throwStats({ speedMph: 17.3, curve: -0.55, board: 17 });
+  else if (k === 't' || k === 'T') ui.showTitle();
+  else if (k === 'e' || k === 'E') playFull(4);
+  else if (k === 'h' || k === 'H') ui.hint('Swing your arm to bowl');
+  else if (k === 'F1' || k === 'F2' || k === 'F3' || k === 'F4') { e.preventDefault(); newGame(+k[1]); }
+  else if (k === 'm' || k === 'M') ui.meter({ visible: true, power: 0.6, aim: -0.3, curve: 0.4 });
+});
+const calls = ['strike','spare','turkey','split','gutter','info','foul'];
+window.addEventListener('keydown', (e) => { if (!e.repeat && e.key >= '1' && e.key <= '7') { const k = calls[+e.key - 1]; ui.callout(k === 'info' ? 'Nice shot' : k.toUpperCase() + (k === 'gutter' ? '' : '!'), k); } });
+
+ui.setStatus({ camera: false, phone: false, source: 'mouse', muted: false });
+ui.showTitle();
+// URL hash helpers for screenshots: #game4, #results1, #pause
+const hash = location.hash.slice(1);
+if (hash.startsWith('game')) { newGame(+hash.slice(4) || 1); for (let i = 0; i < 14; i++) randomRoll(); ui.hint('Swing your arm to bowl'); ui.callout('', 'info'); }
+if (hash === 'pause') { newGame(2); ui.showPause(true); }
+if (hash.startsWith('results')) playFull(+hash.slice(7) || 1);
+</script>
+</body>
+</html>

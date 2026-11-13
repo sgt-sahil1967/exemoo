@@ -10,6 +10,7 @@ iframe and hands it the phone the player already paired.
 | `fruit-slice`, `table-tennis`, `golf`, `tennis`, `pose-match` | `../games-src/<id>/`, `npm run build` | slice / swing / swing / swing / remote |
 | `farm-dash` | static (copy of `../subway runner` + `js/exemoo-remote.js`) | remote + tilt |
 | `cricket` | static, new | swing |
+| `bowling` | static, new (see `bowling/CONTRACT.md`): three.js from the import map, Rapier 3D vendored in `bowling/vendor/` | swing in play, remote in menus + shell camera `pose` events |
 | `rapids-row` | static, new (see `rapids-row/CONTRACT.md`) | swing (2 phones) |
 | `farm-kart` | `../games-src/farm-kart/` = mirror of `../../farm-kart` + `exemoo/` adapter; `node scripts/sync-farm-kart.mjs` | kart in races, remote in menus (1–4 phones) |
 | `shake-freeze`, `wobble-tower`, `flapjack-flip` | static, new party minigames (Canvas 2D, no build). Shared kit `party.js` / `art.js` / `sfx.js` / `party.css` is copied into each folder | swing (1–4 phones: P1 = shell phone, P2–P4 pair their own PIN) |
@@ -17,7 +18,10 @@ iframe and hands it the phone the player already paired.
 | `straw-shot` | static, new party archery game (Canvas 2D, no build). Own copy of the party kit (`party.js` extended with up / down keys and the held Action state; `art.js`, `sfx.js`, `party.css` unchanged) | swing (1–4 phones: P1 = shell phone, P2–P4 pair their own PIN) |
 | `barn-blink` | static, new party reaction game (Canvas 2D, no build). Party kit copied from `shake-freeze` (adds two how-to icons) | swing (1–4 phones: P1 = shell phone, P2–P4 pair their own PIN) |
 | `barn-raiser` | static, camera stacking party game (Canvas 2D, no build). Party kit copied from `shake-freeze` (with two small hooks: `titleButtons`, `onAct`) | swing (P1 = shell phone for tilt / Action, P2–P4 pair their own PIN) + shell camera `pose` events |
+| `back2back` | `../games-src/back2back/`, `npm run build` | driver: kart wheel (tilt) + GAS / BRAKE / DRIFT / ITEM; shooter: swing aim (1 + 1 phones, keyboard and mouse fallback) |
 | `haystack-hideout` | static, new party minigame (Canvas 2D, no build). Own copy of the party kit; its `party.js` is extended with up/down/pick keys per player | swing (1–4 phones: P1 = shell phone, P2–P4 pair their own PIN) |
+| `bale-brawl` | static, new 3D duel (three.js from the import map, no build, no physics library; see `bale-brawl/PLAN.md`) | swing (P1 = shell phone, P2 pairs its own PIN) |
+| `bumper-carts` | static, new 3D party game (three.js from the import map, no build, custom 2-D sim; see `bumper-carts/PLAN.md`) | swing (P1 = shell phone, P2 to P4 pair their own PIN) |
 
 ## Adding a game (Phase 3)
 

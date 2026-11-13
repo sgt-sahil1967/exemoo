@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bumper Carts engine test</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%;margin:0;overflow:hidden;background:#1b1b3a;font-family:'Baloo 2',system-ui,sans-serif}
+canvas#scene{position:fixed;inset:0;display:block;width:100%;height:100%}
+#panel{position:fixed;left:12px;top:12px;z-index:2;background:#fff;border:5px solid #1b1b3a;border-radius:18px;
+  box-shadow:0 6px 0 #1b1b3a;padding:10px 12px;max-width:360px;font-weight:800;color:#1b1b3a;font-size:13px}
+#panel h1{font-family:'Lilita One',sans-serif;font-weight:400;margin:0 0 6px;font-size:22px}
+#panel button,#panel select{font:inherit;border:3px solid #1b1b3a;border-radius:10px;background:#ffd21f;margin:2px;padding:2px 8px;cursor:pointer}
+#log{position:fixed;right:12px;top:12px;z-index:2;width:310px;max-height:55vh;overflow:auto;background:rgba(255,255,255,.92);
+  border:5px solid #1b1b3a;border-radius:18px;padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace;color:#1b1b3a}
+#snap{position:fixed;left:12px;bottom:12px;z-index:2;background:rgba(255,255,255,.92);border:4px solid #1b1b3a;border-radius:14px;
+  padding:6px 10px;font-size:12px;font-family:ui-monospace,monospace;white-space:pre;color:#1b1b3a}
+#flat{position:fixed;right:12px;bottom:12px;z-index:3;width:min(46vh,46vw);height:min(46vh,46vw);background:#f4e3c3;
+  border:5px solid #1b1b3a;border-radius:18px;display:none}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="panel">
+  <h1>Bumper Carts engine</h1>
+  <div id="seats"></div>
+  <div><button id="go">New round</button><button id="storm">Barn storm</button><button id="pause">Pause</button></div>
+  <div>Camera
+    <button data-cam="title">title</button><button data-cam="play">play</button><button data-cam="results">results</button>
+  </div>
+  <div><button id="cel">Celebrate</button><button id="sound">Sound on</button><button id="flatBtn">Top-down debug</button></div>
+  <div style="font-weight:600">Keys: P1 WASD + Space (hold to charge). P2 arrows + Enter.</div>
+  <div id="fps"></div>
+</div>
+<div id="log"></div>
+<div id="snap"></div>
+<canvas id="flat" width="600" height="600"></canvas>
+<script type="module">
+import { createEngine } from '../js/engine.js';
+import { SEATS, ARENA, FENCE, CART } from '../js/constants.js';
+import { postPos } from '../js/sim.js';
+
+const $ = (id) => document.getElementById(id);
+const engine = await createEngine({ canvas: $('scene') });
+window.engine = engine;
+const logEl = $('log');
+const t0 = performance.now();
+const log = (s) => {
+  const d = document.createElement('div');
+  d.textContent = `${((performance.now() - t0) / 1000).toFixed(2)} ${s}`;
+  logEl.prepend(d);
+  while (logEl.childNodes.length > 80) logEl.lastChild.remove();
+};
+for (const ev of ['charge', 'dash', 'bump', 'clash', 'fence', 'fall', 'respawn', 'honk'])
+  engine.on(ev, (p) => log(`${ev} ${JSON.stringify(p, (k, v) => (typeof v === 'number' ? +v.toFixed(2) : v))}`));
+
+// keyboard controls (the real ones are js/keys.js)
+const held = new Set();
+addEventListener('keydown', (e) => { held.add(e.code); if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault(); });
+addEventListener('keyup', (e) => held.delete(e.code));
+const keyCtl = (u, d, l, r, c) => ({
+  read() {
+    let x = (held.has(r) ? 1 : 0) - (held.has(l) ? 1 : 0), y = (held.has(u) ? 1 : 0) - (held.has(d) ? 1 : 0);
+    const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+    return { live: true, x, y, charge: held.has(c) };
+  },
+  recenter() {},
+});
+const KEYS = [keyCtl('KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space'), keyCtl('ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'), null, null];
+
+const DEFAULT = ['normal', 'hard', 'easy', 'normal'];
+$('seats').innerHTML = SEATS.map((s, i) => `<div>P${i + 1} <span style="color:${s.color}">${s.name}</span>
+  <select id="s${i}"><option value="off">off</option>${KEYS[i] ? '<option value="keys">keys</option>' : ''}
+  ${['easy', 'normal', 'hard'].map((l) => `<option ${l === DEFAULT[i] ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`).join('');
+
+function setup() {
+  for (let i = 0; i < 4; i++) {
+    const v = $(`s${i}`).value;
+    if (v === 'off') engine.setCart(i, null);
+    else if (v === 'keys') engine.setCart(i, { ...SEATS[i], control: KEYS[i], cpu: null });
+    else engine.setCart(i, { ...SEATS[i], control: null, cpu: v });
+  }
+}
+let round = 0;
+function newRound() {
+  setup();
+  engine.setActive(false);
+  engine.resetRound();
+  engine.setCamera('play');
+  round++;
+  log(`--- round ${round} ---`);
+  setTimeout(() => { engine.audio.play('go'); engine.setActive(true); }, 700);
+}
+for (let i = 0; i < 4; i++) $(`s${i}`).onchange = setup;
+$('go').onclick = newRound;
+$('storm').onclick = () => { engine.dropFence(); engine.audio.play('storm'); log('BARN STORM'); };
+let paused = false;
+$('pause').onclick = () => { paused = !paused; engine.setPaused(paused); $('pause').textContent = paused ? 'Resume' : 'Pause'; };
+document.querySelectorAll('[data-cam]').forEach((b) => { b.onclick = () => engine.setCamera(b.dataset.cam); });
+$('cel').onclick = () => {
+  const order = engine.snapshot().carts.map((c) => c.i).sort(() => Math.random() - 0.5);
+  engine.setActive(false); engine.setCamera('results'); engine.celebrate(order); engine.audio.play('win');
+  log(`celebrate ${order}`);
+};
+$('sound').onclick = () => { engine.audio.unlock(); engine.audio.music(true); engine.audio.play('click'); };
+$('flatBtn').onclick = () => { const f = $('flat'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; };
+addEventListener('resize', () => engine.resize());
+setup();
+engine.setCamera('title');
+
+// flat top-down debug view straight from the sim
+const fctx = $('flat').getContext('2d');
+const STATE_COL = { drive: '#ffffff', charge: '#ffd21f', dash: '#ff8a1f', stun: '#9fa3b5', fall: '#6b4426', out: '#6b4426' };
+function drawFlat() {
+  if ($('flat').style.display !== 'block') return;
+  const W = 600, k = W / 2 / (ARENA.moatOuter + 0.5), c = W / 2;
+  const sim = engine._debug.sim;
+  fctx.clearRect(0, 0, W, W);
+  fctx.fillStyle = '#7a4e2b'; fctx.beginPath(); fctx.arc(c, c, ARENA.moatOuter * k, 0, 7); fctx.fill();
+  fctx.fillStyle = '#d99a5b'; fctx.beginPath(); fctx.arc(c, c, (ARENA.radius + 0.35) * k, 0, 7); fctx.fill();
+  fctx.strokeStyle = '#fff'; fctx.setLineDash([4, 4]); fctx.beginPath(); fctx.arc(c, c, ARENA.spawnRing * k, 0, 7); fctx.stroke(); fctx.setLineDash([]);
+  const arc = Math.PI * 2 / FENCE.panels;
+  sim.fence.forEach((hp, p) => {
+    if (!hp) return;
+    fctx.strokeStyle = hp === 2 ? '#ffffff' : '#ff3b30'; fctx.lineWidth = hp === 2 ? 6 : 3;
+    fctx.beginPath(); fctx.arc(c, c, FENCE.radius * k, p * arc + 0.03, (p + 1) * arc - 0.03); fctx.stroke();
+  });
+  fctx.fillStyle = '#2f7cff';
+  for (let p = 0; p < FENCE.panels; p++) { const q = postPos(p); fctx.beginPath(); fctx.arc(c + q.x * k, c + q.z * k, FENCE.postRadius * k, 0, 7); fctx.fill(); }
+  for (const cart of sim.carts) {
+    if (!cart.present) continue;
+    const x = c + cart.x * k, y = c + cart.z * k;
+    fctx.globalAlpha = cart.safeT > 0 ? 0.5 : 1;
+    fctx.fillStyle = SEATS[cart.i].color; fctx.beginPath(); fctx.arc(x, y, CART.radius * k, 0, 7); fctx.fill();
+    fctx.lineWidth = 3; fctx.strokeStyle = STATE_COL[cart.state] || '#000'; fctx.stroke();
+    fctx.strokeStyle = '#1b1b3a'; fctx.lineWidth = 2;
+    fctx.beginPath(); fctx.moveTo(x, y); fctx.lineTo(x + cart.vx * k * 0.3, y + cart.vz * k * 0.3); fctx.stroke();
+    fctx.strokeStyle = '#fff';
+    fctx.beginPath(); fctx.moveTo(x, y); fctx.lineTo(x + Math.cos(cart.facing) * CART.radius * k, y + Math.sin(cart.facing) * CART.radius * k); fctx.stroke();
+    if (cart.charging) { fctx.strokeStyle = '#ffd21f'; fctx.lineWidth = 4; fctx.beginPath(); fctx.arc(x, y, CART.radius * k + 5, -Math.PI / 2, -Math.PI / 2 + cart.charge * Math.PI * 2); fctx.stroke(); }
+    fctx.globalAlpha = 1;
+    fctx.fillStyle = '#1b1b3a'; fctx.font = '800 14px system-ui'; fctx.fillText(`${cart.i + 1}`, x - 4, y + 5);
+  }
+}
+
+let last = performance.now(), frames = 0, fpsT = 0;
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  engine.update(dt);
+  engine.render();
+  drawFlat();
+  frames++; fpsT += dt;
+  if (fpsT > 0.5) {
+    const info = engine._debug.renderer.info.render;
+    $('fps').textContent = `${Math.round(frames / fpsT)} fps, ${info.calls} draw calls, ${info.triangles} tris${engine._debug.demo ? ', title demo' : ''}`;
+    frames = 0; fpsT = 0;
+  }
+  const s = engine.snapshot();
+  $('snap').textContent = `fence ${s.fence.join('')}\n` + s.carts.map((c) =>
+    `P${c.i + 1} ${c.state.padEnd(6)} x ${c.x.toFixed(2).padStart(6)} z ${c.z.toFixed(2).padStart(6)} edge ${c.edge.toFixed(2)} charge ${c.charge.toFixed(2)} ${c.safe ? 'SAFE' : ''}`).join('\n');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

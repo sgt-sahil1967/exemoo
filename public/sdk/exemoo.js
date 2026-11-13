@@ -35,13 +35,46 @@ export function pressKey(code) {
   for (const type of ['keydown', 'keyup']) target.dispatchEvent(new KeyboardEvent(type, { code, key, bubbles: true, cancelable: true }));
 }
 
-export function connectExemoo({ layout, title, stream, buttons, keys } = {}) {
+/**
+ * One step of the air cursor: phone rotation rate (deg/s) moves the ring. Same axes as the Exemoo
+ * menu pointer: gyro.beta sweeps left/right, gyro.alpha up/down. `dt` in seconds, `bounds` = {w,h}.
+ * Returns the new position and whether the phone is moving (past the 3 deg/s dead zone).
+ */
+export function stepAirCursor({ x, y }, gyro, dt, speed, { w, h }) {
+  const gx = Math.abs(gyro?.beta) > 3 ? gyro.beta : 0;
+  const gy = Math.abs(gyro?.alpha) > 3 ? gyro.alpha : 0;
+  return {
+    x: Math.max(4, Math.min(w - 4, x - gx * dt * speed)),
+    y: Math.max(4, Math.min(h - 4, y - gy * dt * speed)),
+    moving: !!(gx || gy),
+  };
+}
+
+/** Pad layouts whose sensor stream is on by default (the others only stream when asked to). */
+export const layoutStreams = (layout) => layout === 'swing' || layout === 'slice';
+
+/**
+ * `menuCursor`: () => boolean. Pass it and the phone's gyro drives an on-screen ring over the game's
+ * menus while it returns true (title, lobby, pause, results...). Action then clicks the button under
+ * the ring via nav(), and the d-pad keeps moving focus. Layouts that don't stream motion ('remote')
+ * get the stream switched on only while the menu is up.
+ */
+export function connectExemoo({ layout, title, stream, buttons, keys, menuCursor } = {}) {
   const inShell = typeof window !== 'undefined' && window.parent !== window;
   const listeners = new Map();
   /** pin / padUrl: the shell's pairing room, for games that show their own QR. */
   const phone = { connected: false, transport: 'none', latency: 0, pin: '', padUrl: '' };
   const post = (msg) => {
     if (inShell) window.parent.postMessage({ exemoo: 1, ...msg }, location.origin);
+  };
+  let curLayout = layout, streamSent = null, airApi = null, cursorOn = false;
+  /** Switch the sensor stream on only while the menu cursor needs it and the layout doesn't stream anyway. */
+  const syncStream = () => {
+    const want = cursorOn || (stream ?? layoutStreams(curLayout));
+    if (streamSent === null && !cursorOn) return;
+    if (want === streamSent) return;
+    streamSent = want;
+    post({ type: 'stream', on: want });
   };
   const emit = (ev, arg) => {
     for (const cb of listeners.get(ev) || []) {
@@ -65,6 +98,12 @@ export function connectExemoo({ layout, title, stream, buttons, keys } = {}) {
       else if (d.type === 'pose') emit('pose', d.pose);
       else if (d.type === 'camera') emit('camera', !!d.on);
       else if (d.type === 'button') {
+        // Action while the menu cursor rests on a button clicks that button (the game never sees the press).
+        const under = d.b === 'action' ? airApi?.hot() : null;
+        if (under && !under.disabled) {
+          under.click();
+          return;
+        }
         if (keys?.[d.b]) pressKey(keys[d.b]);
         emit('button', d.b);
       }
@@ -73,7 +112,7 @@ export function connectExemoo({ layout, title, stream, buttons, keys } = {}) {
     post({ type: 'ready', layout, title, stream, buttons });
   }
 
-  return {
+  const api = {
     inShell,
     phone,
     on(ev, cb) {
@@ -87,7 +126,15 @@ export function connectExemoo({ layout, title, stream, buttons, keys } = {}) {
       return i >= 0 && !!(packet.buttons & (1 << i));
     },
     /** `buttons`: extra pad buttons for this game, e.g. [{b:'map', label:'Map'}] (sent back as button events). */
-    setLayout: (l, t, buttons) => post({ type: 'layout', layout: l, title: t, buttons }),
+    setLayout(l, t, buttons) {
+      curLayout = l;
+      post({ type: 'layout', layout: l, title: t, buttons });
+      if (streamSent !== null) {
+        // The pad resets its stream choice on a layout change: say again what the menu cursor needs.
+        streamSent = cursorOn || (stream ?? layoutStreams(curLayout));
+        post({ type: 'stream', on: streamSent });
+      }
+    },
     setStream: (on) => post({ type: 'stream', on: !!on }),
     haptic: (pattern = 20) => post({ type: 'haptic', pattern }),
     /** Send a raw control message to the phone (e.g. {t:'theme', color:'#ff6b4a'}). */
@@ -122,17 +169,28 @@ export function connectExemoo({ layout, title, stream, buttons, keys } = {}) {
           ring.style.opacity = '0';
           return mark(null);
         }
-        // Same axes as the Exemoo menu pointer: beta sweeps left/right, alpha up/down.
-        const gx = Math.abs(p.gyro.beta) > 3 ? p.gyro.beta : 0, gy = Math.abs(p.gyro.alpha) > 3 ? p.gyro.alpha : 0;
-        if (gx || gy) idle = 0;
+        const s = stepAirCursor({ x, y }, p.gyro, dt, speed, { w: innerWidth, h: innerHeight });
+        if (s.moving) idle = 0;
         else idle += dt;
-        x = Math.max(4, Math.min(innerWidth - 4, x - gx * dt * speed));
-        y = Math.max(4, Math.min(innerHeight - 4, y - gy * dt * speed));
+        ({ x, y } = s);
         ring.style.transform = `translate(${x}px,${y}px)`;
         ring.style.opacity = idle < 4 ? '1' : '0';
         mark(idle < 4 ? document.elementFromPoint(x, y)?.closest('button, a, [role=button], input, select, [data-nav]') ?? null : null);
       });
-      return { hot: () => hot, center: () => ((x = innerWidth / 2), (y = innerHeight / 2)) };
+      // Menus can appear while the phone is still (no packets): re-check so the stream and ring follow.
+      setInterval(() => {
+        const on = !!active();
+        if (!on) {
+          ring.style.opacity = '0';
+          mark(null);
+        }
+        if (cursorOn !== on) {
+          cursorOn = on;
+          syncStream();
+        }
+      }, 200);
+      airApi = { hot: () => (hot?.isConnected ? hot : null), center: () => ((x = innerWidth / 2), (y = innerHeight / 2)) };
+      return airApi;
     },
     /**
      * Phone d-pad / Action over the page's visible <button>s (for HTML menus). Returns false when no
@@ -153,4 +211,10 @@ export function connectExemoo({ layout, title, stream, buttons, keys } = {}) {
       return true;
     },
   };
+  if (inShell && typeof menuCursor === 'function') {
+    const start = () => api.airCursor({ active: menuCursor });
+    if (document.body) start();
+    else addEventListener('DOMContentLoaded', start, { once: true });
+  }
+  return api;
 }

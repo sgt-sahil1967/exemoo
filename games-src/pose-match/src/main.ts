@@ -543,7 +543,7 @@ if (import.meta.env.DEV) {
 
 // ───────────────────────────── Exemoo phone remote ─────────────────────────────
 // The camera tracks the body; the phone just drives the menus and pause/exit.
-const exemoo = connectExemoo({ layout: 'remote', title: 'Pose Match' });
+const exemoo = connectExemoo({ layout: 'remote', title: 'Pose Match', menuCursor: () => state === 'title' || state === 'calib' || state === 'over' });
 exemoo.on('button', (b) => {
   if ((state === 'title' || state === 'over') && exemoo.nav(b, { skip: '#mute' })) return;
   if (b === 'pause' || b === 'back') pressKey('Escape');

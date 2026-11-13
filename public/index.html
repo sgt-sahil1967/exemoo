@@ -130,6 +130,8 @@ footer::before{content:"";position:absolute;left:0;right:0;top:-26px;height:20px
 .cam-txt{font-size:13px;font-weight:800;opacity:.7;margin-top:4px}
 .cam-preview{position:fixed;right:14px;bottom:14px;width:160px;border:4px solid var(--ink);border-radius:14px;transform:scaleX(-1);z-index:17;display:none;box-shadow:0 5px 0 var(--ink)}
 body.cam-on .cam-preview{display:block}
+/* a game that draws its own panel from this video: keep the video running (the game reads it) but not visible */
+body.playing.cam-own-preview .cam-preview{opacity:0;pointer-events:none}
 /* ---------- game stage ---------- */
 .stage{position:fixed;inset:0;z-index:15;background:#0b0b18;display:none}
 body.playing .stage{display:block}
@@ -182,14 +184,18 @@ body.playing .toast{z-index:31}
     <button class="game" style="--bg:#2f7cff" data-g="Farm Dash" data-id="farm-dash"><span class="cover" data-cover="runner"></span><span class="bar"><span class="txt">Farm Dash<small>Lean, jump, dodge</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#16a3d9" data-g="Golf" data-id="golf"><span class="cover" data-cover="golf"></span><span class="bar"><span class="txt">Golf<small>Nail the putt</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#1679b8" data-g="Rapids Row" data-id="rapids-row"><span class="cover" data-cover="rapids"></span><span class="bar"><span class="txt">Rapids Row<small>2 phones, 1 canoe</small></span><span class="play">▶</span></span></button>
+    <button class="game" style="--bg:#ff5a1f" data-g="Back2Back" data-id="back2back"><span class="cover" data-cover="back2back"></span><span class="bar"><span class="txt">Back2Back<small>2 phones: drive + shoot</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#e8483b" data-g="Farm Kart" data-id="farm-kart"><span class="cover" data-cover="kart"></span><span class="bar"><span class="txt">Farm Kart<small>Steer, drift, race</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#16a085" data-g="Cricket" data-id="cricket"><span class="cover" data-cover="cricket"></span><span class="bar"><span class="txt">Cricket<small>Swing for six</small></span><span class="play">▶</span></span></button>
+    <button class="game" style="--bg:#7b4dff" data-g="Moo Bowl" data-id="bowling"><span class="cover" data-cover="bowling"></span><span class="bar"><span class="txt">Moo Bowl<small>Camera aim, swing to bowl</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#ff5c8a" data-g="Shake &amp; Freeze" data-id="shake-freeze"><span class="cover" data-cover="shake"></span><span class="bar"><span class="txt">Shake &amp; Freeze<small>Party: shake, then freeze</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#2fc65a" data-g="Wobble Tower" data-id="wobble-tower"><span class="cover" data-cover="wobble"></span><span class="bar"><span class="txt">Wobble Tower<small>Party: tilt to balance</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#ff9a1f" data-g="Flapjack Flip" data-id="flapjack-flip"><span class="cover" data-cover="flapjack"></span><span class="bar"><span class="txt">Flapjack Flip<small>Party: flick to flip</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#c8402f" data-g="Peek-a-Barn" data-id="peek-a-barn"><span class="cover" data-cover="peek"></span><span class="bar"><span class="txt">Peek-a-Barn<small>Party: match the pairs</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#2fc65a" data-g="Straw Shot" data-id="straw-shot"><span class="cover" data-cover="straw"></span><span class="bar"><span class="txt">Straw Shot<small>Party: point, draw, loose!</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#2fc65a" data-g="Barn Blink" data-id="barn-blink"><span class="cover" data-cover="blink"></span><span class="bar"><span class="txt">Barn Blink<small>Party: fastest reflexes</small></span><span class="play">▶</span></span></button>
+    <button class="game" style="--bg:#2bb5e8" data-g="Bale Brawl" data-id="bale-brawl"><span class="cover" data-cover="brawl"></span><span class="bar"><span class="txt">Bale Brawl<small>Bonk them into the pond</small></span><span class="play">▶</span></span></button>
+    <button class="game" style="--bg:#ff7a1f" data-g="Bumper Carts" data-id="bumper-carts"><span class="cover" data-cover="bumper"></span><span class="bar"><span class="txt">Bumper Carts<small>Tilt, charge, bump</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#ff8a3d" data-g="Barn Raiser" data-id="barn-raiser"><span class="cover" data-cover="barnraiser"></span><span class="bar"><span class="txt">Barn Raiser<small>Camera: steer, drop, stack</small></span><span class="play">▶</span></span></button>
     <button class="game" style="--bg:#ffb000" data-g="Haystack Hideout" data-id="haystack-hideout"><span class="cover" data-cover="hideout"></span><span class="bar"><span class="txt">Haystack Hideout<small>Party: memory hide-and-seek</small></span><span class="play">▶</span></span></button>
   </section>

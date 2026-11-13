@@ -11,8 +11,9 @@
  *   /                 landing page (public/)
  *   /pad              phone controller (public/controller.html)
  *   /play/<id>/…      a game's built files (games/<id>/), SPA fallback to its index.html
- *   /signal  (ws)     signalling hub, see signaling.js   (also accepted on / for sword-relay clients)
- *   /healthz          liveness for the host: {ok, rooms, sockets, uptime}
+ *   POST /api/signal  phone pairing over HTTP polling, see pairing.js (same handlers as Vercel, api.js)
+ *   /api/login, /api/auth, /api/logout   alpha sign-in (auth.js; gate is off unless AUTH_SECRET is set)
+ *   /healthz          liveness for the host: {ok, rooms, uptime}
  *   /readyz           readiness: 503 while shutting down
  *   /api/info         where the phone should go (pad URL), installed games, ICE servers
  *   /api/qr?text=…    QR code SVG
@@ -28,8 +29,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
-import QRCode from 'qrcode';
-import { createSignalingHub, rateLimiter } from './signaling.js';
+import { createApi } from './api.js';
+import { authConfig, gate } from './auth.js';
+import { memoryStore } from './pairing.js';
 import { lanIps, loadCert } from './lan.js';
 
 const serverDir = path.dirname(fileURLToPath(import.meta.url));
@@ -81,7 +83,7 @@ const CSP = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
   "media-src 'self' data: blob: mediastream:",
-  "connect-src 'self' ws: wss: data: blob: https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com https://odml.pa.googleapis.com",
+  "connect-src 'self' data: blob: https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com https://odml.pa.googleapis.com",
   "worker-src 'self' blob:",
   "frame-src 'self'",
   "frame-ancestors 'self'",
@@ -149,8 +151,6 @@ export async function startServer(options = {}) {
     turnSecret: process.env.TURN_SECRET || '',
     turnTtlS: envInt('TURN_TTL_S', 6 * 3600),
     trustProxy: ['1', 'true', 'yes'].includes(String(process.env.TRUST_PROXY).toLowerCase()) || !!process.env.RENDER || !!process.env.FLY_APP_NAME,
-    /** Extra origins allowed to open /signal (comma-separated, or '*'); the page's own host is always allowed. */
-    allowedOrigins: (process.env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean),
     /** 'on' | 'report-only' | 'off' */
     csp: (process.env.CSP || 'on').toLowerCase(),
     lan: false,
@@ -160,7 +160,8 @@ export async function startServer(options = {}) {
     publicDir: path.join(rootDir, 'public'),
     gamesDir: path.join(rootDir, 'games'),
     certDir: path.join(serverDir, '.cert'),
-    hub: {},
+    /** Environment for the API (auth settings); tests pass their own. */
+    env: process.env,
     quiet: false,
     logFormat: process.env.LOG_FORMAT || (production ? 'json' : 'text'),
     logLevel: process.env.LOG_LEVEL || (production ? 'info' : 'debug'),
@@ -170,18 +171,12 @@ export async function startServer(options = {}) {
   cfg.iceServers ??= parseIce(process.env.ICE_SERVERS, (m) => log.warn(m));
   cfg.swingLog ??= cfg.lan || process.env.EXEMOO_SWING_LOG === '1';
   if (production && cfg.lan) log.warn('LAN mode (self-signed HTTPS) is for local play; in production the host should terminate TLS');
-  const hubOptions = {
-    trustProxy: cfg.trustProxy,
-    log: (m) => log.debug(m),
-    ...(process.env.ROOM_GRACE_MS ? { gameGraceMs: envInt('ROOM_GRACE_MS', 300_000) } : {}),
-    ...(process.env.ROOM_IDLE_TTL_MS ? { idleTtlMs: envInt('ROOM_IDLE_TTL_MS', 1_800_000) } : {}),
-    ...(process.env.MAX_SOCKETS ? { maxSockets: envInt('MAX_SOCKETS', 5000) } : {}),
-    ...(process.env.MAX_ROOMS ? { maxRooms: envInt('MAX_ROOMS', 10_000) } : {}),
-    ...cfg.hub,
-  };
-  const hub = createSignalingHub(hubOptions);
+  // Rooms live in this process's memory locally; on Vercel the same handlers use Upstash Redis.
+  const store = memoryStore();
+  const api = createApi({ store, env: cfg.env, log: (lvl, m) => log[lvl]?.(m) });
+  const authCfg = authConfig(cfg.env);
+  if (authCfg.enabled) log.info('alpha sign-in gate is on', { emails: authCfg.allow.length, mail: authCfg.resendKey ? 'resend' : 'logged to console' });
   const compressCache = new Map(); // `${enc}:${file}` → {mtimeMs, buf} | Promise
-  const qrLimit = rateLimiter();
   const startedAt = Date.now();
   let draining = false;
 
@@ -355,20 +350,40 @@ export async function startServer(options = {}) {
     return [...cfg.iceServers, { urls: cfg.turnUrls, username, credential }];
   }
 
-  /** Browsers send Origin on WebSocket upgrades: only our own pages (and ALLOWED_ORIGINS) may pair. */
-  function originAllowed(req) {
-    const origin = req.headers.origin;
-    if (!origin || cfg.lan || cfg.allowedOrigins.includes('*')) return true;
-    let o;
-    try {
-      o = new URL(origin);
-    } catch {
-      return false;
+  /** Client IP; behind a trusted proxy the first X-Forwarded-For entry is the real client. */
+  function clientIp(req) {
+    if (cfg.trustProxy) {
+      const fwd = firstHeader(req.headers['x-forwarded-for']);
+      if (fwd) return fwd;
     }
-    if (cfg.allowedOrigins.includes(o.origin)) return true;
-    if (cfg.publicUrl && new URL(cfg.publicUrl).host === o.host) return true;
-    const host = (cfg.trustProxy && firstHeader(req.headers['x-forwarded-host'])) || req.headers.host;
-    return !!host && o.host === host;
+    return req.socket.remoteAddress || 'unknown';
+  }
+
+  /** Node request → Web Request (for the shared handlers in api.js / auth.js). */
+  async function webRequest(req, withBody = false) {
+    const headers = new Headers();
+    for (const [k, v] of Object.entries(req.headers)) if (v !== undefined && !k.startsWith(':')) headers.set(k, Array.isArray(v) ? v.join(', ') : String(v));
+    const host = (cfg.trustProxy && firstHeader(req.headers['x-forwarded-host'])) || req.headers.host || `localhost:${cfg.port}`;
+    const init = { method: req.method, headers };
+    if (withBody && req.method === 'POST') {
+      const chunks = [];
+      let size = 0;
+      for await (const c of req) {
+        size += c.length;
+        if (size > 64 * 1024 + 1) break;
+        chunks.push(c);
+      }
+      init.body = Buffer.concat(chunks);
+    }
+    return new Request(`${isHttps(req) ? 'https' : 'http'}://${host}${req.url}`, init);
+  }
+
+  async function sendWeb(req, res, response) {
+    const extra = {};
+    response.headers.forEach((v, k) => (extra[k] = v));
+    const body = Buffer.from(await response.arrayBuffer());
+    res.writeHead(response.status, headersFor(req, extra));
+    res.end(req.method === 'HEAD' ? undefined : body);
   }
 
   // ───────────────────────────── routing ─────────────────────────────
@@ -376,21 +391,25 @@ export async function startServer(options = {}) {
     const url = new URL(req.url || '/', 'http://x');
     let pathname = url.pathname;
 
-    if (pathname === '/healthz') return sendJson(req, res, 200, { ok: true, rooms: hub.rooms.size, sockets: hub.clients, uptime: Math.round((Date.now() - startedAt) / 1000) });
+    if (pathname === '/healthz') return sendJson(req, res, 200, { ok: true, rooms: store.rooms, uptime: Math.round((Date.now() - startedAt) / 1000) });
     if (pathname === '/readyz') return sendJson(req, res, draining ? 503 : 200, { ready: !draining });
+    const routes = {
+      '/api/signal': (r, ip) => api.signal(r, ip),
+      '/api/qr': (r, ip) => api.qr(r, ip),
+      '/api/login': (r, ip) => api.login(r, ip),
+      '/api/auth': (r) => api.signIn(r),
+      '/api/logout': (r) => api.logout(r),
+    };
+    if (routes[pathname]) return sendWeb(req, res, await routes[pathname](await webRequest(req, true), clientIp(req)));
+    // Alpha sign-in gate for the landing page and game pages (off unless AUTH_SECRET is set).
+    if (authCfg.enabled) {
+      const blocked = await gate(await webRequest(req), authCfg);
+      if (blocked) return sendWeb(req, res, blocked);
+    }
     if (pathname === '/api/info') {
       return sendJson(req, res, 200, { padUrl: padUrl(req), lan: cfg.lan, lanIps: cfg.lan ? lanIps() : [], httpsPort: cfg.lan ? cfg.httpsPort : null, games: installedGames(), iceServers: iceServersFor(), swingLog: cfg.swingLog });
     }
     if (pathname === '/api/swings' && req.method === 'POST') return saveSwing(req, res);
-    if (pathname === '/api/qr') {
-      const text = url.searchParams.get('text') || '';
-      if (!text || text.length > 512) return sendText(req, res, 400, 'text must be 1-512 characters');
-      if (!qrLimit.take(hub.clientIp(req), 120)) return sendText(req, res, 429, 'Too many requests', { 'Retry-After': '60' });
-      const svg = await QRCode.toString(text, { type: 'svg', margin: 1, color: { dark: '#1b1b3a', light: '#ffffff' } });
-      res.writeHead(200, headersFor(req, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=3600' }));
-      return res.end(svg);
-    }
-
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       res.writeHead(405, headersFor(req, { Allow: 'GET, HEAD' }));
       return res.end();
@@ -434,20 +453,6 @@ export async function startServer(options = {}) {
     });
   }
 
-  function attachUpgrade(server) {
-    server.on('upgrade', (req, socket, head) => {
-      socket.on('error', () => {});
-      const pathname = new URL(req.url || '/', 'http://x').pathname;
-      if (pathname !== '/signal' && pathname !== '/') return socket.destroy();
-      if (!originAllowed(req)) {
-        log.warn('websocket origin refused', { origin: String(req.headers.origin).slice(0, 200) });
-        socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
-        return socket.destroy();
-      }
-      return hub.handleUpgrade(req, socket, head);
-    });
-  }
-
   function listen(server, port, label) {
     return new Promise((resolve, reject) => {
       server.once('error', (err) => {
@@ -463,13 +468,11 @@ export async function startServer(options = {}) {
   // Behind a proxy, keep idle keep-alive sockets open longer than the proxy does (avoids 502s).
   httpServer.keepAliveTimeout = 65_000;
   httpServer.headersTimeout = 66_000;
-  attachUpgrade(httpServer);
   const port = await listen(httpServer, cfg.port, 'HTTP');
   let httpsServer = null;
   let httpsPort = null;
   if (cfg.lan) {
     httpsServer = https.createServer(await loadCert(cfg.certDir, (m) => log.info(m.trim())), onRequest);
-    attachUpgrade(httpsServer);
     httpsPort = await listen(httpsServer, cfg.httpsPort, 'HTTPS');
     cfg.httpsPort = httpsPort;
   }
@@ -480,7 +483,7 @@ export async function startServer(options = {}) {
   return {
     port,
     httpsPort,
-    hub,
+    store,
     log,
     get draining() {
       return draining;
@@ -488,23 +491,20 @@ export async function startServer(options = {}) {
     /** Immediate stop (tests). */
     async close() {
       draining = true;
-      await hub.close();
+      store.close();
       for (const s of servers) s.closeAllConnections?.();
       await closeServers();
     },
-    /**
-     * Graceful stop for SIGTERM (deploys): /readyz turns 503, phones and screens get close code
-     * 1012 and reconnect to the next instance, in-flight HTTP requests finish.
-     */
+    /** Graceful stop for SIGTERM (deploys): /readyz turns 503, in-flight HTTP requests finish. */
     async shutdown({ timeoutMs = 10_000 } = {}) {
       if (draining) return;
       draining = true;
-      log.info('shutting down', { rooms: hub.rooms.size, sockets: hub.clients });
+      log.info('shutting down', { rooms: store.rooms });
       const force = setTimeout(() => servers.forEach((s) => s.closeAllConnections?.()), timeoutMs);
       force.unref();
       const closed = closeServers();
       for (const s of servers) s.closeIdleConnections?.();
-      await hub.close({ graceful: true, graceMs: Math.min(2000, timeoutMs) });
+      store.close();
       await closed;
       clearTimeout(force);
     },

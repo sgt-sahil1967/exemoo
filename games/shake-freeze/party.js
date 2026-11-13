@@ -50,7 +50,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
  */
 export function startParty(game) {
   const audio = createAudio(game.music || {});
-  const exemoo = connectExemoo({ layout: 'swing', title: game.title, stream: true });
+  const exemoo = connectExemoo({ layout: 'swing', title: game.title, stream: true, menuCursor: () => MENU_STATES.has(state) });
   const inShell = exemoo.inShell;
   const info = fetch('/api/info').then((r) => r.json()).catch(() => null);
 
@@ -101,6 +101,8 @@ export function startParty(game) {
 
   // ───────────── state ─────────────
   /** 'title' | 'lobby' | 'countdown' | 'play' | 'over' | 'paused' | 'results' */
+  // Gyro cursor (SDK menuCursor) is on in the menu-like states only.
+  const MENU_STATES = new Set(['title', 'lobby', 'paused', 'results']);
   let state = 'title';
   let pausedFrom = 'play';
   let roundT = 0, countT = 0, overT = 0, lastCount = 0, lastWarn = 0;

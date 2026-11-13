@@ -46,6 +46,12 @@ function player({ x, y, shirt, skin = '#ffd9b0', hair = '#5a3a1a', cap, arms, le
   </g>`;
 }
 
+/** A bowling pin for the Moo Bowl cover: base centre at (x, y), s = scale, rot in degrees. */
+const bowlPin = (x, y, s = 1, rot = 0) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">
+  <path d="M-7 0 C-15 -14 -15 -30 -8 -44 C-5 -51 -5 -55 -7 -61 C-10 -71 -5 -80 0 -80 C5 -80 10 -71 7 -61 C5 -55 5 -51 8 -44 C15 -30 15 -14 7 0Z" fill="#fff" ${S3}/>
+  <path d="M-7.6 -49 C-3 -47 3 -47 7.6 -49 M-6.2 -56 C-2 -54.5 2 -54.5 6.2 -56" fill="none" stroke="#ff3b30" stroke-width="3.6" stroke-linecap="round"/>
+  <path d="M-8 -34 C-10 -24 -9 -14 -6 -6" fill="none" stroke="#c9d3ea" stroke-width="3.5" stroke-linecap="round"/></g>`;
+
 export const covers = {
   // ───────────── Fruit Slice ─────────────
   fruit: svg(`${defs('f', '#ff7a3c', '#ffd65c', `
@@ -524,4 +530,129 @@ export const covers = {
     <g fill="none"><circle cx="120" cy="114" r="14" stroke="${INK}" stroke-width="10"/><circle cx="120" cy="114" r="14" stroke="#2fc65a" stroke-width="5"/></g>
     <g transform="translate(366 58)"><circle r="20" fill="#fff" ${S3}/><text y="9" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="28" fill="${INK}">?</text></g>
     ${sparkle(176, 108, '#ffd21f', 0.8)}${sparkle(258, 100, '#fff', 0.7)}`),
+  // ───────────── Back2Back (co-op racer + shooter) ─────────────
+  back2back: svg(`${defs('b2b', '#7fd8ff', '#e6fbff')}
+    ${sky('b2b')}${hills('b2b', -8)}
+    <g ${S3}><ellipse cx="44" cy="48" rx="62" ry="34" fill="#2c1d52"/><ellipse cx="108" cy="30" rx="50" ry="28" fill="#3b2a63"/><ellipse cx="22" cy="92" rx="46" ry="30" fill="#24103e"/><ellipse cx="96" cy="84" rx="40" ry="24" fill="#3b2a63"/></g>
+    <path d="M104 62 L88 98 L102 98 L90 132 L124 86 L108 86 L120 62Z" fill="#ffd21f" ${S3}/>
+    <path d="M188 128 C178 158 120 172 84 220 L316 220 C272 176 234 158 212 128Z" fill="#4b4f63" ${S}/>
+    <path d="M188 128 C178 158 120 172 84 220 M212 128 C234 158 272 176 316 220" fill="none" stroke="#e53b30" stroke-width="4" opacity=".9"/>
+    <path d="M200 132 C198 168 186 186 196 220" fill="none" stroke="#f3f0e6" stroke-width="4" stroke-dasharray="12 10"/>
+    <g transform="translate(200 112) scale(.7)"><rect x="-26" y="-34" width="52" height="32" rx="10" fill="#9b4dff" ${S3}/><rect x="-14" y="-46" width="28" height="14" rx="5" fill="#e8f6ff" ${S3}/><rect x="-22" y="-2" width="12" height="8" fill="#1b1b3a"/><rect x="10" y="-2" width="12" height="8" fill="#1b1b3a"/></g>
+    <g transform="translate(200 196)"><ellipse cy="8" rx="42" ry="8" fill="#000" opacity=".22"/><rect x="-44" y="-34" width="88" height="38" rx="14" fill="#ff3b30" ${S}/><rect x="-30" y="-56" width="60" height="26" rx="10" fill="#ffe9a8" ${S}/><rect x="-22" y="-52" width="44" height="14" fill="#bfe9ff"/></g>
+    <circle cx="300" cy="70" r="26" fill="none" stroke="${INK}" stroke-width="8"/><circle cx="300" cy="70" r="26" fill="none" stroke="#2f7cff" stroke-width="4"/><path d="M270 70 H290 M310 70 H330 M300 40 V60 M300 80 V100" stroke="#fff" stroke-width="4"/>
+    ${sparkle(120, 60, '#ffd21f', 0.8)}${sparkle(360, 128, '#fff', 0.7)}`),
+
+  // ───────────── Moo Bowl (ten-pin bowling: camera aim, phone throw) ─────────────
+  bowling: svg(`${defs('bw', '#3a2a6b', '#ff9a5a', `
+    <linearGradient id="bwl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d79a"/><stop offset="1" stop-color="#e2a85a"/></linearGradient>
+    <radialGradient id="bwb" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff7a6e"/><stop offset=".55" stop-color="#ff3b30"/><stop offset="1" stop-color="#9c120b"/></radialGradient>
+    <radialGradient id="bwg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff3b0" stop-opacity=".95"/><stop offset="1" stop-color="#ffd21f" stop-opacity="0"/></radialGradient>`)}
+    <rect width="400" height="220" fill="url(#bws)"/>
+    <g fill="#2a1d52" opacity=".55"><path d="M0 0 H400 V26 L200 4 L0 26Z"/><rect x="0" y="0" width="14" height="220"/><rect x="386" y="0" width="14" height="220"/></g>
+    <path d="M-10 34 Q100 58 200 36 T410 34" fill="none" stroke="${INK}" stroke-width="2.5"/>
+    ${[18, 62, 108, 154, 246, 292, 338, 382].map((x, i) => `<circle cx="${x}" cy="${43 + Math.sin((x / 400) * Math.PI * 2) * 6 + (x > 200 ? 0 : 2)}" r="6" fill="${['#ffd21f', '#ff3b30', '#2fc65a', '#2f7cff'][i % 4]}" stroke="${INK}" stroke-width="2.5"/>`).join('')}
+    <circle cx="200" cy="92" r="84" fill="url(#bwg)"/>
+    <path d="M0 220 L136 96 H264 L400 220Z" fill="#6b4a9a" ${S}/>
+    <path d="M40 220 L158 96 H242 L360 220Z" fill="url(#bwl)" ${S}/>
+    <g stroke="#c98f45" stroke-width="2" opacity=".8"><path d="M120 220 L179 96"/><path d="M200 220 V96"/><path d="M280 220 L221 96"/></g>
+    <path d="M40 220 L158 96 L146 96 L4 220Z M360 220 L242 96 L254 96 L396 220Z" fill="#3b2a66" ${S3}/>
+    <g fill="${INK}" opacity=".85"><path d="M200 150 l-5 12 h10z"/><path d="M178 158 l-5.5 12 h10z"/><path d="M222 158 l-4.5 12 h10z"/></g>
+    <rect x="150" y="66" width="100" height="32" rx="8" fill="#2a1d52" ${S}/>
+    ${shadow(200, 99, 44, 5)}
+    <g filter="url(#bwd)">
+      ${bowlPin(172, 98, 0.42)}${bowlPin(191, 98, 0.42)}${bowlPin(210, 98, 0.42)}${bowlPin(229, 98, 0.42)}
+      ${bowlPin(160, 92, 0.6, -38)}${bowlPin(244, 84, 0.62, 52)}${bowlPin(200, 62, 0.66, 14)}
+      ${bowlPin(181, 104, 0.5)}${bowlPin(219, 104, 0.5)}${bowlPin(200, 111, 0.58)}
+    </g>
+    <path d="M150 208 Q150 170 176 138" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 13" opacity=".9"/>
+    ${shadow(128, 208, 46, 8)}
+    <g filter="url(#bwd)">
+      <circle cx="124" cy="166" r="42" fill="url(#bwb)" ${S}/>
+      <path d="M92 150 Q108 124 136 128" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+      <g fill="${INK}"><ellipse cx="128" cy="150" rx="6" ry="7"/><ellipse cx="146" cy="156" rx="6" ry="7"/><ellipse cx="134" cy="172" rx="6.5" ry="7.5"/></g>
+    </g>
+    <g stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".85"><path d="M62 190 h-34"/><path d="M70 206 h-26"/><path d="M60 174 h-20"/></g>
+    <g font-family="Lilita One, sans-serif" font-size="34" fill="#ffd21f" stroke="${INK}" stroke-width="7" paint-order="stroke" stroke-linejoin="round"><text x="262" y="176" transform="rotate(-8 262 176)">STRIKE!</text></g>
+    ${sparkle(306, 78, '#ffd21f')}${sparkle(98, 86, '#fff', 0.8)}${sparkle(342, 128, '#fff', 0.6)}`),
+  // ───────────── Bale Brawl (foam-bopper duel on a hay bale in a pond) ─────────────
+  brawl: svg(`${defs('bl', '#5ec2ff', '#d8f2ff', `
+    <linearGradient id="blw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#43c8f0"/><stop offset="1" stop-color="#1679b8"/></linearGradient>
+    <radialGradient id="blb" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#e0a732"/></radialGradient>`)}
+    ${sky('bl')}
+    ${cloud(70, 44, 0.9)}${cloud(250, 30, 0.7)}
+    <path d="M0 112 Q90 86 190 108 T400 100 V150 H0Z" fill="#8fe86a"/>
+    <g ${S3}><rect x="300" y="78" width="54" height="40" fill="#d0412f"/><path d="M294 80 L327 54 L360 80Z" fill="#8a2a1c"/><rect x="316" y="94" width="22" height="24" fill="#fff"/></g>
+    <rect y="132" width="400" height="88" fill="url(#blw)"/>
+    <g fill="none" stroke="#fff" stroke-width="3" opacity=".5" stroke-linecap="round"><path d="M20 160 q14 -6 28 0"/><path d="M330 196 q14 -6 28 0"/><path d="M40 204 q10 -5 22 0"/></g>
+    <g ${S3}><ellipse cx="60" cy="178" rx="20" ry="7" fill="#4fbd2e"/><ellipse cx="352" cy="170" rx="17" ry="6" fill="#4fbd2e"/></g>
+    ${shadow(200, 192, 130, 12)}
+    <g ${S}>
+      <path d="M62 150 V186 Q62 204 200 204 Q338 204 338 186 V150Z" fill="#e0a732"/>
+      <ellipse cx="200" cy="150" rx="138" ry="30" fill="url(#blb)"/>
+    </g>
+    <g stroke="#d0412f" stroke-width="7" fill="none"><path d="M120 176 V203"/><path d="M280 176 V203"/></g>
+    <g stroke="#b9791c" stroke-width="3" stroke-linecap="round" opacity=".8"><path d="M96 152 l14 4M150 142 l16 5M232 140 l14 -4M290 150 l16 -2M200 164 l16 3"/></g>
+    <g filter="url(#bld)">
+      <g transform="translate(138 150)">
+        <rect x="-18" y="-46" width="36" height="46" rx="14" fill="#d0412f" ${S}/>
+        <circle cx="0" cy="-62" r="22" fill="#fff" ${S}/>
+        <circle cx="-9" cy="-70" r="7" fill="${INK}"/><ellipse cx="14" cy="-54" rx="7" ry="5" fill="${INK}" opacity=".85"/>
+        <path d="M-20 -78 l-10 -12 l14 4M20 -78 l10 -12 l-14 4" fill="#fff" ${S3}/>
+        <ellipse cx="4" cy="-55" rx="13" ry="9" fill="#ffb3b8" ${S3}/>
+        <circle cx="-5" cy="-66" r="2.8" fill="${INK}"/><circle cx="8" cy="-66" r="2.8" fill="${INK}"/>
+        <path d="M-20 -84 q20 -14 40 0z" fill="#c9ced6" ${S3}/>
+      </g>
+      <g transform="translate(262 150)">
+        <rect x="-18" y="-46" width="36" height="46" rx="14" fill="#2f7cff" ${S}/>
+        <circle cx="0" cy="-62" r="22" fill="#ffb3c1" ${S}/>
+        <path d="M-18 -78 l-6 -10 l12 4M18 -78 l6 -10 l-12 4" fill="#ff8aa0" ${S3}/>
+        <ellipse cx="-3" cy="-56" rx="11" ry="8" fill="#ff8aa0" ${S3}/><circle cx="-6" cy="-56" r="2" fill="${INK}"/><circle cx="0" cy="-56" r="2" fill="${INK}"/>
+        <circle cx="-10" cy="-69" r="2.8" fill="${INK}"/><circle cx="3" cy="-69" r="2.8" fill="${INK}"/>
+        <path d="M-20 -84 q20 -14 40 0z" fill="#c9ced6" ${S3}/>
+      </g>
+    </g>
+    <g stroke-linecap="round">
+      <path d="M150 112 L250 56" stroke="${INK}" stroke-width="22"/><path d="M150 112 L250 56" stroke="#ff3b30" stroke-width="14"/><path d="M196 87 l-4 8M220 72 l-4 8" stroke="#fff" stroke-width="6"/>
+      <path d="M250 112 L150 56" stroke="${INK}" stroke-width="22"/><path d="M250 112 L150 56" stroke="#2f7cff" stroke-width="14"/><path d="M204 87 l4 8M180 72 l4 8" stroke="#fff" stroke-width="6"/>
+    </g>
+    ${sparkle(200, 76, '#ffd21f', 1.3)}${sparkle(112, 52, '#fff', 0.8)}${sparkle(300, 150, '#fff', 0.7)}
+    <g fill="#9ee3fa" ${S3}><circle cx="372" cy="150" r="6"/><circle cx="384" cy="132" r="4"/><circle cx="364" cy="124" r="5"/></g>
+    <g font-family="Lilita One, sans-serif" font-size="36" fill="#ffd21f" stroke="${INK}" stroke-width="7" paint-order="stroke" stroke-linejoin="round"><text x="22" y="108" transform="rotate(-8 22 108)">BONK!</text></g>`),
+  // ───────────── Bumper Carts (hay carts colliding on a barn floor, broken picket) ─────────────
+  bumper: svg(`${defs('bm', '#ffb25c', '#ffe9b8', `
+    <linearGradient id="bmw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a3a"/><stop offset="1" stop-color="#5c3a1c"/></linearGradient>
+    <radialGradient id="bmf" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#f6d08a"/><stop offset="1" stop-color="#d9a455"/></radialGradient>`)}
+    ${sky('bm')}
+    <path d="M0 96 Q100 74 200 92 T400 86 V140 H0Z" fill="#8fe86a"/>
+    <g ${S3}><rect x="40" y="52" width="70" height="48" fill="#d0412f"/><path d="M32 54 L75 22 L118 54Z" fill="#8a2a1c"/><rect x="60" y="70" width="30" height="30" fill="#fff"/></g>
+    <rect y="150" width="400" height="70" fill="url(#bmw)"/>
+    ${shadow(200, 186, 170, 22)}
+    <g ${S}><ellipse cx="200" cy="168" rx="178" ry="40" fill="url(#bmf)"/></g>
+    <g fill="none" stroke="#b9791c" stroke-width="3" opacity=".6"><path d="M70 168 q130 30 260 0"/><path d="M110 150 q90 18 180 0"/></g>
+    <g ${S3} fill="#fff">${[34, 70, 106, 294, 330, 366].map((x, i) => `<rect x="${x}" y="${i < 3 ? 126 : 126}" width="12" height="38" rx="3"/>`).join('')}<rect x="28" y="136" width="96" height="6" rx="2"/><rect x="286" y="136" width="96" height="6" rx="2"/></g>
+    <g ${S3} fill="#fff"><path d="M148 168 l10 -26 l12 4 l-6 26z"/><path d="M236 172 l16 -22 l10 8 l-12 20z"/></g>
+    <g filter="url(#bmd)">
+      <g transform="translate(142 150) rotate(-8)">
+        <rect x="-46" y="-26" width="92" height="52" rx="16" fill="#d9a455" ${S}/>
+        <rect x="-52" y="-18" width="104" height="36" rx="18" fill="#ff3b30" ${S}/>
+        <rect x="-36" y="-10" width="30" height="8" rx="4" fill="#fff" opacity=".4"/>
+        <circle cx="0" cy="-36" r="20" fill="#fff" ${S}/>
+        <path d="M-17 -50 l-8 -12 l13 5M17 -50 l8 -12 l-13 5" fill="#fff" ${S3}/>
+        <ellipse cx="4" cy="-30" rx="11" ry="8" fill="#ffb3b8" ${S3}/>
+        <circle cx="-6" cy="-40" r="2.8" fill="${INK}"/><circle cx="8" cy="-40" r="2.8" fill="${INK}"/>
+        <path d="M-30 -22 l-8 -34" stroke="${INK}" stroke-width="3.5"/><path d="M-38 -56 l16 4 l-14 8z" fill="#ffd21f" ${S3}/>
+      </g>
+      <g transform="translate(262 156) rotate(9)">
+        <rect x="-46" y="-26" width="92" height="52" rx="16" fill="#d9a455" ${S}/>
+        <rect x="-52" y="-18" width="104" height="36" rx="18" fill="#2f7cff" ${S}/>
+        <rect x="-36" y="-10" width="30" height="8" rx="4" fill="#fff" opacity=".4"/>
+        <circle cx="0" cy="-36" r="20" fill="#ffb3c1" ${S}/>
+        <path d="M-17 -50 l-6 -10 l12 4M17 -50 l6 -10 l-12 4" fill="#ff8aa0" ${S3}/>
+        <ellipse cx="-2" cy="-30" rx="11" ry="8" fill="#ff8aa0" ${S3}/><circle cx="-5" cy="-30" r="2" fill="${INK}"/><circle cx="1" cy="-30" r="2" fill="${INK}"/>
+        <circle cx="-7" cy="-41" r="2.8" fill="${INK}"/><circle cx="6" cy="-41" r="2.8" fill="${INK}"/>
+      </g>
+    </g>
+    ${sparkle(202, 138, '#ffd21f', 1.6)}${sparkle(176, 112, '#fff', 0.9)}${sparkle(232, 108, '#fff', 0.8)}${sparkle(340, 70, '#fff', 0.7)}
+    <g font-family="Lilita One, sans-serif" font-size="36" fill="#ffd21f" stroke="${INK}" stroke-width="7" paint-order="stroke" stroke-linejoin="round"><text x="150" y="70" transform="rotate(-6 150 70)">BUMP!</text></g>`),
 };

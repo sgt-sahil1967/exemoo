@@ -1,0 +1,28 @@
+/* Cinematic camera overlay: letterbox bars + caption. Sits above the canvas, below menus. */
+.cine-root { position: fixed; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.cine-bar {
+  position: absolute; left: 0; right: 0; height: 12vh; background: #000;
+  transition: transform 0.55s cubic-bezier(0.22, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.cine-bar.top { top: 0; transform: translateY(-101%); }
+.cine-bar.bot { bottom: 0; transform: translateY(101%); }
+.cine-root.on .cine-bar { transform: translateY(0); }
+.cine-cap {
+  position: absolute; left: 0; right: 0; top: 58%; text-align: center; padding: 0 4vw;
+  opacity: 0; transform: translateY(18px) scale(0.82);
+  transition: opacity 0.28s ease-out, transform 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+.cine-root.cap .cine-cap { opacity: 1; transform: none; }
+.cine-title {
+  font-family: 'Lilita One', 'Baloo 2', sans-serif; font-weight: 400;
+  font-size: clamp(40px, 9vw, 120px); line-height: 1; letter-spacing: 2px;
+  color: #fff; -webkit-text-stroke: 10px #1b1b3a; paint-order: stroke fill;
+  text-shadow: 0 8px 0 #1b1b3a, 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+.cine-sub {
+  margin-top: 10px; font-family: 'Baloo 2', system-ui, sans-serif; font-weight: 800;
+  font-size: clamp(16px, 2.6vw, 30px); letter-spacing: 3px; text-transform: uppercase;
+  color: #ffd21f; -webkit-text-stroke: 5px #1b1b3a; paint-order: stroke fill;
+}
+.cine-title:empty, .cine-sub:empty { display: none; }

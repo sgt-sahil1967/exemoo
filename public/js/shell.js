@@ -33,10 +33,12 @@ const DEFAULT_LAYOUT = {
   tennis: 'swing',
   golf: 'swing',
   cricket: 'swing',
+  bowling: 'swing',
   'pose-match': 'remote',
   'farm-dash': 'remote',
   'pad-test': 'swing',
   'rapids-row': 'swing',
+  back2back: 'remote',
   'shake-freeze': 'swing',
   'wobble-tower': 'swing',
   'flapjack-flip': 'swing',
@@ -45,6 +47,8 @@ const DEFAULT_LAYOUT = {
   'barn-blink': 'swing',
   'barn-raiser': 'swing',
   'haystack-hideout': 'swing',
+  'bale-brawl': 'swing',
+  'bumper-carts': 'swing',
 };
 
 function toast(msg) {
@@ -199,8 +203,11 @@ const fusion = new HeadingFusion();
 /** Games that run their own camera tracking: the shell's camera pauses while they play. */
 const OWN_CAMERA = new Set(['pose-match', 'farm-dash']);
 /** Games that never use camera assist: the shell's camera stays off while they play. */
-const NO_CAMERA = new Set(['fruit-slice', 'rapids-row', 'farm-kart', 'shake-freeze', 'wobble-tower', 'flapjack-flip', 'peek-a-barn', 'straw-shot', 'barn-blink', 'haystack-hideout']);
+const NO_CAMERA = new Set(['fruit-slice', 'rapids-row', 'back2back', 'farm-kart', 'shake-freeze', 'wobble-tower', 'flapjack-flip', 'peek-a-barn', 'straw-shot', 'barn-blink', 'haystack-hideout', 'bale-brawl', 'bumper-carts']);
 const cameraOff = (id) => OWN_CAMERA.has(id) || NO_CAMERA.has(id);
+/** Games that draw their own camera panel from the shell's video (cricket, bowling): the shell's floating preview is hidden while they play, so only one shows. */
+const OWN_PREVIEW = new Set(['cricket', 'bowling']);
+const syncCamPreview = () => document.body.classList.toggle('cam-own-preview', !!playing && OWN_PREVIEW.has(playing.id));
 const ownCameraGame = () => !!playing && cameraOff(playing.id);
 let camWanted = false;
 try {
@@ -354,6 +361,7 @@ function openGame(id, title) {
   if (location.hash !== `#/play/${id}`) history.pushState(null, '', `#/play/${id}`);
   setPadLayout(playing.layout, playing.title);
   peekStageBar();
+  syncCamPreview();
   if (cameraOff(id) && camera.running) camera.stop();
   else if (!cameraOff(id) && camWanted && !camera.running) camera.start();
   fusion.reset();
@@ -364,6 +372,7 @@ function closeGame({ keepHash = false } = {}) {
   playing.frame.remove();
   playing = null;
   document.body.classList.remove('playing');
+  syncCamPreview();
   if (!keepHash && location.hash.startsWith('#/play/')) history.pushState(null, '', location.pathname + location.search);
   link.send({ t: 'layout', layout: 'menu' });
   showPop(false);

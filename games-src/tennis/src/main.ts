@@ -27,7 +27,7 @@ const cam = new ChaseCamera(world.camera);
 // Mouse/keyboard always works; inside Exemoo the paired phone is the racket too.
 const phone = new PhoneRacketInput();
 const input = new CombinedInput(new MouseKeyboardInput(document.body), phone);
-const exemoo = connectExemoo({ layout: 'swing', title: 'Tennis' });
+const exemoo = connectExemoo({ layout: 'swing', title: 'Tennis', menuCursor: () => navButtons().length > 0 });
 const sfx = new Sfx();
 const ui = new UI(theme);
 const match = new Match(world, ui, sfx, input, cam);

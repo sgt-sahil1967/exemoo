@@ -66,7 +66,7 @@ export class Game {
   private readonly ui: UI;
   /** Inside Exemoo the shell already paired the phone; the adapter speaks this game's PhoneLink API. */
   private readonly inShell = inExemooShell();
-  private readonly link: PhoneLink = this.inShell ? (new SliceLink({ layout: 'slice', title: 'Fruit Slice' }) as unknown as PhoneLink) : new PhoneLink();
+  private readonly link: PhoneLink = this.inShell ? (new SliceLink({ layout: 'slice', title: 'Fruit Slice', menuHold: () => this.screen !== 'playing' }) as unknown as PhoneLink) : new PhoneLink();
   private readonly motion: MotionPointer;
   private readonly mouse: MousePointer;
   private readonly pointer: PointerHub;

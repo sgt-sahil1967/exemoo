@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bale Brawl UI test</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../ui.css">
+<style>
+html,body{height:100%;margin:0;background:linear-gradient(#9be0ff 60%,#2bb5e8 60%);font-family:'Baloo 2',sans-serif}
+#bar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#1b1b3a;padding:6px;display:flex;gap:6px;flex-wrap:wrap}
+#bar button{font:700 13px 'Baloo 2';padding:3px 10px;border-radius:8px;border:0;cursor:pointer}
+#log{position:fixed;right:6px;bottom:44px;z-index:50;background:#fffc;font:12px monospace;padding:4px;max-width:260px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="ui"></div>
+<div id="bar"></div>
+<div id="log"></div>
+<script type="module">
+import { createUI } from '../js/ui.js';
+const ui = createUI({ root: document.getElementById('ui') });
+const log = (m) => { const l = document.getElementById('log'); l.textContent = (m + '\n' + l.textContent).slice(0, 400); };
+['start','pause','resume','restart','exit','mute','rematch','menu','lobbyReady','lobbyBack'].forEach((e) => ui.on(e, (a) => log(e + (a ? ' ' + JSON.stringify(a) : ''))));
+const names = ['Red Cow', 'Billy Bonk'], colors = ['#ff3b30', '#ffd21f'];
+const hud = (o = {}) => ui.hud({ names, colors, wins: [1, 0], need: 2, round: 2, timeLeft: 32, sudden: false, edge: [0.2, 0.85], guard: [false, true], ...o });
+const cards = [
+  { label: 'Red Cow (your Exemoo phone)', color: colors[0], connected: true, keysHelp: 'WASD + Space' },
+  { label: 'Blue Pig', color: '#2f7cff', connected: false, pin: '123456', url: '192.168.1.5:8443/pad', qrSrc: '', keysHelp: 'arrows + Enter' },
+];
+const steps = {
+  Title: () => ui.showTitle(),
+  Lobby: () => ui.showLobby(cards),
+  HUD: () => { ui.hideAll(); hud(); ui.hint('Point your bopper at the screen'); },
+  Sudden: () => { ui.hideAll(); hud({ sudden: true, timeLeft: 0 }); },
+  Pause: () => ui.showPause(true),
+  Results: () => ui.showResults({ winner: 0, names, colors, wins: [2, 1], rounds: 3 }),
+  Count: () => ui.countdown(3), Go: () => ui.countdown('GO'),
+  'ROUND 2': () => ui.banner('ROUND 2', 'round'), 'RING OUT': () => ui.banner('RING OUT!', 'ringout'), 'SUDDEN': () => ui.banner('SUDDEN DEATH', 'sudden'), 'DRAW': () => ui.banner('DRAW, again!', 'draw'),
+  'BONK L': () => ui.callout(0, 'BONK!'), 'BLOCKED R': () => ui.callout(1, 'BLOCKED'), CLASH: () => ui.callout(-1, 'CLASH'),
+  Hide: () => { ui.hideAll(); ui.hud(null); },
+};
+for (const [k, f] of Object.entries(steps)) { const b = document.createElement('button'); b.textContent = k; b.onclick = f; document.getElementById('bar').append(b); }
+steps.Title();
+</script>
+</body>
+</html>

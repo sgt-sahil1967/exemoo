@@ -54,5 +54,7 @@ export interface ExemooExtraButton {
   b: string;
   label: string;
 }
-export declare function connectExemoo(opts?: { layout?: ExemooLayout; title?: string; stream?: boolean; buttons?: ExemooExtraButton[]; keys?: Partial<Record<string, string>> }): Exemoo;
+export declare function connectExemoo(opts?: { layout?: ExemooLayout; title?: string; stream?: boolean; buttons?: ExemooExtraButton[]; keys?: Partial<Record<string, string>>; menuCursor?: () => boolean }): Exemoo;
+export declare function stepAirCursor(pos: { x: number; y: number }, gyro: { alpha: number; beta: number } | undefined, dt: number, speed: number, bounds: { w: number; h: number }): { x: number; y: number; moving: boolean };
+export declare const layoutStreams: (layout?: string) => boolean;
 export declare function pressKey(code: string): void;

@@ -20,7 +20,7 @@ const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const smooth = (t) => t * t * (3 - 2 * t);
-const exemoo = connectExemoo({ layout: 'remote', title: 'Cricket', stream: true });
+const exemoo = connectExemoo({ layout: 'remote', title: 'Cricket', stream: true, menuCursor: () => state === 'menu' || state === 'over' || paused });
 
 /** Settings (menu): players' look and time of day. Stored per browser; changing one reloads the game. */
 const SETTINGS_KEY = 'exemoo.cricket.settings';

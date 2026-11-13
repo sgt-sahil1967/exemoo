@@ -115,7 +115,8 @@ const SLICE_BUTTONS = { action: 'select', recenter: 'calibrate', pause: 'pause',
 
 /** fruit-slice PhoneLink, fed by the shell's phone. */
 export class SliceLink {
-  constructor({ layout = 'slice', title } = {}) {
+  /** menuHold: () => true while a menu is up; the pointer then follows the phone without touching the pad. */
+  constructor({ layout = 'slice', title, menuHold = () => false } = {}) {
     this.latestSample = null;
     this.packetRate = 0;
     this._info = { status: 'waiting' };
@@ -132,7 +133,7 @@ export class SliceLink {
     this.sdk.on('packet', (p) => {
       this._count++;
       // held: the pad's blade area (action) is being touched. Camera assist is not used by fruit-slice.
-      const sample = { seq: p.seq, t: p.t, quat: legacyQuat(p.q), accel: [p.acc.x, p.acc.y, p.acc.z], receivedAt: performance.now(), held: this.sdk.held(p, 'action') };
+      const sample = { seq: p.seq, t: p.t, quat: legacyQuat(p.q), accel: [p.acc.x, p.acc.y, p.acc.z], receivedAt: performance.now(), held: this.sdk.held(p, 'action') || !!menuHold() };
       this.latestSample = sample;
       this._l.emit('sample', sample);
     });

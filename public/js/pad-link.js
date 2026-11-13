@@ -1,10 +1,13 @@
 /**
  * Phone side of the link, used by /pad. Mirrors table-tennis/src/controller/main.ts:
  *
- *  - Joins the PIN room on /signal. When the screen is present, offers WebRTC with two data
- *    channels: 'sensor' (unordered, no retransmits, SEN2 binary) and 'control' (reliable JSON).
- *  - If the data channel doesn't open within rtcTimeoutMs (or WebRTC fails / is missing), falls
- *    back to the server relay: binary WS frames + {type:'relay', payload}.
+ *  - Joins the PIN room on /api/signal (HTTP polling, see poll-socket.js). When the screen is present,
+ *    offers WebRTC with two data channels: 'sensor' (unordered, no retransmits, SEN2 binary) and
+ *    'control' (reliable JSON).
+ *  - There is no server relay: the phone must reach the screen directly, i.e. be on the same Wi-Fi.
+ *    If the data channel doesn't open within rtcTimeoutMs it retries a few times, then gives up with
+ *    a "join the same Wi-Fi" message. A phone that reports a mobile-data connection is refused up
+ *    front (Android Chrome exposes this; iOS doesn't, so there it fails on the timeout instead).
  *
  * Staying connected (the phone is the flakiest device in the room):
  *  - Heartbeat on the signalling socket (net-watch Liveness): a socket that dies without a FIN
@@ -15,9 +18,8 @@
  *    pad rejoins the same screen without re-entering the PIN. While a pairing is being resumed, a
  *    missing room (screen reloading, server restarting) is retried for resumeWindowMs instead of
  *    giving up.
- *  - If the WebRTC data channel goes silent (no screen message for screenStallMs) the phone falls
- *    back to the relay at once, tells the screen ({t:'transport', via:'relay'}), and later tries to
- *    upgrade back to a direct link.
+ *  - If the WebRTC data channel goes silent (no screen message for screenStallMs) the phone rejoins
+ *    the room and negotiates a fresh direct link.
  *  - Page lifecycle: a tab that comes back from the background, a network change, or a bfcache
  *    restore probes / reopens the socket right away.
  *
@@ -26,18 +28,27 @@
  */
 import { Emitter, STUN, defaultSignalUrl } from './protocol.js';
 import { Liveness, backoffDelay, session, watchPage } from './net-watch.js';
+import { openSignal, setPoll } from './poll-socket.js';
+
+export const WIFI_ONLY_TEXT = 'Exemoo needs your phone on the same Wi-Fi as the screen. Mobile data is not supported.';
+
+/** True when the browser says this phone is on mobile data (Android Chrome; unknown elsewhere). */
+export function onMobileData() {
+  const c = typeof navigator !== 'undefined' ? navigator.connection : null;
+  return c?.type === 'cellular';
+}
 
 const DEFAULTS = {
-  rtcTimeoutMs: 5000,
+  rtcTimeoutMs: 12000,
+  /** Direct-link attempts in a row before giving up (phone not on the screen's network). */
+  maxDirectFails: 3,
   /** App-level ping to the screen (latency, and proof the screen path works). */
   pingMs: 2000,
   /** Signalling socket heartbeat. */
   wsPingMs: 5000,
   wsDeadMs: 12000,
-  /** No message from the screen over WebRTC for this long → relay. */
+  /** No message from the screen over WebRTC for this long → rejoin and renegotiate. */
   screenStallMs: 6000,
-  /** After a fallback to the relay, retry a direct link after this long (doubles, 3 tries). */
-  upgradeAfterMs: 10000,
   /** Keep looking for a vanished room this long when resuming a pairing. */
   resumeWindowMs: 10 * 60_000,
   retryBaseMs: 500,
@@ -76,9 +87,7 @@ export class PadLink extends Emitter {
   #pending = [];
   #remoteSet = false;
   #rtcTimer = null;
-  #rtcWorked = false;
-  #upgradeTimer = null;
-  #upgradeTries = 0;
+  #directFails = 0;
   #lastScreenRx = 0;
   #peerPresent = false;
   #lastPersist = 0;
@@ -113,6 +122,7 @@ export class PadLink extends Emitter {
 
   /** Join `pin` (or the current PIN). Idempotent while already joining/joined that PIN. */
   connect(pin) {
+    if (onMobileData()) return this.#gone(WIFI_ONLY_TEXT);
     const p = String(pin ?? this.#pin).replace(/\D/g, '');
     if (p === this.#pin && this.#ws && this.status !== 'gone') return;
     if (p !== this.#pin || this.status === 'gone') {
@@ -161,10 +171,6 @@ export class PadLink extends Emitter {
         /* fall through */
       }
     }
-    if (this.transport === 'relay' && this.#ws?.readyState === 1) {
-      this.#ws.send(JSON.stringify({ type: 'relay', token: this.#token, payload: msg }));
-      return true;
-    }
     return false;
   }
 
@@ -172,10 +178,6 @@ export class PadLink extends Emitter {
   sendSensor(buf) {
     if (this.transport === 'webrtc' && this.#sensor?.readyState === 'open') {
       if (this.#sensor.bufferedAmount < 16 * 1024) this.#sensor.send(buf);
-      return true;
-    }
-    if (this.transport === 'relay' && this.#ws?.readyState === 1) {
-      if (this.#ws.bufferedAmount < 32 * 1024) this.#ws.send(buf);
       return true;
     }
     return false;
@@ -198,14 +200,19 @@ export class PadLink extends Emitter {
       this.#persist();
       if (!this.#pingTimer) this.#pingTimer = setInterval(() => this.#pingTick(), this.#o.pingMs);
     }
+    this.#tunePoll();
     this.emit('status', s, detail);
+  }
+
+  /** Pairing polls: quick while negotiating, rare once the direct link is up. */
+  #tunePoll() {
+    const s = this.status;
+    setPoll(this.#ws, s === 'connected' ? 20000 : s === 'negotiating' ? 500 : s === 'waiting' ? 2000 : 1000);
   }
 
   #stopPing() {
     clearInterval(this.#pingTimer);
     this.#pingTimer = null;
-    clearTimeout(this.#upgradeTimer);
-    this.#upgradeTimer = null;
   }
 
   #persist() {
@@ -244,12 +251,13 @@ export class PadLink extends Emitter {
     if (this.status !== 'lost') this.#setStatus('connecting');
     let sock;
     try {
-      sock = new WebSocket(this.#signalUrl);
+      sock = openSignal(this.#signalUrl);
     } catch {
       return this.#socketDown(null, 'Cannot reach the server. Retrying...');
     }
     sock.binaryType = 'arraybuffer';
     this.#ws = sock;
+    this.#tunePoll();
     sock.onopen = () => {
       sock.send(JSON.stringify({ type: 'join_room', room: this.#pin, resume: this.#resume || undefined }));
       this.#live.start();
@@ -341,7 +349,7 @@ export class PadLink extends Emitter {
       case 'peer_connected':
         if (m.role === 'game') {
           this.#peerPresent = true;
-          this.#startRtc().catch(() => this.#useRelay());
+          this.#startRtc().catch(() => this.#directFailed());
         }
         break;
       case 'peer_disconnected':
@@ -359,7 +367,7 @@ export class PadLink extends Emitter {
               this.#remoteSet = true;
               for (const c of this.#pending.splice(0)) await pc.addIceCandidate(c).catch(() => {});
             })
-            .catch(() => this.#useRelay());
+            .catch(() => this.#directFailed());
         }
         break;
       case 'candidate':
@@ -368,9 +376,6 @@ export class PadLink extends Emitter {
           if (this.#pc && this.#remoteSet) this.#pc.addIceCandidate(c).catch(() => {});
           else this.#pending.push(c);
         }
-        break;
-      case 'relay':
-        if (m.payload && typeof m.payload === 'object') this.#onScreen(m.payload);
         break;
       case 'replaced':
         // Another device (or tab) joined with this PIN. Don't auto-rejoin, or the two would fight.
@@ -412,32 +417,22 @@ export class PadLink extends Emitter {
     this.send({ t: 'ping', ts: performance.now() });
     const now = Date.now();
     if (now - this.#lastPersist > 30_000) this.#persist();
-    // A silent direct link (path changed, NAT rebinding): switch to the relay instead of hanging.
+    // A silent direct link (path changed, screen reloaded): rejoin and negotiate a new one.
     if (this.transport === 'webrtc' && now - this.#lastScreenRx > this.#o.screenStallMs) {
       this.#closePeer();
-      if (this.#ws?.readyState === 1 && this.#peerPresent) {
-        this.#setStatus('connected', undefined, 'relay');
-        this.send({ t: 'transport', via: 'relay' });
-        this.#scheduleUpgrade();
-      } else this.#socketDown(this.#ws, 'Connection lost. Reconnecting...', true);
+      this.#socketDown(this.#ws, 'Connection lost. Reconnecting...', true);
     }
   }
 
-  /** Back on the relay after a direct link worked: try the direct link again later. */
-  #scheduleUpgrade() {
-    clearTimeout(this.#upgradeTimer);
-    if (!this.#rtcWorked || this.#upgradeTries >= 3) return;
-    const delay = this.#o.upgradeAfterMs * 2 ** this.#upgradeTries++;
-    this.#upgradeTimer = setTimeout(() => {
-      this.#upgradeTimer = null;
-      if (this.status === 'connected' && this.transport === 'relay' && this.#peerPresent) this.#startRtc().catch(() => {});
-    }, delay);
-  }
-
-  #useRelay() {
-    if (this.status === 'gone' || this.#ws?.readyState !== 1) return;
-    if (this.status === 'connected') return; // already on the relay, or direct
-    this.#setStatus('connected', undefined, 'relay');
+  /** The direct link did not come up: retry a few times, then ask for the same Wi-Fi. */
+  #directFailed() {
+    if (this.status === 'gone' || this.status === 'connected') return;
+    this.#closePeer();
+    if (++this.#directFails >= this.#o.maxDirectFails) {
+      this.#directFails = 0;
+      return this.#gone(onMobileData() ? WIFI_ONLY_TEXT : "Can't reach the screen. Put this phone on the same Wi-Fi as the screen, then scan again.");
+    }
+    this.#socketDown(this.#ws, 'Still connecting... is this phone on the same Wi-Fi as the screen?');
   }
 
   #closePeer() {
@@ -458,11 +453,9 @@ export class PadLink extends Emitter {
   }
 
   async #startRtc() {
-    // Upgrading from a working relay keeps using it until the direct link is up.
-    const upgrading = this.status === 'connected' && this.transport === 'relay';
     this.#closePeer();
-    if (!this.useWebRTC || typeof RTCPeerConnection === 'undefined') return this.#useRelay();
-    if (!upgrading) this.#setStatus('negotiating', 'Connecting to the screen...');
+    if (!this.useWebRTC || typeof RTCPeerConnection === 'undefined') return this.#gone('This browser cannot connect to the screen (no WebRTC).');
+    this.#setStatus('negotiating', 'Connecting to the screen...');
     const pc = new RTCPeerConnection({ iceServers: this.iceServers });
     this.#pc = pc;
     const sensor = pc.createDataChannel('sensor', { ordered: false, maxRetransmits: 0 });
@@ -474,19 +467,14 @@ export class PadLink extends Emitter {
       if (this.#pc !== pc) return;
       clearTimeout(this.#rtcTimer);
       this.#rtcTimer = null;
-      this.#rtcWorked = true;
-      this.#upgradeTries = 0;
+      this.#directFails = 0;
       this.#lastScreenRx = Date.now();
       this.#setStatus('connected', undefined, 'webrtc');
     };
     control.onclose = () => {
       if (this.#pc !== pc || this.transport !== 'webrtc') return;
       this.#closePeer();
-      if (this.#ws?.readyState === 1 && this.#peerPresent) {
-        this.#setStatus('connected', undefined, 'relay');
-        this.send({ t: 'transport', via: 'relay' });
-        this.#scheduleUpgrade();
-      } else this.#setStatus('lost', 'Connection lost. Reconnecting...');
+      this.#socketDown(this.#ws, 'Connection lost. Reconnecting...', true);
     };
     control.onmessage = (ev) => {
       if (typeof ev.data !== 'string') return;
@@ -504,8 +492,7 @@ export class PadLink extends Emitter {
       const s = pc.iceConnectionState;
       if (s === 'failed') {
         if (this.transport === 'webrtc') control.onclose();
-        else if (upgrading) this.#closePeer();
-        else this.#useRelay();
+        else this.#directFailed();
       }
     };
     const offer = await pc.createOffer();
@@ -514,10 +501,7 @@ export class PadLink extends Emitter {
     this.#rtcTimer = setTimeout(() => {
       this.#rtcTimer = null;
       if (this.#pc !== pc || control.readyState === 'open') return;
-      if (upgrading) {
-        this.#closePeer();
-        this.#scheduleUpgrade();
-      } else this.#useRelay();
+      this.#directFailed();
     }, this.#o.rtcTimeoutMs);
   }
 }

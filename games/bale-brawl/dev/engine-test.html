@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bale Brawl engine test</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%;margin:0;overflow:hidden;background:#1b1b3a;font-family:'Baloo 2',system-ui,sans-serif}
+canvas#scene{position:fixed;inset:0;display:block;width:100%;height:100%}
+#panel{position:fixed;left:12px;top:12px;z-index:2;background:#fff;border:5px solid #1b1b3a;border-radius:18px;
+  box-shadow:0 6px 0 #1b1b3a;padding:10px 12px;max-width:340px;font-weight:800;color:#1b1b3a;font-size:13px}
+#panel h1{font-family:'Lilita One',sans-serif;font-weight:400;margin:0 0 6px;font-size:22px}
+#panel button,#panel select{font:inherit;border:3px solid #1b1b3a;border-radius:10px;background:#ffd21f;margin:2px;padding:2px 8px;cursor:pointer}
+#log{position:fixed;right:12px;top:12px;z-index:2;width:300px;max-height:60vh;overflow:auto;background:rgba(255,255,255,.92);
+  border:5px solid #1b1b3a;border-radius:18px;padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace;color:#1b1b3a}
+#snap{position:fixed;left:12px;bottom:12px;z-index:2;background:rgba(255,255,255,.92);border:4px solid #1b1b3a;border-radius:14px;
+  padding:6px 10px;font-size:12px;font-family:ui-monospace,monospace;white-space:pre;color:#1b1b3a}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="panel">
+  <h1>Bale Brawl engine</h1>
+  <div>P0 <select id="p0"><option value="">keys (WASD, Space guard, Q/E level)</option><option>easy</option><option selected>normal</option><option>hard</option><option>champ</option></select></div>
+  <div>P1 <select id="p1"><option>easy</option><option>normal</option><option selected>hard</option><option>champ</option></select></div>
+  <div>
+    <button id="go">New round</button><button id="sudden">Sudden death</button><button id="pause">Pause</button>
+  </div>
+  <div>Camera
+    <button data-cam="title">title</button><button data-cam="duel1p">duel1p</button><button data-cam="duel2p">duel2p</button><button data-cam="results">results</button>
+  </div>
+  <div><button id="cel">Celebrate winner</button><button id="sound">Sound on</button><label><input type="checkbox" id="auto" checked> auto rounds</label></div>
+  <div id="fps"></div>
+</div>
+<div id="log"></div>
+<div id="snap"></div>
+<script type="module">
+import { createEngine } from '../js/engine.js';
+import { CPU_CAST, PLAYERS, MATCH } from '../js/constants.js';
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('scene');
+const engine = await createEngine({ canvas });
+window.engine = engine;
+const logEl = $('log');
+let t0 = performance.now();
+const log = (s) => {
+  const d = document.createElement('div');
+  d.textContent = `${((performance.now() - t0) / 1000).toFixed(2)} ${s}`;
+  logEl.prepend(d);
+  while (logEl.childNodes.length > 80) logEl.lastChild.remove();
+};
+for (const ev of ['swing', 'hit', 'block', 'clash', 'edge', 'ringout', 'splash']) engine.on(ev, (p) => log(`${ev} ${JSON.stringify(p, (k, v) => (typeof v === 'number' ? +v.toFixed(2) : v))}`));
+
+// tiny keyboard control for P0 (the real one is js/keys.js)
+const held = new Set();
+let pending = null, lastDir = 0;
+addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  held.add(e.code);
+  const dirs = { KeyD: 0, KeyA: Math.PI, KeyW: Math.PI / 2, KeyS: -Math.PI / 2 };
+  if (e.code in dirs && !held.has('Space')) { pending = { dir: dirs[e.code], power: e.shiftKey ? 1 : 0.75 }; lastDir = dirs[e.code]; }
+});
+addEventListener('keyup', (e) => held.delete(e.code));
+const keyControl = {
+  read() {
+    const guard = held.has('Space');
+    const level = held.has('KeyQ') || held.has('KeyE');
+    const s = pending; pending = null;
+    return { live: true, yaw: Math.cos(lastDir) * 0.35, pitch: 0.45 + Math.sin(lastDir) * 0.3, bladeAngle: level ? 0 : Math.PI / 2, guard, swing: guard ? null : s };
+  },
+  recenter() {},
+};
+
+let round = 0, roundTimer = 0, sudden = false;
+function setup() {
+  const c0 = $('p0').value, c1 = $('p1').value;
+  engine.setFighter(0, c0 ? { ...CPU_CAST[c0], cpu: c0 } : { ...PLAYERS[0], control: keyControl, cpu: null });
+  engine.setFighter(1, { ...CPU_CAST[c1], cpu: c1 });
+}
+function newRound() {
+  setup();
+  engine.resetRound();
+  engine.celebrate(-1);
+  engine.setCamera($('p0').value ? 'duel2p' : 'duel1p');
+  engine.setKnockScale(1);
+  sudden = false; roundTimer = 0;
+  round++;
+  log(`--- round ${round} ---`);
+  setTimeout(() => engine.setActive(true), 600);
+}
+engine.on('splash', ({ loser }) => {
+  const w = loser === -1 ? -1 : 1 - loser;
+  setTimeout(() => engine.celebrate(w), 150);
+  if ($('auto').checked) setTimeout(newRound, MATCH.ringoutPause * 1000 + 600);
+});
+$('go').onclick = newRound;
+$('sudden').onclick = () => { engine.setArenaScale(MATCH.suddenMinScale, MATCH.suddenShrinkSeconds); engine.setKnockScale(1.5); sudden = true; engine.audio.play('sudden'); };
+let paused = false;
+$('pause').onclick = () => { paused = !paused; engine.setPaused(paused); $('pause').textContent = paused ? 'Resume' : 'Pause'; };
+document.querySelectorAll('[data-cam]').forEach((b) => { b.onclick = () => engine.setCamera(b.dataset.cam); });
+$('cel').onclick = () => { const s = engine.snapshot(); engine.celebrate(s.fighters[0].x > -s.arenaRadius ? 0 : 1); };
+$('sound').onclick = () => { engine.audio.unlock(); engine.audio.music(true); engine.audio.play('go'); };
+addEventListener('resize', () => engine.resize());
+newRound();
+
+let last = performance.now(), frames = 0, fpsT = 0;
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  if (!paused) {
+    roundTimer += dt;
+    if (!sudden && roundTimer > MATCH.roundSeconds) $('sudden').onclick();
+  }
+  engine.update(dt);
+  engine.render();
+  frames++; fpsT += dt;
+  if (fpsT > 0.5) {
+    const info = engine._debug.renderer.info.render;
+    $('fps').textContent = `${Math.round(frames / fpsT)} fps, ${info.calls} draw calls, ${info.triangles} tris`;
+    frames = 0; fpsT = 0;
+  }
+  const s = engine.snapshot();
+  $('snap').textContent = `R ${s.arenaRadius.toFixed(2)}  t ${roundTimer.toFixed(1)}\n` + s.fighters.map((f, i) =>
+    `F${i} x ${f.x.toFixed(2)} edge ${f.edge.toFixed(2)} guard ${f.guard ? 'Y' : '-'} stag ${f.stagger.toFixed(2)} blade ${(f.bladeAngle * 57.3).toFixed(0)} live ${f.live}`).join('\n');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

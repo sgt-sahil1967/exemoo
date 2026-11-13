@@ -12,11 +12,11 @@
     "test": "node --test --test-concurrency=1 'server/test/*.test.js'",
     "build": "node scripts/build-games.mjs",
     "build:ci": "node scripts/build-games.mjs --ci",
-    "check:deploy": "node scripts/check-deploy.mjs"
+    "check:deploy": "node scripts/check-deploy.mjs",
+    "build:vercel": "node scripts/build-vercel.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",
-    "selfsigned": "^5.5.0",
-    "ws": "^8.22.0"
+    "selfsigned": "^5.5.0"
   }
 }

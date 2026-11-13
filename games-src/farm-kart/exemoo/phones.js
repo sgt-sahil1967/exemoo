@@ -33,7 +33,9 @@ export class Phones {
     this.order = 0;
     this.online = true;
     this.info = { urls: [QR_BASE] };
-    this.sdk = connectExemoo({ layout: 'remote', title: 'Farm Kart' });
+    // Gyro cursor over the menus (title, setup, pause, results): everywhere except while racing.
+    const menuUp = () => !!(this.game.cfg && this.game.track) && (!this.game.inRace() || !!this.game.paused);
+    this.sdk = connectExemoo({ layout: 'remote', title: 'Farm Kart', menuCursor: menuUp });
     this.inShell = this.sdk.inShell;
     this.padBase = `${location.origin}/pad`;
     this.nav = createNav();

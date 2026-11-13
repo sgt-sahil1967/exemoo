@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moo Bowl audio test</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; background: #1b1b3a; color: #fff; margin: 0; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #ffd21f; margin: 18px 0 6px; }
+  button { font: inherit; background: #fff; color: #1b1b3a; border: 3px solid #1b1b3a; border-radius: 10px; padding: 6px 12px; margin: 3px; cursor: pointer; box-shadow: 0 3px 0 #000; }
+  button:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+  button.hot { background: #ffd21f; }
+  button.on { background: #2fc65a; }
+  label { display: inline-block; min-width: 150px; }
+  .row { margin: 6px 0; }
+  input[type=range] { width: 260px; vertical-align: middle; }
+  #log { font: 12px/1.3 ui-monospace, monospace; background: #0d0d22; padding: 8px; border-radius: 8px; height: 110px; overflow: auto; white-space: pre-wrap; }
+  .err { color: #ff6b61; }
+</style>
+</head>
+<body>
+<h1>Moo Bowl audio test</h1>
+<div class="row">
+  <button id="unlock" class="hot">Unlock audio</button>
+  <button id="mute">Mute: off</button>
+  <button id="strike" class="hot">Simulate strike</button>
+  <button id="gutterBall">Simulate gutter ball</button>
+</div>
+
+<h2>Roll (held, called every frame)</h2>
+<div class="row"><button id="rollToggle">Roll: off</button> <button id="gutterToggle">Gutter timbre: off</button> <button id="autoZ">Auto z sweep: off</button></div>
+<div class="row"><label>speed <span id="vSpeed"></span> m/s</label><input id="speed" type="range" min="3.5" max="10.5" step="0.1" value="7.6"></div>
+<div class="row"><label>x <span id="vX"></span> m</label><input id="x" type="range" min="-0.6" max="0.6" step="0.01" value="0"></div>
+<div class="row"><label>z <span id="vZ"></span> m</label><input id="z" type="range" min="-19" max="0" step="0.1" value="0"></div>
+
+<h2>Pins and ball</h2>
+<div class="row"><label>strength <span id="vS"></span></label><input id="str" type="range" min="0" max="1" step="0.01" value="0.8">
+  <label style="min-width:60px">pin x</label><input id="px" type="range" min="-0.6" max="0.6" step="0.01" value="0"></div>
+<div class="row">
+  <button data-fn="release">release</button>
+  <button data-fn="pinHit">pinHit</button>
+  <button data-fn="pinClack">pinClack</button>
+  <button data-fn="pinFloor">pinFloor</button>
+  <button id="burst">Pin burst (hit + 20 clacks + floors)</button>
+  <button data-fn="gutter">gutter</button>
+  <button data-fn="ballPit">ballPit</button>
+  <button data-fn="sweep">sweep</button>
+  <button data-fn="rack">rack</button>
+</div>
+
+<h2>Calls, crowd, UI</h2>
+<div class="row">
+  <button data-call="strike">call strike</button><button data-call="turkey">call turkey</button><button data-call="spare">call spare</button>
+  <button data-call="split">call split</button><button data-call="gutter">call gutter</button><button data-call="open">call open</button>
+</div>
+<div class="row">
+  <button data-crowd="cheer">cheer</button><button data-crowd="aww">aww</button><button data-crowd="clap">clap</button>
+  <button data-ui="move">ui move</button><button data-ui="select">ui select</button><button data-ui="back">ui back</button><button data-ui="start">ui start</button>
+</div>
+
+<h2>Music and ambience</h2>
+<div class="row">
+  <button data-music="title">music title</button><button data-music="game">music game</button><button data-music="results">music results</button><button data-music="off">music off</button>
+  <button id="amb">ambience: off</button>
+</div>
+
+<h2>Log</h2>
+<div id="log"></div>
+
+<script type="module">
+import { createAudio } from '../js/audio.js';
+
+const log = document.getElementById('log');
+const say = (m, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = m; log.appendChild(d); log.scrollTop = log.scrollHeight; };
+window.addEventListener('error', (e) => say('ERROR ' + e.message, 'err'));
+window.addEventListener('unhandledrejection', (e) => say('REJECTION ' + e.reason, 'err'));
+
+const audio = createAudio();
+window.audio = audio;
+const $ = (id) => document.getElementById(id);
+const num = (id) => parseFloat($(id).value);
+
+// every method must be a harmless no-op before unlock
+try {
+  audio.roll({ active: true, speed: 7, x: 0, z: -3, gutter: false });
+  audio.pinHit(1, 0); audio.pinClack(1, 0); audio.pinFloor(1); audio.release(7); audio.gutter(); audio.ballPit();
+  audio.sweep(); audio.rack(); audio.call('strike'); audio.crowd('cheer'); audio.ui('move'); audio.music('off'); audio.ambience(false);
+  say('pre-unlock calls: no throw (muted=' + audio.muted + ')');
+} catch (e) { say('pre-unlock threw: ' + e.message, 'err'); }
+
+$('unlock').onclick = () => { audio.unlock(); say('unlock()'); };
+// any first gesture unlocks too
+document.addEventListener('pointerdown', () => audio.unlock(), { once: true });
+
+$('mute').onclick = () => { audio.setMuted(!audio.muted); $('mute').textContent = 'Mute: ' + (audio.muted ? 'on' : 'off'); };
+
+const sync = () => { $('vSpeed').textContent = num('speed').toFixed(1); $('vX').textContent = num('x').toFixed(2); $('vZ').textContent = num('z').toFixed(1); $('vS').textContent = num('str').toFixed(2); };
+for (const id of ['speed', 'x', 'z', 'str', 'px']) $(id).addEventListener('input', sync);
+sync();
+
+let rolling = false, gutterTimbre = false, autoZ = false, simRoll = null;
+$('rollToggle').onclick = () => { rolling = !rolling; $('rollToggle').textContent = 'Roll: ' + (rolling ? 'on' : 'off'); $('rollToggle').classList.toggle('on', rolling); };
+$('gutterToggle').onclick = () => { gutterTimbre = !gutterTimbre; $('gutterToggle').textContent = 'Gutter timbre: ' + (gutterTimbre ? 'on' : 'off'); $('gutterToggle').classList.toggle('on', gutterTimbre); };
+$('autoZ').onclick = () => { autoZ = !autoZ; $('autoZ').textContent = 'Auto z sweep: ' + (autoZ ? 'on' : 'off'); };
+
+let t0 = performance.now();
+function frame(now) {
+  const dt = (now - t0) / 1000; t0 = now;
+  if (simRoll) {
+    simRoll.t += dt;
+    const u = Math.min(1, simRoll.t / simRoll.dur);
+    audio.roll({ active: u < 1, speed: simRoll.speed * (1 - 0.12 * u), x: simRoll.x, z: -19 * u, gutter: simRoll.gutter });
+    if (u >= 1) { const done = simRoll.onDone; simRoll = null; done && done(); }
+  } else if (rolling) {
+    if (autoZ) { const z = ((num('z') - 3 * dt * 1.0)); $('z').value = z < -19 ? 0 : z; sync(); }
+    audio.roll({ active: true, speed: num('speed'), x: num('x'), z: num('z'), gutter: gutterTimbre });
+  } else {
+    audio.roll({ active: false, speed: 0, x: 0, z: 0, gutter: false });
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+for (const b of document.querySelectorAll('[data-fn]')) b.onclick = () => {
+  audio.unlock();
+  const fn = b.dataset.fn, s = num('str'), x = num('px');
+  if (fn === 'release') audio.release(num('speed'));
+  else if (fn === 'pinHit' || fn === 'pinClack') audio[fn](s, x);
+  else if (fn === 'pinFloor') audio.pinFloor(s);
+  else audio[fn]();
+  say(fn);
+};
+for (const b of document.querySelectorAll('[data-call]')) b.onclick = () => { audio.unlock(); audio.call(b.dataset.call); say('call ' + b.dataset.call); };
+for (const b of document.querySelectorAll('[data-crowd]')) b.onclick = () => { audio.unlock(); audio.crowd(b.dataset.crowd); say('crowd ' + b.dataset.crowd); };
+for (const b of document.querySelectorAll('[data-ui]')) b.onclick = () => { audio.unlock(); audio.ui(b.dataset.ui); say('ui ' + b.dataset.ui); };
+for (const b of document.querySelectorAll('[data-music]')) b.onclick = () => { audio.unlock(); audio.music(b.dataset.music); say('music ' + b.dataset.music); };
+let amb = false;
+$('amb').onclick = () => { audio.unlock(); amb = !amb; audio.ambience(amb); $('amb').textContent = 'ambience: ' + (amb ? 'on' : 'off'); $('amb').classList.toggle('on', amb); };
+
+function burst(withHit = true) {
+  if (withHit) audio.pinHit(0.95, 0.02);
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => audio.pinClack(0.25 + Math.random() * 0.7, (Math.random() - 0.5) * 0.9), 20 + Math.random() * 580);
+  }
+  for (let i = 0; i < 6; i++) setTimeout(() => audio.pinFloor(0.3 + Math.random() * 0.6), 200 + Math.random() * 700);
+}
+$('burst').onclick = () => { audio.unlock(); burst(); say('pin burst'); };
+
+function simulate(gutter) {
+  audio.unlock();
+  say(gutter ? 'simulate gutter ball' : 'simulate strike');
+  audio.release(num('speed'));
+  setTimeout(() => {
+    simRoll = {
+      t: 0, dur: 2.4, speed: num('speed'), x: gutter ? 0.55 : 0.05, gutter,
+      onDone: () => {
+        if (gutter) { audio.gutter(); setTimeout(() => { audio.ballPit(); audio.call('gutter'); audio.crowd('aww'); }, 500); return; }
+        burst();
+        setTimeout(() => { audio.ballPit(); }, 300);
+        setTimeout(() => { audio.call('strike'); audio.crowd('cheer'); audio.crowd('clap'); }, 900);
+        setTimeout(() => { audio.sweep(); }, 3600);
+      },
+    };
+  }, 80);
+}
+$('strike').onclick = () => simulate(false);
+$('gutterBall').onclick = () => simulate(true);
+
+say('ready. Click Unlock audio (or any button).');
+</script>
+</body>
+</html>

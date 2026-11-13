@@ -22,6 +22,7 @@
  */
 import { Emitter, STUN, decodePacket, defaultSignalUrl } from './protocol.js';
 import { Liveness, backoffDelay, watchPage } from './net-watch.js';
+import { openSignal, setPoll } from './poll-socket.js';
 
 const PING_MS = 1000;
 const STALL_MS = 3500;
@@ -64,6 +65,7 @@ export class ScreenLink extends Emitter {
   #clockSamples = [];
   #rateCount = 0;
   #rateT0 = 0;
+  #waitSince = 0;
 
   constructor({ signalUrl, storageKey = 'exemoo.room', iceServers = STUN, wsPingMs = WS_PING_MS, wsDeadMs = WS_DEAD_MS, retryBaseMs = 500, retryMaxMs = 8000 } = {}) {
     super();
@@ -147,10 +149,27 @@ export class ScreenLink extends Emitter {
   #setStatus(s, detail, transport) {
     const t = transport ?? this.transport;
     if (s === this.status && detail === this.#detail && t === this.transport) return;
+    if (s === 'waiting' && this.status !== 'waiting') this.#waitSince = performance.now();
     this.status = s;
     this.#detail = detail;
     this.transport = t;
+    this.#tunePoll();
     this.emit('status', s, detail);
+  }
+
+  /** Pairing polls: quick while a phone is connecting, slow once it talks to us directly. */
+  // An idle screen (QR up, nobody pairing) backs off so a tab left open costs little.
+  #tunePoll() {
+    const s = this.status;
+    let ms = 1000;
+    if (s === 'connected' && this.transport === 'webrtc') ms = 15000;
+    else if (s === 'pairing') ms = 500;
+    else if (s === 'waiting') {
+      const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+      const waited = performance.now() - this.#waitSince;
+      ms = hidden ? 30000 : waited < 120_000 ? 2000 : waited < 600_000 ? 5000 : 15000;
+    }
+    setPoll(this.#ws, ms);
   }
 
   #signal(msg) {
@@ -173,13 +192,14 @@ export class ScreenLink extends Emitter {
     if (this.status !== 'disconnected') this.#setStatus('connecting');
     let ws;
     try {
-      ws = new WebSocket(this.#signalUrl);
+      ws = openSignal(this.#signalUrl);
     } catch (e) {
       this.#setStatus('error', `Bad signalling URL: ${e.message}`, 'none');
       return this.#scheduleReconnect();
     }
     ws.binaryType = 'arraybuffer';
     this.#ws = ws;
+    this.#tunePoll();
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: 'create_room', pin: this.pin || undefined, resume: this.#resume || undefined }));
       this.#live.start();
@@ -238,6 +258,9 @@ export class ScreenLink extends Emitter {
   /** Tab visible again / network back: check the socket now instead of waiting for the heartbeat. */
   #wake(ms) {
     if (this.#stopped) return;
+    // Someone came back to the screen: poll quickly again so a phone pairs at once.
+    this.#waitSince = performance.now();
+    this.#tunePoll();
     if (this.#reconnectTimer) return this.#reconnectNow();
     if (this.#ws?.readyState === 1) this.#live.probe(ms);
   }
@@ -277,7 +300,7 @@ export class ScreenLink extends Emitter {
       case 'offer':
         this.#onOffer(String(m.sdp || '')).catch((e) => {
           console.warn('[exemoo] WebRTC offer failed', e);
-          this.#setStatus('pairing', 'WebRTC failed. Waiting for relay...', 'none');
+          this.#setStatus('pairing', 'Could not connect to the phone. Is it on the same Wi-Fi?', 'none');
         });
         break;
       case 'candidate':
@@ -380,7 +403,7 @@ export class ScreenLink extends Emitter {
       if ((s === 'failed' || s === 'closed') && this.transport === 'webrtc') {
         this.#control = null;
         if (this.#relaySeen) this.#markConnected('relay');
-        else this.#setStatus('pairing', 'Direct connection lost. Trying relay...', 'none');
+        else this.#setStatus('pairing', 'Connection to the phone lost. Reconnecting...', 'none');
       }
     };
     pc.ondatachannel = (e) => {
@@ -470,6 +493,7 @@ export class ScreenLink extends Emitter {
 
   #tick() {
     const now = performance.now();
+    this.#tunePoll();
     if (now - this.#rateT0 >= 1000) {
       this.packetRate = Math.round((this.#rateCount * 1000) / (now - this.#rateT0 || 1000));
       this.#rateCount = 0;

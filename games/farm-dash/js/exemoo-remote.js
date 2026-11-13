@@ -2,8 +2,11 @@
 // phone left/right, jump / roll with up / down (or GO to jump). The webcam still works as before.
 import { connectExemoo, pressKey } from '/sdk/exemoo.js';
 
+const inMenu = () => [...document.querySelectorAll('.overlay')].some((o) => o.getClientRects().length && !o.classList.contains('hidden'));
+
 const exemoo = connectExemoo({
   layout: 'remote',
+  menuCursor: inMenu, // gyro cursor over the menus
   title: 'Farm Dash',
   stream: true,
   buttons: [
@@ -12,7 +15,6 @@ const exemoo = connectExemoo({
   ],
 });
 
-const inMenu = () => [...document.querySelectorAll('.overlay')].some((o) => o.getClientRects().length && !o.classList.contains('hidden'));
 const KEY = { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', jump: 'ArrowUp', roll: 'ArrowDown', action: 'Space', pause: 'KeyP', back: 'KeyP' };
 
 exemoo.on('button', (b) => {

@@ -5,6 +5,6 @@ export declare class SpinshotLink {
   [key: string]: any;
 }
 export declare class SliceLink {
-  constructor(opts?: { layout?: string; title?: string });
+  constructor(opts?: { layout?: string; title?: string; menuHold?: () => boolean });
   [key: string]: any;
 }

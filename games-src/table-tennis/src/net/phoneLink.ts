@@ -17,6 +17,7 @@ import type {
   SensorPacket,
 } from '../core/contracts';
 import { decodePacket } from './packets';
+import { openSignal, setPoll, screenPollMs } from '../../../../public/js/poll-socket.js';
 
 const STUN: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
 const STORAGE_KEY = 'spinshot.room';
@@ -36,8 +37,8 @@ interface ServerInfo {
 type Listeners = { [K in keyof PhoneLinkEvents]: Set<PhoneLinkEvents[K]> };
 
 function defaultSignalUrl(): string {
-  if (typeof location === 'undefined') return 'ws://localhost:8080/signal';
-  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/signal`;
+  if (typeof location === 'undefined') return 'http://localhost:8080/api/signal';
+  return `${location.origin}/api/signal`;
 }
 
 export class PhoneLink {
@@ -112,6 +113,7 @@ export class PhoneLink {
     this.status = s;
     this.detail = detail;
     this.transport = t;
+    setPoll(this.ws, screenPollMs(s, t));
     this.emit('status', s, detail);
   }
 
@@ -215,7 +217,7 @@ export class PhoneLink {
     if (this.status !== 'disconnected') this.setStatus('connecting');
     let ws: WebSocket;
     try {
-      ws = new WebSocket(this.signalUrl);
+      ws = openSignal(this.signalUrl);
     } catch (e) {
       this.setStatus('error', `Bad signalling URL: ${(e as Error).message}`, 'none');
       this.scheduleReconnect();
@@ -223,6 +225,7 @@ export class PhoneLink {
     }
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
+    setPoll(ws, screenPollMs(this.status, this.transport));
     ws.onopen = () => {
       this.retry = 0;
       const pin = this.pin || this.savedPin;

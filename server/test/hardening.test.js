@@ -1,16 +1,15 @@
-// Production hardening: security headers, compression, ranges, readiness, origin checks, limits.
+// Production hardening: security headers, compression, ranges, readiness.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
-import WebSocket from 'ws';
-import { boot, sleep } from './helpers.js';
+import { boot } from './helpers.js';
 import { startServer } from '../index.js';
 
 let t;
-before(async () => (t = await boot({ maxSockets: 3, socketsPerIp: 100 })));
+before(async () => (t = await boot()));
 after(() => t.close());
 const get = (p, init) => fetch(t.base + p, { redirect: 'manual', ...init });
 
@@ -69,28 +68,6 @@ test('/readyz is 200 while serving', async () => {
   const r = await get('/readyz');
   assert.equal(r.status, 200);
   assert.equal((await r.json()).ready, true);
-});
-
-test('websocket upgrades from another site are refused; same-origin and non-browser clients are fine', async () => {
-  const host = new URL(t.base).host;
-  const evil = new WebSocket(t.base.replace('http', 'ws') + '/signal', { headers: { Origin: 'https://evil.example' } });
-  await assert.rejects(new Promise((res, rej) => (evil.once('open', res), evil.once('error', rej))), /403/);
-  const good = new WebSocket(t.base.replace('http', 'ws') + '/signal', { headers: { Origin: `http://${host}` } });
-  await new Promise((res, rej) => (good.once('open', res), good.once('error', rej)));
-  good.close();
-});
-
-test('the global socket cap refuses extra connections with 503', async () => {
-  await sleep(50);
-  const open = [];
-  for (let i = 0; i < 3; i++) {
-    const w = new WebSocket(t.base.replace('http', 'ws') + '/signal');
-    await new Promise((res, rej) => (w.once('open', res), w.once('error', rej)));
-    open.push(w);
-  }
-  const extra = new WebSocket(t.base.replace('http', 'ws') + '/signal');
-  await assert.rejects(new Promise((res, rej) => (extra.once('open', res), extra.once('error', rej))), /503/);
-  for (const w of open) w.close();
 });
 
 test('TURN_SECRET yields short-lived TURN REST credentials in /api/info', async () => {

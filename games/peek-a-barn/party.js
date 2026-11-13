@@ -57,7 +57,7 @@ export function startParty(game) {
   const audio = createAudio(game.music || {});
   const LAYOUT = game.layout || 'swing';
   const STREAM = game.stream ?? true;
-  const exemoo = connectExemoo({ layout: LAYOUT, title: game.title, stream: STREAM });
+  const exemoo = connectExemoo({ layout: LAYOUT, title: game.title, stream: STREAM, menuCursor: () => MENU_STATES.has(state) });
   const inShell = exemoo.inShell;
   const info = fetch('/api/info').then((r) => r.json()).catch(() => null);
 
@@ -108,6 +108,7 @@ export function startParty(game) {
 
   // ───────────── state ─────────────
   /** 'title' | 'lobby' | 'countdown' | 'play' | 'over' | 'paused' | 'results' */
+  const MENU_STATES = new Set(['title', 'lobby', 'paused', 'results']);
   let state = 'title';
   let pausedFrom = 'play';
   let roundT = 0, countT = 0, overT = 0, lastCount = 0, lastWarn = 0;

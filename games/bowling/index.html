@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moo Bowl — Exemoo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ui.css">
+<style>
+html,body{height:100%;margin:0;overflow:hidden;background:#1b1b3a}
+canvas#scene{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none}
+#boot{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#1b1b3a;color:#fff;
+  font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;text-align:center;transition:opacity .5s}
+#boot.done{opacity:0;pointer-events:none}
+#boot h1{font-family:'Lilita One',sans-serif;font-weight:400;font-size:clamp(48px,9vw,96px);margin:0 0 18px;color:#ffd21f;
+  -webkit-text-stroke:7px #0d0d22;paint-order:stroke fill;text-shadow:0 7px 0 #0d0d22;letter-spacing:.03em}
+#boot .bar{width:min(320px,70vw);height:18px;border:4px solid #fff;border-radius:12px;overflow:hidden;margin:0 auto 12px}
+#boot .bar i{display:block;height:100%;width:8%;background:#ffd21f;transition:width .3s}
+#boot p{margin:0;opacity:.85;font-size:17px}
+#boot.error .bar{display:none}
+#boot.error p{color:#ffb3ae;max-width:560px;padding:0 20px}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="boot"><div><h1>MOO BOWL</h1><div class="bar"><i id="bootBar"></i></div><p id="bootMsg">Setting the pins...</p></div></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

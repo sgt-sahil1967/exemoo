@@ -30,6 +30,8 @@ jobs:
         run: npm run build:ci
       - name: Deploy audit (sizes, local paths, LAN IPs, external hosts)
         run: npm run check:deploy
+      - name: Vercel static build
+        run: npm run build:vercel
       - name: Smoke test the production server
         run: |
           NODE_ENV=production PORT=8080 node server/index.js &

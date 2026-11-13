@@ -1,9 +1,12 @@
-// End-to-end: the browser-side ScreenLink (shell) and PadLink (phone) talking through the real
-// server. Node has WebSocket but no RTCPeerConnection, so this exercises the relay fallback path;
-// the WebRTC path is checked in a browser.
+// End-to-end: the browser-side ScreenLink (shell) and PadLink (phone) pairing through the real
+// server's HTTP polling (/api/signal). Node has no RTCPeerConnection, so a small in-process fake
+// stands in for WebRTC: the offer/answer still travel through the server, and the data channels
+// connect directly, like a phone and a laptop on the same Wi-Fi. `FakePC.reachable = false` plays a
+// phone on mobile data (no direct path).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { boot, sleep } from './helpers.js';
+import { WIFI_ONLY_TEXT } from '../../public/js/pad-link.js';
 import { ScreenLink } from '../../public/js/screen-link.js';
 import { PadLink } from '../../public/js/pad-link.js';
 import { encodeSen2, decodePacket, quatFromEuler, buttonBit, buttonsFromMask, normalizeButton, SEN1_MAGIC } from '../../public/js/protocol.js';
@@ -19,7 +22,80 @@ const until = async (fn, ms = 3000) => {
     await sleep(10);
   }
 };
-const url = () => t.base.replace('http', 'ws') + '/signal';
+const url = () => t.base + '/api/signal';
+
+// ── fake WebRTC ──
+const pcs = new Map();
+let pcId = 0;
+class FakeChannel {
+  constructor(label) {
+    this.label = label;
+    this.readyState = 'connecting';
+    this.binaryType = 'arraybuffer';
+    this.bufferedAmount = 0;
+    this.peer = null;
+    this.onopen = this.onclose = this.onmessage = null;
+  }
+  send(d) {
+    if (this.readyState !== 'open') throw new Error('channel not open');
+    const p = this.peer;
+    setTimeout(() => p?.readyState === 'open' && p.onmessage?.({ data: d }), 0);
+  }
+  _open() {
+    this.readyState = 'open';
+    this.onopen?.();
+  }
+  close() {
+    if (this.readyState === 'closed') return;
+    this.readyState = 'closed';
+    setTimeout(() => this.onclose?.(), 0);
+    this.peer?.close();
+  }
+}
+class FakePC {
+  static reachable = true;
+  constructor() {
+    this.id = ++pcId;
+    pcs.set(this.id, this);
+    this.channels = [];
+    this.iceConnectionState = 'new';
+    this.ondatachannel = this.onicecandidate = this.oniceconnectionstatechange = null;
+  }
+  createDataChannel(label) {
+    const c = new FakeChannel(label);
+    this.channels.push(c);
+    return c;
+  }
+  async createOffer() {
+    return { type: 'offer', sdp: `fake:${this.id}` };
+  }
+  async createAnswer() {
+    return { type: 'answer', sdp: `fake:${this.id}` };
+  }
+  async setLocalDescription() {}
+  async setRemoteDescription(d) {
+    const remote = pcs.get(Number(String(d.sdp).split(':')[1]));
+    if (d.type !== 'answer' || !remote || !FakePC.reachable) return;
+    setTimeout(() => {
+      if (this.closed || remote.closed) return;
+      for (const c of this.channels) {
+        const rc = new FakeChannel(c.label);
+        rc.peer = c;
+        c.peer = rc;
+        remote.channels.push(rc);
+        remote.ondatachannel?.({ channel: rc });
+        c._open();
+        rc._open();
+      }
+    }, 5);
+  }
+  async addIceCandidate() {}
+  close() {
+    this.closed = true;
+    for (const c of this.channels) c.close();
+  }
+}
+globalThis.RTCPeerConnection = FakePC;
 
 test('SEN2 round-trips and junk is rejected', () => {
   const q = quatFromEuler(30, 45, -20);
@@ -43,20 +119,20 @@ test('legacy SEN1 decodes with zero gyro and buttons', () => {
   assert.equal(d.buttons, 0);
 });
 
-test('shell and pad pair over the relay, exchange control messages and sensor packets', async () => {
+test('screen and pad pair through /api/signal, then talk directly: control messages and sensor packets', async () => {
   const screen = new ScreenLink({ signalUrl: url(), storageKey: 'test.' + Math.random() });
   screen.start();
   await until(() => screen.status === 'waiting' && /^\d{6}$/.test(screen.pin));
 
   const pad = new PadLink({ signalUrl: url() });
   pad.connect(screen.pin);
-  await until(() => pad.connected && pad.transport === 'relay');
+  await until(() => pad.connected && pad.transport === 'webrtc', 8000);
 
   const fromPhone = [];
   screen.on('message', (m) => fromPhone.push(m));
   pad.send({ t: 'hello', ua: 'test' });
   await until(() => screen.connected && fromPhone.some((m) => m.t === 'hello'));
-  assert.equal(screen.transport, 'relay');
+  assert.equal(screen.transport, 'webrtc');
 
   const packets = [];
   screen.on('packet', (p) => packets.push(p));
@@ -75,7 +151,7 @@ test('shell and pad pair over the relay, exchange control messages and sensor pa
   assert.ok(!fromPhone.some((m) => m.t === 'ping' || m.t === 'pong'));
 
   pad.close();
-  await until(() => screen.status === 'waiting');
+  await until(() => screen.status === 'waiting', 8000);
   screen.stop();
 });
 
@@ -90,19 +166,53 @@ test('a reloaded screen gets the same PIN back and the phone reconnects', async 
     const pin = screen.pin;
     const pad = new PadLink({ signalUrl: url() });
     pad.connect(pin);
-    await until(() => pad.connected);
+    await until(() => pad.connected, 8000);
 
     screen.stop(); // tab reload
-    await until(() => pad.status === 'waiting');
+    await until(() => !pad.connected, 8000);
     const screen2 = new ScreenLink({ signalUrl: url(), storageKey: key });
     screen2.start();
-    await until(() => screen2.pin === pin && pad.connected);
-    pad.send({ t: 'hello', ua: 'again' });
-    await until(() => screen2.connected);
+    await until(() => screen2.pin === pin && pad.connected && screen2.connected, 15000);
     pad.close();
     screen2.stop();
   } finally {
     delete globalThis.sessionStorage;
+  }
+});
+
+test('a phone that cannot reach the screen directly (mobile data) gets the Wi-Fi message, never a relay', async () => {
+  const screen = new ScreenLink({ signalUrl: url(), storageKey: 'test.' + Math.random() });
+  screen.start();
+  await until(() => screen.status === 'waiting');
+  FakePC.reachable = false;
+  const pad = new PadLink({ signalUrl: url(), rtcTimeoutMs: 300, maxDirectFails: 2, retryBaseMs: 50, retryMaxMs: 100 });
+  let detail = '';
+  pad.on('status', (s, d) => s === 'gone' && (detail = d));
+  try {
+    pad.connect(screen.pin);
+    await until(() => pad.status === 'gone', 15000);
+    assert.match(detail, /same Wi-Fi/);
+    assert.equal(screen.connected, false);
+  } finally {
+    FakePC.reachable = true;
+    pad.close();
+    screen.stop();
+  }
+});
+
+test('a phone that reports mobile data is refused before pairing', async () => {
+  const nav = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { value: { connection: { type: 'cellular' } }, configurable: true });
+  try {
+    const pad = new PadLink({ signalUrl: url() });
+    let detail = '';
+    pad.on('status', (s, d) => (detail = d));
+    pad.connect('123456');
+    assert.equal(pad.status, 'gone');
+    assert.equal(detail, WIFI_ONLY_TEXT);
+  } finally {
+    if (nav) Object.defineProperty(globalThis, 'navigator', nav);
+    else delete globalThis.navigator;
   }
 });
 

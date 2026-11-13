@@ -173,7 +173,8 @@ export class Emitter {
 
 export const STUN = [{ urls: 'stun:stun.l.google.com:19302' }];
 
+/** Pairing endpoint (HTTP polling, see poll-socket.js and server/pairing.js). */
 export function defaultSignalUrl() {
-  if (typeof location === 'undefined') return 'ws://localhost:8080/signal';
-  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/signal`;
+  if (typeof location === 'undefined') return 'http://localhost:8080/api/signal';
+  return `${location.origin}/api/signal`;
 }

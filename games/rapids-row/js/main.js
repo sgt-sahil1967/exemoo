@@ -91,7 +91,7 @@ async function loadMap(id) {
 }
 
 // ───────────────────────────── phones ─────────────────────────────
-const exemoo = connectExemoo({ layout: 'swing', title: 'Rapids Row · Left paddle', stream: true });
+const exemoo = connectExemoo({ layout: 'swing', title: 'Rapids Row · Left paddle', stream: true, menuCursor: () => ['title', 'maps', 'pairing', 'paused', 'results'].includes(state) });
 const inShell = exemoo.inShell;
 let padBase = null;
 const info = fetch('/api/info').then((r) => r.json()).catch(() => null);

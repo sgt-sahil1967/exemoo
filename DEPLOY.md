@@ -1,126 +1,76 @@
-# Deploying Exemoo
+# Deploying Exemoo (Vercel, free Hobby plan)
 
-One Node process serves everything (landing page, `/pad`, `/play/<id>/`, pairing on `/signal`).
-The host must provide **HTTPS**: phones only expose motion sensors to secure pages.
+Exemoo runs entirely on Vercel:
 
-```bash
-npm ci && npm test              # server, pairing and reconnect tests
-npm run build:ci                # build every game in games-src/ into games/ from the lockfiles
-npm run check:deploy            # sizes, local paths / LAN IPs, external hosts
-docker build -t exemoo . && docker run --rm -p 8080:8080 exemoo
-```
-
-## How the pieces fit
-
-| Piece | What |
+| Piece | On Vercel |
 |---|---|
-| `Dockerfile` | Stage 1 builds the games from `games-src/` (`npm ci`, `tsc`, `vite`); stage 2 is `node:22-alpine` with the server, `public/` and `games/`. Static games already in `games/` (cricket, farm-dash, pad-test, rapids-row) are copied as-is. Runs as `node`, health check on `/healthz`. |
-| `render.yaml` | Render blueprint using that Dockerfile, so Render, CI and a local `docker build` produce the same image. |
-| `.github/workflows/ci.yml` | On every push/PR: `npm ci`, `npm test`, `npm run build:ci`, `npm run check:deploy`, a production-mode smoke test, then a Docker build + health check. |
-| `.env.example` | Every environment variable, with defaults. |
+| Landing page, `/pad`, `/play/<id>/` | Static files. `scripts/build-vercel.mjs` lays them out in `dist/` (games come prebuilt from `games/`). |
+| `/api/info` | Static `info.json` (game list), via a rewrite in `vercel.json`. |
+| `/api/signal` | Pairing function (`api/signal.js` → `server/pairing.js`). Rooms live in **Upstash Redis**. |
+| `/api/qr` | QR code function. |
+| `/api/login`, `/api/auth`, `/api/logout` + `middleware.js` | Alpha sign-in (email allowlist, emailed link, cookie). |
 
-`games/` stays committed: it holds the static games, and the prebuilt Vite games let `npm start` work
-from a plain checkout. The image rebuilds the Vite games anyway, so a stale `games/` can't ship.
+Phones pair through the server, then talk to the screen **directly over the local Wi-Fi** (WebRTC
+data channel). There is no relay and no TURN, so phones on mobile data can't play: Android phones
+that report mobile data are told so before pairing, other phones after the direct connection fails.
+Playing costs the server almost nothing: a connected pair makes about 7 requests a minute.
 
-## Render (recommended)
+## One-time setup
 
-1. Push the repo to GitHub.
-2. In Render: **New → Blueprint**, pick the repo. It reads `render.yaml` (Docker, one instance,
-   health check `/healthz`, `NODE_ENV=production`, `TRUST_PROXY=1`).
-3. Render asks for the `sync: false` values. Leave them empty for a first deploy.
-4. Open `https://<service>.onrender.com` on the laptop/TV and scan the QR code with a phone.
+1. **Push to GitHub** (this repo).
+2. **Vercel → Add New → Project →** import the repo. Vercel reads `vercel.json` (no framework,
+   build `node scripts/build-vercel.mjs`, output `dist/`). Deploy. It works without Redis for the
+   pages, but pairing returns 503 until step 3.
+3. **Storage → Marketplace → Upstash (Redis) → Create**, free plan, region close to the
+   functions (Vercel's default is Washington, D.C. `iad1`, so pick `us-east-1`). Connect it to the
+   project; Vercel adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`. **Redeploy**.
+4. Open `https://<project>.vercel.app` on the laptop/TV, scan the QR code with a phone on the same
+   Wi-Fi.
 
-Plan: the free plan sleeps after inactivity (the first visit then takes ~1 min and drops everyone
-connected). Use `starter` or above for real play.
+### Alpha sign-in (optional, recommended)
 
-Without Docker (Render “Node” runtime): build command
-`npm ci && npm run build:ci && npm prune --omit=dev`, start command `npm start`, same env vars.
+5. Sign up at [resend.com](https://resend.com) (free: 3,000 emails/month), verify a domain you own,
+   create an API key.
+6. In Vercel → Settings → Environment Variables (Production) add:
+   - `AUTH_SECRET`: a long random string (`openssl rand -hex 32`)
+   - `ALPHA_EMAILS`: `friend@example.com, other@example.com` (or `@yourteam.com` for a whole domain)
+   - `RESEND_API_KEY`: from step 5
+   - `MAIL_FROM`: `Exemoo <alpha@your-verified-domain.com>`
+7. Redeploy. Visitors now land on `/login.html`, enter their email, and get a sign-in link valid for
+   15 minutes; the session lasts 30 days. Phones don't sign in: they join a signed-in screen's PIN.
 
-## Custom domain
+To add or remove testers, edit `ALPHA_EMAILS` and redeploy. Removing an email also ends its existing
+sessions. Changing `AUTH_SECRET` signs everyone out.
 
-1. Render → the service → **Settings → Custom Domains → Add**, e.g. `play.example.com`.
-2. At your DNS provider add the record Render shows (CNAME `play` → `<service>.onrender.com`;
-   for an apex domain, the A/ALIAS record it gives).
-3. Wait for Render to issue the certificate (automatic).
-4. Set `PUBLIC_URL=https://play.example.com` so QR codes and pad links use the domain.
+## Free-plan limits (as of Nov 2026)
 
-HSTS is sent automatically once requests arrive over HTTPS.
+| Service | Free allowance / month | Exemoo's use |
+|---|---|---|
+| Vercel Hobby | 1M function invocations, 4 CPU-hours | 1 invocation per pairing poll, QR and sign-in |
+| Vercel Hobby | 1M edge requests (middleware) | 1 per page load of `/` or a game |
+| Upstash Redis | 500K commands, 256 MB | 1 command per pairing poll |
 
-## Docker anywhere else (Fly, a VPS, …)
+Rough budget: a screen waiting for a phone polls every 2 s, backing off to every 15 s after 10 minutes
+and every 30 s in a hidden tab; a playing pair makes about 7 polls a minute. 500K commands is
+roughly 400 screen-hours of waiting or 1,000+ hours of play a month. Over a limit nothing is charged:
+the feature stops until the month resets (Vercel can pause the project). Hobby is for
+non-commercial use; charging money needs Vercel Pro.
+
+## Checks
 
 ```bash
-docker build -t exemoo .
-docker run -d --restart unless-stopped -p 8080:8080 \
-  -e PUBLIC_URL=https://play.example.com -e TRUST_PROXY=1 exemoo
+npm ci && npm test        # pairing, sign-in, phone-link and HTTP tests
+npm run build             # rebuild the Vite games into games/ (commit the result)
+npm run build:vercel      # what Vercel runs: dist/
+npm run check:deploy      # sizes, local paths / LAN IPs, external hosts
 ```
 
-Put a TLS proxy in front (Caddy: `play.example.com { reverse_proxy localhost:8080 }`). It must pass
-WebSocket upgrades on `/signal` and set `X-Forwarded-For` / `X-Forwarded-Proto`. Only set
-`TRUST_PROXY=1` when a proxy really sits in front (otherwise clients could fake their IP for the
-rate limits). On Fly, `FLY_APP_NAME` turns it on automatically.
+When you change a Vite game in `games-src/` (or `public/js/screen-link.js`, which two of them
+bundle), run `npm run build` and commit `games/`: Vercel copies `games/` as-is.
 
-## Phones on the open internet: WebRTC and TURN
+## Local play and self-hosting
 
-The phone first tries a **direct WebRTC data channel** to the screen (lowest latency). If that does
-not open within 5 s, or dies later, it uses the **server WebSocket relay** automatically, so play
-always works; the relay just adds the round trip to the server. On home Wi-Fi both devices are
-usually on the same network and connect directly. Across networks (phone on cellular, strict
-corporate/hotel Wi-Fi) direct connections often need a **TURN** server:
-
-- Managed: Cloudflare Calls TURN, Twilio Network Traversal, Metered.ca. Put what they give you in
-  `ICE_SERVERS` as JSON, e.g.
-  `[{"urls":"stun:stun.l.google.com:19302"},{"urls":["turn:turn.example.com:3478","turns:turn.example.com:5349"],"username":"…","credential":"…"}]`.
-  Prefer providers' short-lived credentials if they offer an API.
-- Self-hosted coturn with `use-auth-secret` / `static-auth-secret=<secret>`: set
-  `TURN_URLS=turn:turn.example.com:3478,turns:turn.example.com:5349` and `TURN_SECRET=<secret>`.
-  The server then hands each page credentials valid for `TURN_TTL_S` (6 h), so no static password
-  is ever published.
-
-Without TURN nothing breaks; more phones simply end up on the relay (the pad shows “relay”).
-
-## Connection reliability (what the code does)
-
-- Both clients send a heartbeat on the signalling socket every 5 s; a socket silent for 12 s after
-  a ping (Wi-Fi ↔ cellular switch, NAT timeout) is dropped and reopened with jittered backoff. The
-  server pings every 15 s and drops sockets that miss a pong.
-- The screen keeps its PIN across reloads (resume key in `sessionStorage`); after a server restart
-  it re-creates the room with the **same PIN**. The pad keeps its pairing in `sessionStorage`, so a
-  reloaded phone rejoins the same screen without the PIN and is reported as `resumed`; while
-  resuming it keeps looking for a missing room for 10 minutes instead of giving up.
-- A room waits `ROOM_GRACE_MS` (5 min) for its screen to come back; a room with no screen and no
-  traffic is reaped after `ROOM_IDLE_TTL_MS` (30 min).
-- Tab visible again, network back online, or an iOS back/forward-cache restore: the clients check or
-  reopen their socket immediately.
-- Deploys: on `SIGTERM` the server stops accepting connections, `/readyz` turns 503, and every
-  socket is closed with code 1012 so clients reconnect to the new instance within a second.
-
-## Hardening that is on by default
-
-Security headers (CSP allowing only the CDNs the games use, `X-Frame-Options`, `nosniff`,
-`Referrer-Policy: no-referrer` so PINs in URLs don't leak, `Permissions-Policy`, HSTS on HTTPS),
-brotli/gzip, immutable caching for hashed `assets/`, `no-cache` + ETag for HTML and shared JS, byte
-ranges for media. Pairing limits per IP (30 rooms/min, 20 wrong PINs/min, 60 sockets), a global
-socket cap, 64 KB frames, a per-socket message-rate limit, a WebSocket `Origin` check, and a rate
-limit on `/api/qr`. Logs are JSON lines in production.
-
-External hosts the pages load from (allowed in the CSP): `fonts.googleapis.com`,
-`fonts.gstatic.com`, `unpkg.com` and `cdn.jsdelivr.net` (three.js, MediaPipe),
-`storage.googleapis.com` (pose models), `odml.pa.googleapis.com` (MediaPipe telemetry). If you add
-a game that loads from elsewhere, add the host to `CSP` in `server/index.js` (or set
-`CSP=report-only` while testing).
-
-## Scaling
-
-Rooms are in memory, so run **one instance**. One small instance handles thousands of paired
-phones (the relay forwards ~60 small packets/s per relayed phone). Scaling out later needs sticky
-routing by PIN plus a shared room store (e.g. Redis pub/sub).
-
-## Checklist for you (needs your accounts)
-
-- [ ] Push to GitHub; check the CI run is green (the first run also proves the Docker build works).
-- [ ] Render: New → Blueprint → this repo; pick a paid plan for real play.
-- [ ] Optional: custom domain + DNS record + `PUBLIC_URL`.
-- [ ] Optional: TURN provider or coturn → `ICE_SERVERS` or `TURN_URLS` + `TURN_SECRET`.
-- [ ] Test with a phone on cellular data (not the laptop's Wi-Fi): pad should say “direct” with
-      TURN, “relay” without.
-- [ ] Commit `games-src/farm-kart/package-lock.json` so its build is pinned like the others.
+`npm run dev` runs the same routes in one Node process with rooms in memory (and self-signed HTTPS
+for phones on your LAN). The `Dockerfile` still builds that server if you ever want to self-host
+(`docker build -t exemoo . && docker run -p 8080:8080 exemoo`, behind a TLS proxy); it keeps rooms in
+memory, so run one instance.

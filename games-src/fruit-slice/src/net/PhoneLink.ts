@@ -1,5 +1,6 @@
 import type { GameToPhone, LinkInfo, PhoneButton, SensorSample } from '../contracts';
 import { base64ToBuffer, decodeSen1 } from './sen1';
+import { openSignal } from '../../../../public/js/poll-socket.js';
 
 export interface PhoneLinkOptions {
   /** Signaling websocket URL. Default ws(s)://<location.host>/signal or VITE_SIGNAL_URL. */
@@ -25,8 +26,7 @@ const MAX_BACKOFF_MS = 10_000;
 function defaultSignalUrl(): string {
   const env = import.meta.env?.VITE_SIGNAL_URL as string | undefined;
   if (env) return env;
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${location.host}/signal`;
+  return `${location.origin}/api/signal`;
 }
 
 /**
@@ -159,7 +159,7 @@ export class PhoneLink {
     if (this._info.status !== 'connected') this.setInfo({ status: 'signaling', message: 'Contacting pairing service…' });
     let ws: WebSocket;
     try {
-      ws = new WebSocket(this.signalUrl);
+      ws = openSignal(this.signalUrl);
     } catch (err) {
       this.fail(`Bad signaling URL: ${(err as Error).message}`);
       return;

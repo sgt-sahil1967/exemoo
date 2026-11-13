@@ -1,18 +1,25 @@
 # Exemoo server
 
-One Node process serves everything: the landing page, the phone controller (`/pad`), every game
-build (`/play/<id>/`) and the phone pairing. It is built on `sword-relay-main/index.js` and keeps
-the same idea: the server only pairs devices and passes the WebRTC handshake, then the phone
-streams motion straight to the screen over a data channel. A WebSocket relay is the fallback
-when a direct connection can't be made.
+Exemoo's dynamic parts are small Web-standard handlers (`Request → Response`) that run in two places:
+
+- **Vercel** (production): the static site is built into `dist/`, the handlers are the functions in
+  `../api/`, rooms live in Upstash Redis, and `../middleware.js` is the alpha sign-in gate. See
+  [`../DEPLOY.md`](../DEPLOY.md).
+- **This Node server** (local play and tests): one process serves the same pages and routes, with
+  rooms in memory.
+
+The server only pairs devices and carries the WebRTC handshake. After that the phone streams motion
+straight to the screen over a data channel on the local network. There is **no relay**: a phone that
+can't reach the screen directly (mobile data, isolated guest Wi-Fi) can't play, and is told to join
+the screen's Wi-Fi.
 
 ## Run
 
 ```bash
 npm install
 npm run dev     # LAN mode: http://localhost:8080 for the screen, https://<LAN-IP>:8443/pad for phones
-npm start       # production mode: HTTP only on $PORT, TLS comes from the host
-npm test        # protocol, HTTP and phone-link tests (node:test)
+npm start       # HTTP only on $PORT
+npm test        # pairing, sign-in, HTTP and phone-link tests (node:test)
 ```
 
 In LAN mode the HTTPS certificate is self-signed (cached in `server/.cert/`), so a phone shows a
@@ -22,71 +29,52 @@ warning once. Motion sensors only work on HTTPS pages, which is why LAN mode exi
 
 | File | What |
 |---|---|
-| `index.js` | HTTP(S) server, static files, `/play/<id>/`, `/api/*`, WebSocket routing, CLI |
-| `signaling.js` | PIN rooms + signalling hub (`/signal`, and `/` for sword-relay clients) |
+| `index.js` | Local HTTP(S) server: static files, `/play/<id>/`, the `/api/*` handlers, the sign-in gate, CLI |
+| `api.js` | The `/api/*` handlers shared with Vercel: `signal`, `qr`, `login`, `auth`, `logout` |
+| `pairing.js` | PIN rooms over HTTP polling, plus the in-memory and Upstash Redis stores |
+| `auth.js` | Alpha allowlist, signed sign-in links and session cookie, the page gate |
+| `vercel.js` | Vercel glue (one API instance per function, Upstash store) |
 | `lan.js` | LAN IP detection + self-signed certificate |
 | `test/` | `npm test` |
 
-## Signalling protocol (`/signal`)
+## Pairing protocol (`POST /api/signal`)
 
-Wire-compatible with sword-relay, table-tennis / golf and fruit-slice.
+Clients POST `{pin?, role?, token?, msgs: [...]}` and get back `{msgs: [...]}`: the replies plus every
+message queued for them. `public/js/poll-socket.js` wraps this in a WebSocket-like object, so the
+screen and phone links (`screen-link.js`, `pad-link.js`) speak the same messages as before.
 
 | Direction | Message | Reply / effect |
 |---|---|---|
-| game → | `{type:'create_room', pin?, resume?}` | `{type:'joined', role:'game', room, token, resume, peer, expires_in, features}`. With a matching `pin`+`resume` the game gets its old room back. |
-| game → | `{type:'resume_room', room, token}` | Same `joined`, for fruit-slice (`token` = its previous token or the resume key) |
-| phone → | `{type:'join_room', room, resume?}` | `{type:'joined', role:'controller', resume, resumed, ...}`. `resume` is the controller key from a previous `joined`; a reloaded pad that presents it is `resumed` (also in the game's `peer_connected`). A different phone gets a new key. |
+| game → | `{type:'create_room', pin?, resume?}` | `{type:'joined', role:'game', room, token, resume, resumed, peer}`. With a matching `pin`+`resume` the game gets its old room back. Needs sign-in when the gate is on. |
+| game → | `{type:'resume_room', room, token}` | Same `joined`, for fruit-slice |
+| phone → | `{type:'join_room', room, resume?}` | `{type:'joined', role:'controller', resume, resumed, peer}`. A reloaded pad presenting its key is `resumed`; a different phone gets a new key and the old one hears `replaced`. |
 | both ← | `peer_connected` / `peer_disconnected` `{role}` | |
-| both → | `offer` / `answer` / `candidate` `{token, ...}` | Forwarded to the peer with `from` (token removed) |
-| both → | `{type:'relay', token, payload \| data}` | Forwarded to the peer with `from` |
-| both → | binary frame | Forwarded verbatim (dropped if the peer is backed up) |
+| both → | `offer` / `answer` / `candidate` | Queued for the peer with `from` |
+| both → | `{type:'leave'}` | The peer hears `peer_disconnected` (sent on close and page unload) |
 | both → | `{type:'ping'}` | `{type:'pong', timestamp_ms}` |
-| both ← | `replaced`, `room_closed` / `room_expired` `{reason}`, `error` `{code, message}` | |
-| both ← | close code `1012` | Server restarting (deploy): reconnect right away. `1008` = message flood. |
+| both ← | `replaced`, `room_expired`, `error` `{code, message}` | |
 
-Room rules:
-- A room lives while its game screen is connected. The server pings every 15 s and drops dead sockets.
-- If the game leaves, the room waits `ROOM_GRACE_MS` (5 min) so a reloaded tab or a waking laptop can
-  resume the same PIN, then closes. After a server restart the screen re-creates the same PIN.
-- A new phone joining a room replaces the old phone (reconnects just work).
-- Rate limits per IP: 30 new rooms a minute, 20 wrong PINs a minute, 60 open sockets; globally
-  `MAX_SOCKETS`; per socket 200 messages/s (burst 400); 64 KB frames; browser `Origin` must be this site.
-- Clients (`public/js/pad-link.js`, `screen-link.js`, helpers in `net-watch.js`) send a heartbeat
-  every 5 s, reopen a socket that stays silent 12 s, back off with jitter, and recheck on tab
-  visible / online / bfcache restore. Tests: `test/reconnect.test.js`.
+Rules:
+- Each poll stamps the side as present; a side silent for 90 s counts as gone. The room expires
+  `ROOM_GRACE_MS` (5 min) after the screen's last poll, so a reloaded tab resumes the same PIN.
+- Poll rates (set by the links): screen 0.5 s while a phone is pairing, 2 s waiting (5 s after 2 min,
+  15 s after 10 min, 30 s in a hidden tab), 15 s once the phone is connected; phone 0.5 s
+  negotiating, 20 s connected. Every poll is one Redis command.
+- Rate limits per IP: 30 new rooms a minute, 20 wrong PINs a minute; 5 sign-in emails per 10 min.
 
 ## HTTP routes
 
 | Route | What |
 |---|---|
-| `/` | Landing page (`public/`) |
-| `/pad` | Phone controller (`public/controller.html`) |
-| `/sdk/exemoo.js` | Game SDK (`public/sdk/`), see `games/README.md` |
-| `/js/*` | Shared browser modules: `protocol.js`, `screen-link.js`, `pad-link.js`, `shell.js`, `pad.js` |
-| `/play/<id>/…` | Built game in `games/<id>/`, SPA fallback to its `index.html`, `assets/` cached forever |
-| `/healthz` | `{ok, rooms, sockets, uptime}` for the host's health check |
-| `/readyz` | 200, or 503 while shutting down |
-| `/api/info` | `{padUrl, lan, lanIps, httpsPort, games}`: the URL to put in the QR code |
-| `/api/qr?text=…` | QR code SVG (text up to 512 characters) |
+| `/` | Landing page (`public/`); sign-in required when the gate is on |
+| `/login.html` | Alpha sign-in page |
+| `/pad` | Phone controller (`public/controller.html`), always open |
+| `/sdk/exemoo.js`, `/js/*` | Game SDK and shared browser modules |
+| `/play/<id>/…` | Built game in `games/<id>/` |
+| `/api/info` | `{padUrl, games, iceServers, ...}` (a static `info.json` on Vercel) |
+| `/api/signal` | Pairing, see above |
+| `/api/qr?text=…` | QR code SVG |
+| `/api/login`, `/api/auth`, `/api/logout` | Alpha sign-in, see `auth.js` |
+| `/healthz`, `/readyz` | Local server health |
 
-## Deploy
-
-See [`../DEPLOY.md`](../DEPLOY.md) (Render blueprint, Docker, custom domain, TURN) and
-[`../.env.example`](../.env.example) for every environment variable.
-
-| Env | Default | |
-|---|---|---|
-| `PORT` / `HOST` | 8080 / 0.0.0.0 | |
-| `NODE_ENV` | | `production` → JSON logs at info level |
-| `PUBLIC_URL` | (from request) | Base URL put in the QR code |
-| `TRUST_PROXY` | on for Render/Fly | Read client IP/proto/host from `X-Forwarded-*` |
-| `ICE_SERVERS` | Google STUN | JSON list of RTCIceServer (add TURN) |
-| `TURN_URLS`, `TURN_SECRET`, `TURN_TTL_S` | | coturn REST credentials, handed out by `/api/info` |
-| `ALLOWED_ORIGINS` | | Extra origins allowed to open `/signal` |
-| `CSP` | `on` | `on`, `report-only`, `off` |
-| `ROOM_GRACE_MS`, `ROOM_IDLE_TTL_MS` | 300000, 1800000 | Room lifetimes |
-| `MAX_SOCKETS`, `MAX_ROOMS` | 5000, 10000 | Global caps |
-| `LOG_FORMAT`, `LOG_LEVEL` | text/debug in dev, json/info in production | |
-| `EXEMOO_LAN`, `HTTPS_PORT` | | LAN mode (self-signed HTTPS), local only |
-
-Rooms are in memory, so run a single instance.
+Environment variables: see [`../.env.example`](../.env.example).
