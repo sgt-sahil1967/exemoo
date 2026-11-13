@@ -148,3 +148,11 @@ test('the Upstash store sends one EVAL per poll and parses replies', async () =>
   assert.deepEqual(await store.getRoom('123456'), { resume: 'r1', gameToken: 'g1' });
   assert.throws(() => upstashStore({ url: '', token: '' }), /not configured/);
 });
+
+test('Upstash credentials are found with or without a Vercel prefix', async () => {
+  const { findEnv } = await import('../pairing.js');
+  assert.equal(findEnv({ KV_REST_API_URL: 'a' }, ['KV_REST_API_URL']), 'a');
+  assert.equal(findEnv({ STORAGE_KV_REST_API_URL: 'b' }, ['KV_REST_API_URL', 'UPSTASH_REDIS_REST_URL']), 'b');
+  assert.equal(findEnv({ KV_REST_API_READ_ONLY_TOKEN: 'ro' }, ['KV_REST_API_TOKEN']), '');
+  assert.doesNotThrow(() => upstashStore({ env: { EXEMOO_KV_REST_API_URL: 'https://x', EXEMOO_KV_REST_API_TOKEN: 't' } }));
+});

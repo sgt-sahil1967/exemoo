@@ -28,6 +28,15 @@ export function requestIp(request, fallback = 'unknown') {
   return h.get('x-real-ip') || String(h.get('x-forwarded-for') || '').split(',')[0].trim() || fallback;
 }
 
+/** GET /api/qr?text=… → QR code SVG. `limited()` → true when the caller is over its rate limit. */
+export async function qrResponse(request, limited = async () => false) {
+  const text = new URL(request.url).searchParams.get('text') || '';
+  if (!text || text.length > 512) return new Response('text must be 1-512 characters\n', { status: 400 });
+  if (await limited()) return new Response('Too many requests\n', { status: 429, headers: { 'Retry-After': '60' } });
+  const svg = await QRCode.toString(text, { type: 'svg', margin: 1, color: { dark: '#1b1b3a', light: '#ffffff' } });
+  return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=3600' } });
+}
+
 export function createApi({ store, env = process.env, log = () => {} }) {
   const pairing = createPairing({
     store,
@@ -56,13 +65,7 @@ export function createApi({ store, env = process.env, log = () => {} }) {
       return json(200, reply);
     },
 
-    async qr(request, ip = requestIp(request)) {
-      const text = new URL(request.url).searchParams.get('text') || '';
-      if (!text || text.length > 512) return new Response('text must be 1-512 characters\n', { status: 400 });
-      if (await over(120, 60_000)(`x:rl:q:${ip}`)) return new Response('Too many requests\n', { status: 429, headers: { 'Retry-After': '60' } });
-      const svg = await QRCode.toString(text, { type: 'svg', margin: 1, color: { dark: '#1b1b3a', light: '#ffffff' } });
-      return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=3600' } });
-    },
+    qr: (request, ip = requestIp(request)) => qrResponse(request, () => over(120, 60_000)(`x:rl:q:${ip}`)),
 
     login(request, ip = requestIp(request)) {
       return handleLogin(request, auth, { ip, limit: over(5, 10 * 60_000), log: (m) => log('info', m) });

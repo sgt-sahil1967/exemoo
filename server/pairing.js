@@ -334,12 +334,23 @@ if c == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
 return c`;
 
 /**
- * Upstash Redis over its REST API (works from Vercel functions; no TCP connection to keep).
- * Reads KV_REST_API_URL / KV_REST_API_TOKEN (Vercel marketplace names) or UPSTASH_REDIS_REST_*.
+ * An env var by name, or with any prefix (Vercel lets you prefix a connected store's variables,
+ * e.g. STORAGE_KV_REST_API_URL).
  */
-export function upstashStore({ url, token, fetchImpl = fetch } = {}) {
-  url ||= process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  token ||= process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+export function findEnv(env, names) {
+  for (const n of names) if (env[n]) return env[n];
+  for (const [k, v] of Object.entries(env)) if (v && names.some((n) => k.endsWith(`_${n}`))) return v;
+  return '';
+}
+
+/**
+ * Upstash Redis over its REST API (works from Vercel functions; no TCP connection to keep).
+ * Reads KV_REST_API_URL / KV_REST_API_TOKEN (Vercel marketplace names, with or without a prefix) or
+ * UPSTASH_REDIS_REST_*.
+ */
+export function upstashStore({ url, token, fetchImpl = fetch, env = process.env } = {}) {
+  url ||= findEnv(env, ['KV_REST_API_URL', 'UPSTASH_REDIS_REST_URL']);
+  token ||= findEnv(env, ['KV_REST_API_TOKEN', 'UPSTASH_REDIS_REST_TOKEN']);
   if (!url || !token) throw new Error('Upstash Redis is not configured (KV_REST_API_URL / KV_REST_API_TOKEN)');
   async function cmd(args) {
     const res = await fetchImpl(url, {
